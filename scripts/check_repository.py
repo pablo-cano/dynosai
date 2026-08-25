@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import ast
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -39,8 +40,8 @@ def main() -> int:
     match = re.search(r'__version__\s*=\s*["\']([^"\']+)', version_text)
     if not match:
         fail("could not read package version")
-    version = match.group(1)
 
+    version = match.group(1)
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     if f'version = "{version}"' not in pyproject:
         fail("pyproject version does not match dynosai_flow.version")
@@ -56,14 +57,24 @@ def main() -> int:
         if not ast.get_docstring(tree):
             fail(f"missing module docstring: {path.relative_to(ROOT)}")
 
-    forbidden = [
-        ROOT / "src" / "dynosai_flow.egg-info",
-        ROOT / "dist",
-        ROOT / "build",
-    ]
-    for path in forbidden:
-        if path.exists():
-            fail(f"generated artifact must not be committed: {path.relative_to(ROOT)}")
+    forbidden_prefixes = (
+        "src/dynosai_flow.egg-info/",
+        "dist/",
+        "build/",
+    )
+
+    result = subprocess.run(
+        ["git", "ls-files"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    for tracked_file in result.stdout.splitlines():
+        normalized = tracked_file.replace("\\", "/")
+        if normalized.startswith(forbidden_prefixes):
+            fail(f"generated artifact must not be committed: {normalized}")
 
     print(f"DynosAI repository checks: PASS ({len(source_files)} modules, version {version})")
     return 0
