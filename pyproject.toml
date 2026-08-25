@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dynosai-flow"
+version = "0.13.0"
+description = "Local-first SDD governance, evidence, Git control, validation, and semantic memory for coding agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [{name = "Pablo Cano"}]
+keywords = [
+  "ai-agents",
+  "coding-agents",
+  "model-context-protocol",
+  "software-development",
+  "spec-driven-development",
+  "developer-tools",
+  "cursor",
+  "codex",
+]
+dependencies = [
+  "fastembed>=0.8.0,<0.9",
+  "sqlite-vec>=0.1.9,<0.2",
+  "numpy>=1.26,<3",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Quality Assurance",
+  "Topic :: Software Development :: Version Control :: Git",
+]
+
+[project.urls]
+Homepage = "https://www.dynosai.com/"
+Documentation = "https://www.dynosai.com/docs/"
+Repository = "https://github.com/pablo-cano/dynosai"
+Issues = "https://github.com/pablo-cano/dynosai/issues"
+LinkedIn = "https://www.linkedin.com/in/pablo-cano-galan/"
+
+[project.optional-dependencies]
+codegraph = [
+  "tree-sitter-language-pack>=1.13.3,<2",
+]
+dev = [
+  "pytest>=8,<9",
+  "build>=1.2,<2",
+]
+
+[project.scripts]
+dynosai = "dynosai_flow.cli:main"
+dyno = "dynosai_flow.cli:main"
+dynosai-mcp = "dynosai_flow.mcp:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

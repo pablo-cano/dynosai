@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Builds
+dist/
+build/
+*.whl
+
+# DynosAI local runtime
+.dynosai/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local logs and diagnostics
+*.log
+*.tmp
+acceptance-logs/
+
+# Documentation website
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+apps/web/.vercel/
+apps/web/.tsbuildinfo

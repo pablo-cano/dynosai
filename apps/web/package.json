@@ -1,0 +1,46 @@
+{
+  "name": "@dynosai/web",
+  "version": "0.13.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "check": "node scripts/check-source.mjs"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "next": "16.3.2",
+    "next-themes": "^0.4.6",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "eslint": "^9.35.0",
+    "eslint-config-next": "16.3.2",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5.9.2"
+  },
+  "license": "MIT",
+  "author": "Pablo Cano",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "packageManager": "npm@10.9.2",
+  "homepage": "https://www.dynosai.com/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pablo-cano/dynosai.git"
+  }
+}
