@@ -32,7 +32,10 @@ for (const file of sourceFiles) {
 }
 
 const packageJson = JSON.parse(fs.readFileSync(path.join(webRoot, "package.json"), "utf8"));
-if (packageJson.version !== "0.13.0") failures.push("package.json: website version must match DynosAI 0.13.0");
+const pyproject = fs.readFileSync(path.join(repoRoot, "pyproject.toml"), "utf8");
+const versionMatch = pyproject.match(/^version = "([^"]+)"/m);
+if (!versionMatch) failures.push("pyproject.toml: project version could not be read");
+else if (packageJson.version !== versionMatch[1]) failures.push(`package.json: website version ${packageJson.version} must match DynosAI ${versionMatch[1]}`);
 if (packageJson.license !== "MIT") failures.push("package.json: license must be MIT");
 if (packageJson.author !== "Pablo Cano") failures.push("package.json: author is incorrect");
 

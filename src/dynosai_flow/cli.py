@@ -30,6 +30,7 @@ from .model_control import ModelControlPlane
 from .model_benchmark import ModelBenchmarkMatrix
 from .context_control import ContextCheckpointStore
 from .predictive_validation import PredictiveRouterValidator
+from .app_server import serve_studio
 
 
 def parser() -> argparse.ArgumentParser:
@@ -47,6 +48,13 @@ def parser() -> argparse.ArgumentParser:
     git_group.add_argument("--no-git-init",action="store_true",help=argparse.SUPPRESS)
     stat=sub.add_parser("status",help="Provider-neutral active work status"); stat.add_argument("work_id",nargs="?")
     resume=sub.add_parser("resume",help="Resume a persistent provider feature session"); resume.add_argument("--provider",choices=["cursor","codex","claude"],required=True); resume.add_argument("work_id",nargs="?")
+    studio=sub.add_parser("studio",help="Launch the local DynosAI graphical control plane")
+    studio.add_argument("--host",choices=["127.0.0.1","localhost"],default="127.0.0.1")
+    studio.add_argument("--port",type=int,default=8765)
+    studio.add_argument("--no-browser",action="store_true",help="Start Studio without opening a browser")
+    app_server=sub.add_parser("app-server",help="Run the local DynosAI App Server without opening Studio")
+    app_server.add_argument("--host",choices=["127.0.0.1","localhost"],default="127.0.0.1")
+    app_server.add_argument("--port",type=int,default=8765)
     init=sub.add_parser("init"); init.add_argument("path",nargs="?",default="."); init.add_argument("--name"); init.add_argument("--language",default="python"); init.add_argument("--test-command",default="pytest"); init.add_argument("--agent",choices=["claude","codex","cursor","all"]); init.add_argument("--install-model",action="store_true")
     adopt=sub.add_parser("adopt"); adopt.add_argument("path",nargs="?",default="."); adopt.add_argument("--name"); adopt.add_argument("--agent",choices=["claude","codex","cursor","all"]); adopt.add_argument("--install-model",action="store_true")
     c=sub.add_parser("connect"); c.add_argument("agent",choices=["claude","codex","cursor","all"]); dc=sub.add_parser("disconnect"); dc.add_argument("agent",choices=["claude","codex","cursor","all"])
@@ -192,6 +200,9 @@ def main(argv:list[str]|None=None)->int:
     args=parser().parse_args(argv); project=Path(getattr(args,"path",None) or args.project).resolve(); engine=DynosAI(project)
     try:
         cmd=args.command
+        if cmd in {"studio","app-server"}:
+            serve_studio(project, host=args.host, port=args.port, open_browser=(cmd=="studio" and not getattr(args,"no_browser",False)))
+            return 0
         if cmd=="setup":
             providers=["cursor","codex","claude"] if args.provider=="all" else [args.provider]
             result=MachineProviderSetup().setup(providers,install_model=not args.skip_model)

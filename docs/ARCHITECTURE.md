@@ -6,16 +6,16 @@
 2. **Git is code truth.** Agent statements never replace repository evidence.
 3. **Evidence before completion.** Work is not complete because a model says it is complete.
 4. **Human governance at consequential boundaries.** Specs, plans, scope, code, and merge can require explicit approval.
-5. **Provider-neutral Core.** Cursor/Codex integrations adapt to one workflow model instead of defining separate products.
+5. **Provider-neutral Core.** Cursor/Codex integrations and graphical clients adapt to one workflow model instead of defining separate products.
 6. **Context is a budget, not a reason to buy a larger model.** Compact/retrieve/reuse before escalation.
 7. **Failure attribution matters.** Tool, provider, validation precondition, governance, and model failures are not interchangeable.
 
 ## Component view
 
 ```text
-Coding Agent / CLI
+Coding Agent / CLI / Local Studio
       |
-      | MCP / application adapters
+      | MCP / App Server / application adapters
       v
 +-------------------------------+
 |         DynosAI Core          |
@@ -45,6 +45,12 @@ Coding Agent / CLI
 ### Git
 
 `GitManager` and `GitGuard` observe and govern the source tree. DynosAI verifies actual file status and diff evidence rather than trusting an agent summary.
+
+### Application API and Local App Server
+
+`application.py` is the provider-neutral application boundary shared by CLI/MCP and graphical clients. `app_server.py` exposes a small loopback-only HTTP/JSON adapter for Local Studio. The browser never reads `.dynosai/knowledge.db` directly.
+
+The App Server is intentionally not a remote administration plane: it accepts only loopback bindings and does not enable cross-origin access.
 
 ### MCP
 
@@ -83,6 +89,14 @@ An execution wave is a conservative bounded chain of dependent tasks that may be
 
 ## Model-control boundary
 
-Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.13.0.
+Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.14.0.
 
 For code ownership by module, see [Module reference](reference/MODULES.md).
+
+
+## Project intelligence boundary
+
+0.14.0 adds two deterministic advisory services outside the workflow state machine:
+
+- `validation_discovery.py` reads project configuration and proposes safe validation profile commands. Discovery never executes or approves a command; explicit approval persists the profile through the application layer.
+- `risk.py` scores review risk from repository/plan surfaces such as authentication, migrations, dependency manifests, CI, blast radius and unresolved scope. Risk is advisory and never grants authority or bypasses a gate.

@@ -1,6 +1,6 @@
 # Code Quality Review
 
-This review describes the public 0.13.0 source tree after repository/documentation hardening. No runtime behavior was intentionally changed by this cleanup.
+The original review described the public 0.13.0 source tree after repository/documentation hardening. DynosAI 0.14.0 adds small, bounded application/product modules (`app_server.py`, `validation_discovery.py`, `risk.py`) without moving workflow authority out of the established Core.
 
 ## Current scale
 
@@ -65,6 +65,6 @@ These should be separate changes with their own tests, not mixed into a document
 - activating Predictive Router authority;
 - introducing a mandatory independent second-model code reviewer.
 
-## Quality recommendation for post-0.13.0
+## Quality recommendation for 0.14.x and beyond
 
 Use small refactor PRs around one module boundary at a time. Establish behavior-characterization tests first, then extract cohesive services with zero public-contract changes. Prefer measurable reductions in complexity/coupling over large cosmetic rewrites.

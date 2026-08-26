@@ -49,7 +49,7 @@ export default function HomePage() {
               <Button size="lg" variant="outline" asChild><a href={siteConfig.github} target="_blank" rel="noreferrer">View on GitHub ↗</a></Button>
             </div>
             <p className="mt-5 text-sm text-muted-foreground">
-              v{siteConfig.version} · Python + MCP · Codex and Cursor
+              v{siteConfig.version} · Python + MCP · Local Studio · Codex and Cursor
             </p>
           </div>
 
@@ -109,6 +109,23 @@ export default function HomePage() {
               <CardContent><CardDescription>{description}</CardDescription></CardContent>
             </Card>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-border bg-muted/45">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
+          <div>
+            <Badge>New in 0.14</Badge>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Local Studio: the governed workflow without memorizing the CLI.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">Launch a loopback-only graphical control plane with <code>dynosai studio</code>. Detect project stacks, inspect proposed validation profiles, see deterministic risk and blockers, and start governed work through the same application layer as CLI/MCP.</p>
+            <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
+          </div>
+          <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[["Project","Detected"],["Risk","Medium"],["Validations","4 proposed"],["Blockers","1 decision"]].map(([label,value]) => <div key={label} className="rounded-xl border border-border bg-muted/35 p-4"><div className="text-xs text-muted-foreground">{label}</div><div className="mt-1 text-lg font-semibold">{value}</div></div>)}
+            </div>
+            <div className="mt-4 rounded-xl border border-border p-4"><div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Next action</div><div className="mt-2 font-medium">Review the current specification gate.</div></div>
+          </div>
         </div>
       </section>
 

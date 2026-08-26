@@ -6,7 +6,7 @@ This guide takes a new user from a clean clone to a governed DynosAI project.
 
 - Python 3.11 or newer.
 - Git for governed repository operations.
-- At least one supported coding-agent provider if you want provider-native execution (Codex or Cursor are the two providers covered by the 0.13.0 beta acceptance matrix).
+- At least one supported coding-agent provider if you want provider-native execution (Codex or Cursor are the two providers covered by the stable core acceptance matrix; Claude configuration is available but not yet part of that real-provider certification matrix).
 - Internet access may be needed the first time the local embedding model is downloaded. Runtime project state remains local.
 
 ## 2. Install from source
@@ -38,7 +38,28 @@ dynosai --version
 dynosai doctor
 ```
 
-## 3. Configure providers once
+
+## 3. Launch Local Studio (optional, recommended for onboarding)
+
+From the repository you want DynosAI to govern:
+
+```bash
+cd /path/to/your/project
+dynosai studio
+```
+
+DynosAI opens `http://127.0.0.1:8765/` by default. The App Server binds only to loopback and the browser talks through `DynosAIApplication`; it does not open `knowledge.db` directly.
+
+Use another port or run without opening a browser:
+
+```bash
+dynosai studio --port 9876 --no-browser
+dynosai app-server --port 9876
+```
+
+Studio can detect the repository stack and validation candidates before initialization. Discovered validation commands are only proposals until you explicitly approve them.
+
+## 4. Configure providers once
 
 ```bash
 dynosai setup --provider all
@@ -58,7 +79,7 @@ dynosai agent-config show --provider codex
 dynosai agent-config show --provider cursor
 ```
 
-## 4. Initialize a project
+## 5. Initialize a project
 
 In an existing Git repository:
 
@@ -76,7 +97,7 @@ dynosai project initialize . --agent codex --init-git
 
 DynosAI creates `.dynosai/` for local runtime state. The authoritative workflow database is `.dynosai/knowledge.db`; Git remains authoritative for source code.
 
-## 5. Start work
+## 6. Start work
 
 The normal path is provider-native: use the DynosAI instructions/skills generated for your coding agent and describe the feature in natural language.
 
@@ -97,7 +118,7 @@ Discovery -> Spec Review -> Plan Review -> Ready -> Implementation
 
 Specification, plan, code, scope extension, and merge decisions are human-governed where required.
 
-## 6. Inspect context and evidence
+## 7. Inspect context and evidence
 
 ```bash
 dynosai status
@@ -107,7 +128,7 @@ dynosai board
 dynosai scorecard
 ```
 
-## 7. Resume after a provider restart
+## 8. Resume after a provider restart
 
 ```bash
 dynosai resume --provider codex
@@ -116,7 +137,7 @@ dynosai resume --provider cursor
 
 DynosAI reconstructs the current contract from durable state instead of asking the chat history to recreate it.
 
-## 8. Back up local DynosAI state
+## 9. Back up local DynosAI state
 
 ```bash
 dynosai backup --reason "before refactor"
@@ -125,7 +146,7 @@ dynosai restore /path/to/snapshot.json.gz
 
 Restores are validated before atomically replacing the live database.
 
-## 9. Run the test suite
+## 10. Run the test suite
 
 ```bash
 python -m compileall -q src/dynosai_flow
@@ -133,7 +154,7 @@ python scripts/check_repository.py
 python -m pytest
 ```
 
-## 10. Learn the behavior before production use
+## 11. Learn the behavior before production use
 
 Read these next:
 

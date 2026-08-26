@@ -27,7 +27,7 @@ DynosAI executes approved commands as subprocesses with captured output, timeout
 - `integration` — integration or system tests;
 - project-specific validation commands.
 
-A validation capability existing in DynosAI does not mean every project enables it automatically. The current default initialization creates a unit-test profile from the configured `test_command`. Teams should add the validations required by their stack.
+A validation capability existing in DynosAI does not mean every project enables it automatically. The current default initialization creates a unit-test profile from the configured `test_command`. In 0.14.0, DynosAI also discovers common repository-native candidates (pytest/Ruff/mypy, npm scripts/TypeScript, Cargo, .NET, Maven/Gradle). **Discovery is read-only**: candidates require explicit user approval before they become governed validation profiles.
 
 ## 3. Does DynosAI check compilation?
 
@@ -63,13 +63,20 @@ It does **not** claim perfect:
 
 Those dimensions should be enforced with project validations and, where appropriate, specialist tools or human review.
 
-## 5. Semantic code review
+
+## 5. Risk Assessment v1
+
+Risk is intentionally separate from Quality. Quality reports governance/traceability findings for a work item; Risk is an advisory signal used to communicate likely review intensity.
+
+The deterministic 0.14 scorer can raise risk for security/authentication surfaces, schema/migration changes, dependency/build manifests, CI changes, large file blast radius, pending scope extensions and pending human decisions. A High risk result does not mean the change is wrong, and a Low risk result does not mean it is safe. Risk never bypasses the normal workflow.
+
+## 6. Semantic code review
 
 Managed-agent guidance asks the coding agent to inspect the diff, trace behavior to requirements, look for regressions, and check maintainability/validation gaps. A human code-review gate remains explicit.
 
-0.13.0 does not automatically launch a second independent reviewer model for every change. The deterministic Core checks and human gate are independent; semantic model review is currently performed inside the managed workflow.
+0.14.0 does not automatically launch a second independent reviewer model for every change. The deterministic Core checks and human gate are independent; semantic model review is currently performed inside the managed workflow.
 
-## 6. Failure classification
+## 7. Failure classification
 
 DynosAI avoids learning "the model failed" from every non-zero outcome. It distinguishes, among others:
 
@@ -81,6 +88,6 @@ DynosAI avoids learning "the model failed" from every non-zero outcome. It disti
 
 Only evidence that is explicitly eligible should influence predictive model-capability learning.
 
-## 7. Stable acceptance evidence
+## 8. Stable acceptance evidence
 
 The 0.13.0 promotion source (`0.12.9 RC4`) passed Codex and Cursor in both greenfield and brownfield scenarios with full Oracle checks, Quality 100, zero MCP failures/rejections/scopes, and zero infrastructure retries. See [`validation/final-matrix-0.13.0.json`](validation/final-matrix-0.13.0.json).

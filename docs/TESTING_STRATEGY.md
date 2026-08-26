@@ -42,3 +42,21 @@ Predictive model-routing logic is evaluated by replaying historical acceptance e
 ## What a PASS means
 
 A release PASS is therefore a combination of deterministic regression, packaging checks, scenario Oracle evidence, governance quality, and (when required) real-provider behavior. It is not a claim that every programming language, framework, security tool, or repository shape has already been certified.
+
+
+## 0.14 application/product regression
+
+`tests/test_140.py` adds deterministic coverage for the new product layer without requiring real providers or network access:
+
+- version/package contract;
+- stack-aware project detection;
+- validation candidate discovery and explicit approval;
+- deterministic risk signals;
+- explainable uninitialized blockers;
+- bounded project overview;
+- Local Studio/App Server API health;
+- loopback-only server binding;
+- packaged Studio assets and source/package synchronization;
+- public `studio` and `app-server` CLI contracts.
+
+The 0.13.0 real-provider matrix remains the baseline certification for the unchanged governed provider/Core behavior. A later 0.14.x release may recertify real providers when Studio begins mutating additional workflow surfaces or provider runtime contracts change.

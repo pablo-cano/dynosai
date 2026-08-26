@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>DynosAI Studio</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="mark">D</div><div><strong>DynosAI</strong><span>Local Studio</span></div></div>
+      <nav>
+        <button class="nav-item active" data-view="overview">Overview</button>
+        <button class="nav-item" data-view="work">Work</button>
+        <button class="nav-item" data-view="quality">Quality & Risk</button>
+        <button class="nav-item" data-view="diagnostics">Diagnostics</button>
+      </nav>
+      <div class="sidebar-footer">
+        <label class="switch-row"><span>Advanced mode</span><input id="advanced-toggle" type="checkbox" /></label>
+        <div id="version" class="muted small">Loading…</div>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div><p class="eyebrow">LOCAL-FIRST CONTROL PLANE</p><h1 id="project-name">DynosAI Studio</h1><p id="project-path" class="muted"></p></div>
+        <div class="top-actions"><span id="connection" class="pill neutral">Connecting</span><button id="refresh" class="secondary">Refresh</button></div>
+      </header>
+
+      <div id="alert" class="alert hidden"></div>
+
+      <section id="overview" class="view active">
+        <div class="hero-card">
+          <div><p class="eyebrow">PROJECT STATUS</p><h2 id="project-classification">Scanning project…</h2><p id="project-message" class="muted">DynosAI keeps workflow authority in durable state and source authority in Git.</p></div>
+          <button id="initialize" class="primary hidden">Initialize DynosAI</button>
+        </div>
+        <div class="metric-grid">
+          <article class="metric"><span>Risk</span><strong id="risk-level">—</strong><small id="risk-score">—</small></article>
+          <article class="metric"><span>Active work</span><strong id="active-work">—</strong><small>governed items</small></article>
+          <article class="metric"><span>Validations</span><strong id="validation-count">—</strong><small>approved profiles</small></article>
+          <article class="metric"><span>Blockers</span><strong id="blocker-count">—</strong><small id="blocker-summary">current workflow</small></article>
+        </div>
+        <div class="two-col">
+          <article class="panel"><div class="panel-head"><div><p class="eyebrow">NEXT ACTION</p><h3>What needs attention</h3></div></div><div id="blockers"></div></article>
+          <article class="panel"><div class="panel-head"><div><p class="eyebrow">VALIDATION DISCOVERY</p><h3>Project checks</h3></div><button id="approve-validations" class="secondary small-button">Approve discovered</button></div><div id="validations"></div></article>
+        </div>
+      </section>
+
+      <section id="work" class="view">
+        <div class="two-col work-layout">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">NEW WORK</p><h3>Start from intent</h3></div></div>
+            <label>What do you want to build or change?</label>
+            <textarea id="work-description" rows="6" placeholder="Add Google authentication without changing the existing password login…"></textarea>
+            <div class="form-row"><label>Provider<select id="provider"><option value="codex">Codex</option><option value="cursor">Cursor</option><option value="claude">Claude</option></select></label><label>Workspace<select id="workspace"><option value="interactive_branch">Interactive branch</option><option value="isolated_worktree">Isolated worktree</option></select></label></div>
+            <button id="start-work" class="primary">Start governed work</button>
+          </article>
+          <article class="panel"><div class="panel-head"><div><p class="eyebrow">RECENT WORK</p><h3>Workflow timeline</h3></div></div><div id="work-list"></div></article>
+        </div>
+        <article class="panel advanced-only"><div class="panel-head"><div><p class="eyebrow">EVENT STREAM</p><h3>Application events</h3></div></div><pre id="events">Advanced mode exposes provider-neutral workflow events.</pre></article>
+      </section>
+
+      <section id="quality" class="view">
+        <div class="two-col">
+          <article class="panel"><p class="eyebrow">RISK ASSESSMENT</p><h3 id="risk-title">Deterministic advisory score</h3><div id="risk-signals"></div></article>
+          <article class="panel"><p class="eyebrow">GOVERNANCE</p><h3>Risk is not quality</h3><p class="muted">Risk predicts review intensity from blast radius and sensitive surfaces. Quality continues to measure workflow/evidence findings. Neither score grants authority or bypasses human gates.</p><div id="risk-recommendations"></div></article>
+        </div>
+      </section>
+
+      <section id="diagnostics" class="view">
+        <article class="panel"><p class="eyebrow">LOCAL APP SERVER</p><h3>Runtime diagnostics</h3><pre id="health">Loading…</pre></article>
+        <article class="panel advanced-only"><p class="eyebrow">RAW OVERVIEW</p><h3>Bounded read model</h3><pre id="raw-overview">Loading…</pre></article>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import json
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -92,8 +93,10 @@ class DynosAI111HardeningTests(unittest.TestCase):
             "DYNOSAI_ACCEPTANCE_PROCESS_TRACE_MIRROR":str(mirror),
         })
         config=(Path(runtime.root)/"home"/"config.toml").read_text(encoding="utf-8")
-        self.assertIn(f'DYNOSAI_ACCEPTANCE_PROCESS_TRACE = "{trace}"',config)
-        self.assertIn(f'DYNOSAI_ACCEPTANCE_PROCESS_TRACE_MIRROR = "{mirror}"',config)
+        parsed=tomllib.loads(config)
+        env=parsed["mcp_servers"]["dynosai"]["env"]
+        self.assertEqual(env["DYNOSAI_ACCEPTANCE_PROCESS_TRACE"],str(trace))
+        self.assertEqual(env["DYNOSAI_ACCEPTANCE_PROCESS_TRACE_MIRROR"],str(mirror))
 
     def test_runtime_metrics_fall_back_to_codex_app_server(self):
         stream=self.tmp/"codex-app-server.jsonl"

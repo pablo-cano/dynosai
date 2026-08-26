@@ -9,7 +9,8 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `acceptance_policy.py` | Acceptance-only environment/provider safety policy |
 | `agent_config.py` | Provider-neutral agent configuration generation and validation |
 | `agents.py` | Managed agent rules, skills, instructions, provider integration helpers |
-| `application.py` | Provider-neutral application adapters |
+| `application.py` | Provider-neutral application API and graphical-client read/write contracts |
+| `app_server.py` | Loopback-only HTTP/JSON adapter and Local Studio static server |
 | `artifacts.py` | Constitution, baseline, specification, plan and Markdown artifact management |
 | `baselines.py` | Accepted reference efficiency baselines |
 | `benchmark.py` | Offline acceptance comparison helpers |
@@ -44,4 +45,6 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `token_usage.py` | Token normalization, phase attribution and usage reporting |
 | `util.py` | Shared low-level helpers |
 | `validation.py` | Workflow quality scoring and validation evaluation |
+| `validation_discovery.py` | Stack-aware, read-only discovery and explicit approval of validation profiles |
+| `risk.py` | Deterministic advisory project/work risk assessment |
 | `version.py` | Package version |

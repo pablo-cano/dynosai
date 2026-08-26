@@ -20,6 +20,7 @@ DynosAI has been developed through repeated local and real-provider acceptance l
 | 0.12.7 | Cursor transport compatibility and consolidated 4-case matrix | Real Codex/Cursor Green/Brown matrix; exposed provider-specific transport behavior |
 | 0.12.8 | Transparent infrastructure retry policy | Simulated retry certification and real full matrix |
 | 0.12.9 | Recovered-rejection-aware retry hardening | 280 selected source/wheel tests and final 4/4 real-provider matrix |
+| 0.14.0 | Product/control-plane layer on stable governed core | Local App Server, Studio alpha, validation discovery, risk, explainable blockers, roadmap/web refresh |
 | 0.13.0 | Stable promotion with no functional change from accepted RC4 | Final matrix certification, promotion invariants, offline predictive replay |
 
 ## How changes are recorded now

@@ -26,7 +26,7 @@ from .application import DynosAIApplication
 from .debug import DebugE2ERunner, SCENARIOS
 from .debug_fixtures import seed_orderflow_brownfield
 from .providers import MachineProviderSetup
-from .util import utc_now
+from .util import executable_command, utc_now
 from .version import __version__
 from .model_routing import BUILTIN_DEFAULTS, ACCEPTANCE_MODEL_PROFILES, ModelRoute, ProviderModelRouting, cursor_cli_selector, env_override, model_observation, activity_for_state
 from .acceptance_logging import AcceptanceLogger, acceptance_log_home, new_run_id, update_latest_pointer
@@ -65,7 +65,7 @@ def probe_provider(provider:str)->ProviderProbe:
     if not executable:
         return ProviderProbe(provider,None,False,error="provider executable not found")
     try:
-        proc=subprocess.run([executable,"--version"],text=True,capture_output=True,timeout=10)
+        proc=subprocess.run(executable_command(executable,"--version"),text=True,capture_output=True,timeout=10)
         version=(proc.stdout or proc.stderr).strip().splitlines()[0][:300] if (proc.stdout or proc.stderr).strip() else ""
         return ProviderProbe(provider,executable,proc.returncode==0,version=version,error="" if proc.returncode==0 else (proc.stderr or proc.stdout).strip()[:500])
     except Exception as exc:
@@ -416,7 +416,7 @@ class CursorAcceptanceDriver:
         if interaction_mode=="interactive":
             command += [prompt]
             started=time.monotonic()
-            proc=subprocess.run(command,cwd=project,env=env,timeout=self.timeout)
+            proc=subprocess.run(executable_command(command[0], *command[1:]),cwd=project,env=env,timeout=self.timeout)
             if logger:
                 logger.emit("provider_exit",phase="provider",provider="cursor",message="Cursor interactive provider exited",exit_code=proc.returncode,duration_seconds=round(time.monotonic()-started,3))
             return {"provider":"cursor","driver":"cursor-interactive-cli","interaction_mode":interaction_mode,"command":command[:-1]+["<prompt>"],"exit_code":proc.returncode,"duration_seconds":round(time.monotonic()-started,3),"real_provider":True,"wire_elicitation":True,"automated_responses":False,"model_route_requested":model_route.to_dict() if model_route else None,"model_selector":selector,"model_route_verified":None}
@@ -424,7 +424,7 @@ class CursorAcceptanceDriver:
         command += ["-p","--force","--approve-mcps","--output-format","stream-json",prompt]
         started=time.monotonic()
         stdout_path=logs/"provider-stream.jsonl"; stderr_path=logs/"provider-stderr.log"
-        proc=subprocess.Popen(command,cwd=project,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=1)
+        proc=subprocess.Popen(executable_command(command[0], *command[1:]),cwd=project,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=1)
         stdout_lines=0; stderr_lines=0; observed=None; last_progress=time.monotonic(); last_heartbeat=started; termination_reason=None
         lock=threading.Lock(); usage_pending={"input_chars":0,"output_chars":0,"reasoning_chars":0,"last_flush":time.monotonic()}
         def _flush_usage_estimate(force:bool=False):
@@ -611,7 +611,7 @@ class CodexAppServerDriver:
                 command += ["--model",model_route.model]
                 if model_route.effort: command += ["-c",f'model_reasoning_effort="{model_route.effort}"']
             command += [prompt]
-            started=time.monotonic(); proc=subprocess.run(command,cwd=project,timeout=self.timeout)
+            started=time.monotonic(); proc=subprocess.run(executable_command(command[0], *command[1:]),cwd=project,timeout=self.timeout)
             return {"provider":"codex","driver":"codex-interactive-cli","interaction_mode":"interactive","command":command[:-1]+["<prompt>"],"exit_code":proc.returncode,"duration_seconds":round(time.monotonic()-started,3),"real_provider":True,"wire_elicitation":True,"automated_responses":False,"model_route_requested":model_route.to_dict() if model_route else None,"model_route_verified":None}
         logs.mkdir(parents=True,exist_ok=True); trace=logs/"codex-app-server.jsonl"; mirror_dir=logger.paths.root if logger else None
         effective=AgentConfiguration(project).resolve(provider="codex",activity="discovery")
@@ -632,7 +632,7 @@ class CodexAppServerDriver:
         if logger: env["DYNOSAI_ACCEPTANCE_PROCESS_TRACE_MIRROR"]=str(logger.paths.root/"mcp-activity.jsonl")
         if logger:
             logger.emit("provider_launch",phase="provider",provider="codex",message="launching Codex app-server",model=(model_route.model if model_route else None))
-        proc=subprocess.Popen([self.executable,"app-server","--listen","stdio://"],cwd=project,env=env,text=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=1)
+        proc=subprocess.Popen(executable_command(self.executable,"app-server","--listen","stdio://"),cwd=project,env=env,text=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=1)
         usage_stop=threading.Event(); usage_thread=None
         if usage:
             codex_home=Path(managed.root)/"home"

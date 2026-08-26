@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -85,9 +86,13 @@ class DynosAI08Tests(unittest.TestCase):
         self.assertIn("mine",cursor["mcpServers"]); self.assertEqual(cursor["mcpServers"]["dynosai"]["env"]["DYNOSAI_AGENT_PROVIDER"],"cursor")
         self.assertEqual(Path(cursor["mcpServers"]["dynosai"]["command"]),Path(sys.executable).absolute())
         self.assertEqual(cursor["mcpServers"]["dynosai"]["args"],["-m","dynosai_flow.mcp"])
-        codex=(self.home/".codex"/"config.toml").read_text()
+        codex_path=self.home/".codex"/"config.toml"
+        codex=codex_path.read_text()
         self.assertIn('model="gpt-x"',codex); self.assertIn("[mcp_servers.dynosai]",codex); self.assertIn('DYNOSAI_AGENT_PROVIDER = "codex"',codex)
-        self.assertIn(str(Path(sys.executable).absolute()),codex); self.assertIn('args = ["-m", "dynosai_flow.mcp"]',codex)
+        parsed=tomllib.loads(codex)
+        server=parsed["mcp_servers"]["dynosai"]
+        self.assertEqual(Path(server["command"]),Path(sys.executable).absolute())
+        self.assertEqual(server["args"],["-m","dynosai_flow.mcp"])
 
     def test_provider_project_artifacts_use_cursor_commands_and_single_codex_skill(self):
         croot,capp=self._project("cursor")

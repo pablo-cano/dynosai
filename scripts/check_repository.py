@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import json
 import re
 import subprocess
 import sys
@@ -22,6 +23,10 @@ REQUIRED = [
     "pyproject.toml",
     "docs/ARCHITECTURE.md",
     "docs/QUALITY_AND_VALIDATION.md",
+    "docs/STUDIO.md",
+    "apps/studio/index.html",
+    "apps/studio/app.js",
+    "apps/studio/styles.css",
     "docs/reference/MODULES.md",
 ]
 
@@ -45,6 +50,16 @@ def main() -> int:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     if f'version = "{version}"' not in pyproject:
         fail("pyproject version does not match dynosai_flow.version")
+    web_package = json.loads((ROOT / "apps" / "web" / "package.json").read_text(encoding="utf-8"))
+    if str(web_package.get("version")) != version:
+        fail("apps/web package version does not match dynosai_flow.version")
+    if '"dynosai_flow.studio_assets" = ["*.html", "*.css", "*.js"]' not in pyproject:
+        fail("pyproject does not package Local Studio static assets")
+    for asset in ("index.html", "app.js", "styles.css"):
+        public_asset = ROOT / "apps" / "studio" / asset
+        packaged_asset = SRC / "studio_assets" / asset
+        if public_asset.read_bytes() != packaged_asset.read_bytes():
+            fail(f"Local Studio source/package drift: {asset}")
 
     source_files = sorted(SRC.glob("*.py"))
     for path in source_files:

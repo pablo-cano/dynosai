@@ -2,6 +2,15 @@
 
 Run `dynosai <command> --help` for the authoritative argument list. This document groups the public commands by purpose.
 
+## Local Studio and App Server
+
+```text
+studio
+app-server
+```
+
+`studio` serves the graphical control plane on loopback and opens the browser by default. `app-server` exposes the same local API without opening a browser.
+
 ## Setup and project lifecycle
 
 ```text
