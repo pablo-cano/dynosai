@@ -19,6 +19,8 @@ export function SiteHeader() {
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
           <Button variant="ghost" size="sm" asChild><Link href="/why/">Why DynosAI</Link></Button>
+          <Button variant="ghost" size="sm" asChild><Link href="/studio/">Studio</Link></Button>
+          <Button variant="ghost" size="sm" asChild><Link href="/roadmap/">Roadmap</Link></Button>
           <Button variant="ghost" size="sm" asChild><Link href="/docs/">Docs</Link></Button>
           <Button variant="ghost" size="sm" asChild><Link href="/validation/">Validation</Link></Button>
           <Button variant="ghost" size="sm" asChild><a href={siteConfig.github} target="_blank" rel="noreferrer">GitHub ↗</a></Button>

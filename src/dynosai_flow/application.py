@@ -10,15 +10,18 @@ from pathlib import Path
 from typing import Any
 
 from .engine import DynosAI
+from .db import Database
 from .git_manager import GitError
 from .interactions import HumanInteractionRequest, HumanInteractionService
 from .events import ApplicationEventBus
-from .util import json_dumps, utc_now
+from .util import json_dumps, json_loads, utc_now
 from .model_routing import ProviderModelRouting, activity_for_state
 from .model_control import ModelControlPlane
 from .token_usage import align_usage_to_activity
 from .context_control import ContextCheckpointStore
 from .agent_config import AgentConfiguration
+from .validation_discovery import ValidationDiscovery
+from .risk import RiskAssessment
 
 
 class ProjectDetector:
@@ -67,10 +70,25 @@ class ProjectDetector:
         elif has_git and has_code: classification = "MONOREPO" if probable_monorepo else "EXISTING_GIT_REPO"
         elif has_code: classification = "NEW_CODE_NO_GIT"
         else: classification = "EMPTY_DIRECTORY"
+        stacks: list[str] = []
+        if exists:
+            if (root / "pyproject.toml").exists() or (root / "requirements.txt").exists(): stacks.append("python")
+            if (root / "package.json").exists():
+                stacks.append("typescript" if (root / "tsconfig.json").exists() else "javascript")
+            if (root / "Cargo.toml").exists(): stacks.append("rust")
+            if list(root.glob("*.sln")) or list(root.glob("*.csproj")): stacks.append("dotnet")
+            if (root / "pom.xml").exists() or (root / "gradlew").exists(): stacks.append("java")
+        primary_language = stacks[0] if stacks else "python"
+        candidates = ValidationDiscovery(root).discover() if exists else []
+        unit = next((item for item in candidates if item.get("name") == "unit"), None)
+        suggested_test_command = " ".join(unit.get("command") or []) if unit else "pytest"
         return {
             "root": str(root), "exists": exists, "classification": classification,
             "has_code": has_code, "has_git": has_git, "has_dynosai": has_dynosai,
             "dirty": dirty, "probable_monorepo": probable_monorepo,
+            "stacks": stacks, "primary_language": primary_language,
+            "suggested_test_command": suggested_test_command,
+            "validation_candidates": candidates,
         }
 
 
@@ -161,16 +179,16 @@ class DynosAIApplication:
             result = self.engine.adopt(
                 name=name,
                 agent=agent,
-                language=language or "python",
-                test_command=test_command or "pytest",
+                language=language or info.get("primary_language") or "python",
+                test_command=test_command or info.get("suggested_test_command") or "pytest",
             )
             return {"action": "adopt", "detection": info, **result}
         if cls == "NEW_CODE_NO_GIT" and not allow_git_init:
             return {"action": "analysis_only", "detection": info, "message": "Git is required before governed implementation."}
         result = self.engine.initialize(
             name=name,
-            language=language or "python",
-            test_command=test_command or "pytest",
+            language=language or info.get("primary_language") or "python",
+            test_command=test_command or info.get("suggested_test_command") or "pytest",
             agent=agent,
             mode="brownfield" if cls == "NEW_CODE_NO_GIT" else "greenfield",
         )
@@ -218,6 +236,106 @@ class DynosAIApplication:
             "work": work,
             "pending_interactions": [x.to_dict() for x in self.interactions.pending_for_work(work["id"])] if work else [],
         }
+
+    def list_work(self, *, state: str | None = None, limit: int = 50) -> list[dict[str, Any]]:
+        """Return recent governed work for graphical/headless clients."""
+        self.engine.db.initialize()
+        if state:
+            rows = self.engine.db.query("SELECT * FROM work_items WHERE state=? ORDER BY updated_at DESC LIMIT ?", (state, limit))
+        else:
+            rows = self.engine.db.query("SELECT * FROM work_items ORDER BY updated_at DESC LIMIT ?", (limit,))
+        return [dict(row) for row in rows]
+
+    def validation_discovery(self) -> dict[str, Any]:
+        """Detect repository validation commands without implicitly approving them."""
+        candidates = ValidationDiscovery(self.root).discover()
+        approved: dict[str, dict[str, Any]] = {}
+        info = self.detector.detect(self.root)
+        if info.get("has_dynosai"):
+            self.engine.db.initialize()
+            for row in self.engine.db.query("SELECT name,command_json,source,approved FROM validation_profiles ORDER BY name"):
+                try:
+                    command = json_loads(row.get("command_json"), [])
+                except Exception:
+                    command = []
+                approved[row["name"]] = {"command": command, "source": row.get("source"), "approved": bool(row.get("approved"))}
+        return {"candidates": candidates, "approved": approved}
+
+    def approve_discovered_validations(self, names: list[str] | None = None, *, overwrite: bool = False) -> dict[str, Any]:
+        """Persist selected discovered validations after explicit user approval."""
+        self.engine._ensure_ready()
+        candidates = ValidationDiscovery(self.root).discover()
+        result = ValidationDiscovery.apply(self.engine.db, candidates, names, overwrite=overwrite)
+        self.events.emit("ValidationProfilesApproved", payload=result)
+        return {**result, "profiles": self.validation_discovery()}
+
+    def risk_assessment(self, work_id: str | None = None) -> dict[str, Any]:
+        """Return a deterministic advisory risk score for the project/current work."""
+        info = self.detector.detect(self.root)
+        if info.get("has_dynosai"):
+            self.engine.db.initialize()
+            return RiskAssessment(self.root).assess(self.engine, work_id)
+        return RiskAssessment(self.root).assess()
+
+    def explain_blockers(self, work_id: str | None = None) -> dict[str, Any]:
+        """Explain why the project/work cannot advance in user-facing terms."""
+        info = self.detector.detect(self.root)
+        items: list[dict[str, Any]] = []
+        if not info.get("exists"):
+            items.append({"code": "PROJECT.MISSING", "message": "The selected project directory does not exist.", "action": "Choose an existing directory."})
+            return {"blocked": True, "items": items, "recommended_action": items[0]["action"]}
+        if not info.get("has_dynosai"):
+            items.append({"code": "PROJECT.NOT_INITIALIZED", "message": "DynosAI has not been initialized for this project.", "action": "Initialize or adopt the project."})
+            if info.get("classification") == "DIRTY_GIT_REPO":
+                items.append({"code": "GIT.DIRTY", "message": "The Git repository contains uncommitted changes.", "action": "Commit or stash the changes before adoption."})
+            return {"blocked": True, "items": items, "recommended_action": items[0]["action"]}
+        self.engine.db.initialize()
+        try:
+            work = self.engine.get_work(work_id)
+        except Exception:
+            return {"blocked": False, "items": [], "recommended_action": "Start a governed work item."}
+        for interaction in self.interactions.pending_for_work(work["id"]):
+            items.append({"code": f"GATE.{str(interaction.gate or interaction.kind).upper()}", "message": interaction.message, "action": "Review and resolve the pending decision.", "interaction_id": interaction.id})
+        try:
+            score, findings = self.engine.quality.health_score(work["id"])
+        except Exception:
+            score, findings = 100, []
+        for finding in findings:
+            if finding.severity == "blocking":
+                items.append({"code": finding.code, "message": finding.message, "action": "Resolve the quality finding before the next governed gate.", "entity_id": finding.entity_id})
+        try:
+            schedule = self.engine.schedule(work["id"])
+            if schedule.get("blocked"):
+                items.append({"code": "TASK.DEPENDENCY", "message": f"{len(schedule['blocked'])} task(s) are waiting on dependencies.", "action": "Complete the ready task wave first."})
+        except Exception:
+            pass
+        contract = self.engine.action_contract(work["id"]) or {}
+        if not items and contract.get("human_gate"):
+            items.append({"code": "GATE.REQUIRED", "message": str(contract.get("message") or "A human decision is required."), "action": "Review the current gate."})
+        recommendation = items[0]["action"] if items else str(contract.get("next_action") or contract.get("message") or "Continue the governed workflow.")
+        return {"blocked": bool(items), "items": items, "recommended_action": recommendation, "work_id": work["id"], "state": work.get("state"), "quality": score}
+
+    def project_overview(self, work_id: str | None = None) -> dict[str, Any]:
+        """Aggregate the bounded read model used by Local Studio."""
+        detection = self.detector.detect(self.root)
+        overview: dict[str, Any] = {
+            "detection": detection,
+            "project": self.root.name,
+            "initialized": bool(detection.get("has_dynosai")),
+            "validations": self.validation_discovery(),
+            "risk": self.risk_assessment(work_id),
+        }
+        if not detection.get("has_dynosai"):
+            overview["work"] = []
+            overview["status"] = None
+            overview["blockers"] = self.explain_blockers(work_id)
+            return overview
+        self.engine.db.initialize()
+        overview["project"] = self.engine.db.get_meta("project_name", self.root.name)
+        overview["work"] = self.list_work(limit=12)
+        overview["status"] = self.status(work_id)
+        overview["blockers"] = self.explain_blockers(work_id)
+        return overview
 
     def resume(self, provider: str, work_id: str | None = None, *, at_provider_boundary: bool = True) -> dict[str, Any]:
         work = self.engine.get_work(work_id)

@@ -8,7 +8,7 @@ DynosAI is a local-first orchestration and governance layer for AI coding agents
 
 > The agent writes code. DynosAI governs what may change, what must be proven, and when the work is actually done.
 
-**Current release:** `0.13.0` · **Public beta**
+**Current release:** `0.14.0` · **Public beta · Local Studio alpha**
 **License:** MIT
 **Author and maintainer:** [Pablo Cano](https://www.linkedin.com/in/pablo-cano-galan/)
 **Website:** [https://www.dynosai.com/](https://www.dynosai.com/)
@@ -44,12 +44,14 @@ The authoritative state lives in `.dynosai/knowledge.db` and Git, not in the pro
 - **Governed scope** — planned files and actions are compared with the actual Git diff.
 - **Independent result verification** — an agent cannot simply declare its own work verified; DynosAI checks repository state and recorded evidence.
 - **Validation profiles** — unit, lint, type-check, build, integration, or project-specific commands can be executed as governed checks.
+- **Validation auto-discovery** — common Python, Node.js/TypeScript, Rust, .NET and Java checks are proposed from repository configuration and require explicit approval before becoming governed profiles.
+- **Local Studio** — `dynosai studio` opens a loopback-only graphical control plane for onboarding, work visibility, blocker explanations, risk and validation setup.
 - **Brownfield support** — existing repositories are indexed to infer an evidence-backed AS-IS baseline without pretending inferred behavior is business truth.
 - **Execution waves** — short dependent task chains can be implemented and validated atomically to reduce orchestration overhead.
 - **Local semantic memory** — local embeddings, symbols, tests, decisions, features, and evidence can be retrieved in bounded context.
 - **Session recovery** — active work can be resumed from durable state after a provider restart.
 - **Model control** — phase-aware budgets, complexity, failures, and routing evidence are tracked while expensive escalation remains conservative.
-- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but version 0.13.0 does not let the predictor autonomously change model tiers.
+- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but version 0.14.0 still does not let the predictor autonomously change model tiers.
 - **Observability** — MCP calls, token usage, context strategies, validation results, route decisions, retries, and acceptance evidence are persisted.
 - **Real-provider acceptance harness** — greenfield and brownfield scenarios can be executed against Codex and Cursor and packaged into one auditable bundle.
 
@@ -74,7 +76,7 @@ It verifies deterministic facts such as:
 
 DynosAI runs the validation profiles configured for the project. A profile can execute `pytest`, `ruff`, `mypy`, `npm run build`, `tsc`, `dotnet build`, `cargo test`, integration tests, or any other approved command.
 
-A fresh Python project currently gets a unit-test profile by default. Build/type/lint checks are therefore **capabilities, not universal defaults**. If a `build` profile is configured and selected by the plan, DynosAI executes it and records the real exit status.
+A fresh project still gets a baseline unit profile, and 0.14.0 can additionally **discover** common repository-native unit/lint/type-check/build commands. Discovery is read-only: proposed commands must be explicitly approved before they become governed validation profiles. If a `build` profile is approved and selected by the plan, DynosAI executes it and records the real exit status.
 
 ## Does DynosAI review the generated code?
 
@@ -83,7 +85,7 @@ There are two layers:
 1. **Deterministic Core verification:** Git diff, scope, planned actions, requirements, evidence, validations, and state transitions are checked independently of the agent's claim.
 2. **Semantic review:** the managed agent is instructed to inspect the diff against requirements and regressions, followed by a human code-review gate.
 
-Version 0.13.0 does **not** yet require a second independent LLM reviewer for every change. That distinction is intentional and documented.
+Version 0.14.0 does **not** yet require a second independent LLM reviewer for every change. That distinction is intentional and documented.
 
 ## Quick start
 
@@ -109,7 +111,13 @@ dynosai project detect .
 dynosai project initialize . --agent codex
 ```
 
-Provider-native agent configuration can then drive the normal DynosAI workflow. See [Getting started](GETTING_STARTED.md) for the complete walkthrough.
+Provider-native agent configuration can then drive the normal DynosAI workflow. Or launch the first graphical control plane:
+
+```bash
+dynosai studio
+```
+
+Studio is served only on loopback and uses `DynosAIApplication`; it never reads the SQLite authority directly. See [Local Studio](docs/STUDIO.md) and [Getting started](GETTING_STARTED.md).
 
 ## Documentation
 
@@ -117,7 +125,8 @@ Provider-native agent configuration can then drive the normal DynosAI workflow. 
 |---|---|
 | [Getting started](GETTING_STARTED.md) | Install, configure, initialize, and run the first workflow |
 | [User guide](docs/USER_GUIDE.md) | Day-to-day workflow and common operations |
-| [Architecture](docs/ARCHITECTURE.md) | Components, authority boundaries, state, Git, MCP, and memory |
+| [Architecture](docs/ARCHITECTURE.md) | Components, authority boundaries, state, Git, MCP, App Server, and memory |
+| [Local Studio](docs/STUDIO.md) | Graphical control plane, local App Server, validation discovery, blockers, and risk |
 | [Quality and validation](docs/QUALITY_AND_VALIDATION.md) | Exactly what DynosAI checks and what Quality 100 means |
 | [Model control](docs/MODEL_CONTROL.md) | Complexity, token budgets, routing, failures, and predictive shadow mode |
 | [Brownfield workflows](docs/BROWNFIELD.md) | How existing repositories are indexed and governed |
@@ -129,6 +138,7 @@ Provider-native agent configuration can then drive the normal DynosAI workflow. 
 | [Configuration](docs/reference/CONFIGURATION.md) | Runtime/environment configuration |
 | [Evolution](docs/EVOLUTION.md) | What changed across the major development iterations |
 | [Release process](docs/RELEASE_PROCESS.md) | Versioning, changelog, tests, acceptance, and promotion policy |
+| [0.14.0 release notes](docs/RELEASE_0.14.0.md) | Installation, validation, compatibility and known limitations for this release |
 | [Code quality review](docs/CODE_QUALITY.md) | Maintainability review and known technical hotspots |
 | [Security](SECURITY.md) | Security policy and reporting guidance |
 
@@ -147,7 +157,7 @@ Across that matrix: 63 MCP calls, 0 MCP failures, 0 MCP rejections, 0 scope requ
 
 ## Public beta status
 
-DynosAI `0.13.0` is the first internally stabilized baseline and is published as a **public beta**. The core workflow has been validated with Codex and Cursor across greenfield and brownfield scenarios, but the project is still pre-1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
+DynosAI `0.14.0` builds a first product/Studio layer on top of the internally stabilized 0.13.0 governed core and remains a **public beta**. The 0.13.0 core acceptance evidence remains the baseline for Codex/Cursor greenfield and brownfield behavior; 0.14.0 adds local UI/application regression coverage without expanding autonomous authority. The project is still pre-1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
 
 External pull requests are **not currently accepted** while the public API, packaging, and contribution model settle. Bug reports and practical feedback are welcome through [GitHub Issues](https://github.com/pablo-cano/dynosai/issues). Opening contributions is planned for a later beta phase and is not ruled out in the near term.
 

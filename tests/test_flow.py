@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -45,9 +46,13 @@ class DynosAIFlowV03Tests(unittest.TestCase):
         self.assertEqual(e.db.get_meta("schema_version"), "6")
         self.assertTrue((self.tmp/".dynosai/state/snapshot.json.gz").exists())
         env=e.git_guard.environment()
-        ok=subprocess.run(["git","status"],cwd=self.tmp,env=env,capture_output=True,text=True)
+        if os.name == "nt":
+            git_command=[os.environ.get("COMSPEC","cmd.exe"),"/d","/c",str(e.git_guard.guard_dir/"git.cmd")]
+        else:
+            git_command=[str(e.git_guard.guard_dir/"git")]
+        ok=subprocess.run([*git_command,"status"],cwd=self.tmp,env=env,capture_output=True,text=True)
         self.assertEqual(ok.returncode,0)
-        denied=subprocess.run(["git","commit","--allow-empty","-m","forbidden"],cwd=self.tmp,env=env,capture_output=True,text=True)
+        denied=subprocess.run([*git_command,"commit","--allow-empty","-m","forbidden"],cwd=self.tmp,env=env,capture_output=True,text=True)
         self.assertEqual(denied.returncode,73)
         self.assertIn("Git Guard", denied.stderr)
 

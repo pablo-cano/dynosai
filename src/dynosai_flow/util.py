@@ -6,9 +6,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable
@@ -68,6 +70,40 @@ def run_command(
 
 def command_exists(name: str) -> bool:
     return shutil.which(name) is not None
+
+
+def executable_command(executable: str | Path, *args: str) -> list[str]:
+    """Build a cross-platform command for a provider executable or test shim.
+
+    Real provider binaries are returned unchanged. On Windows, extensionless
+    Python/shebang shims are not directly executable by ``CreateProcess`` even
+    when they are marked executable, so development/acceptance shims are routed
+    through the interpreter declared by their shebang. This keeps the production
+    path identical for real ``.exe``/``.cmd`` providers while making provider
+    overrides and acceptance fixtures portable.
+    """
+    target = str(executable)
+    if os.name != "nt":
+        return [target, *args]
+
+    path = Path(target)
+    if not path.is_file():
+        return [target, *args]
+
+    try:
+        first_line = path.open("r", encoding="utf-8", errors="replace").readline().strip().lower()
+    except OSError:
+        first_line = ""
+
+    if path.suffix.lower() == ".py" or (first_line.startswith("#!") and "python" in first_line):
+        return [sys.executable, target, *args]
+
+    if first_line.startswith("#!") and any(shell in first_line for shell in ("/sh", "/bash", "/zsh")):
+        shell = shutil.which("bash") or shutil.which("sh")
+        if shell:
+            return [shell, target, *args]
+
+    return [target, *args]
 
 
 STOPWORDS = {

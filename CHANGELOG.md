@@ -2,6 +2,31 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 0.14.0 - 2026-08-26
+
+### Added
+
+- Added a loopback-only DynosAI App Server as a provider-neutral interface over `DynosAIApplication`.
+- Added `dynosai studio` and the first Local Studio alpha for project onboarding, recent work, blocker visibility, validation discovery, risk and diagnostics.
+- Added stack-aware project detection and suggested validation/test commands.
+- Added read-only validation auto-discovery for Python, Node.js/TypeScript, Rust, .NET and Java with explicit approval before profiles become governed checks.
+- Added deterministic Risk Assessment v1, separate from workflow Quality, using blast-radius and sensitive-surface signals.
+- Added explainable blockers and a bounded project overview read model for graphical clients.
+- Added public `/studio` and `/roadmap` website surfaces plus a substantially expanded product roadmap through 1.0.
+
+### Changed
+
+- Provider process launching and acceptance shims are now cross-platform on Windows: Python shebang fixtures/provider overrides are routed through the active interpreter, and Windows Git Guard tests invoke the generated command wrapper explicitly.
+- TOML configuration tests now validate parsed values instead of raw backslash escaping, making Codex configuration assertions portable across POSIX and Windows paths.
+- Project onboarding now uses detected language/test hints instead of defaulting every repository to Python/pytest when stronger project evidence is available.
+- Website version checks now compare against the authoritative `pyproject.toml` version instead of hardcoding a release number.
+- The 0.13.0 governed SDD core, schema v6 authority model, Git boundaries and predictive-router shadow policy remain intact.
+
+### Validation
+
+- Added the 0.14 regression suite covering Studio assets/API, project/stack detection, validation approval, risk assessment, blocker explanations and CLI contracts.
+- Existing stable regression suites remain release gates; historical pre-stable aggregate suites remain available for manual diagnostics.
+
 ## 0.13.0 - 2026-08-25
 
 ### Changed

@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -53,7 +54,7 @@ class GitGuard:
         except OSError:
             pass
         cmd = self.guard_dir / "git.cmd"
-        python_exe = os.environ.get("PYTHON", "python")
+        python_exe = os.environ.get("PYTHON") or str(Path(sys.executable).absolute())
         cmd.write_text("@echo off\r\n" f'"{python_exe}" "{posix}" %*\r\n', encoding="utf-8")
         return {"directory": str(self.guard_dir), "real_git": real_git, "policy": "exact-read-only-v2"}
 

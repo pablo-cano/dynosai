@@ -24,7 +24,7 @@ class SemanticStrictRuntime095Tests(unittest.TestCase):
         return ManagedProviderRuntime(self.project).prepare(provider, activity="discovery", effective=effective)
 
     def test_version_is_095(self):
-        self.assertEqual(__version__, "0.13.0")
+        self.assertEqual(__version__, "0.14.0")
 
     def test_codex_remote_control_server_name_is_not_mcp(self):
         runtime = self._runtime("codex")

@@ -11,7 +11,7 @@ This directory contains the public website for **https://www.dynosai.com/**.
 - Static export (`next build` with `output: "export"`)
 - Static documentation rendered from repository Markdown
 
-The website intentionally has no application database or server-side business logic. All product and documentation pages are statically generated.
+The website intentionally has no application database or server-side business logic. All product and documentation pages are statically generated. The Local Studio is a separate loopback-only product surface shipped by the Python package, not by this Vercel site.
 
 ## Local development
 
@@ -36,7 +36,7 @@ The production output is written to `apps/web/out/`.
 
 ## Content
 
-Product documentation routes are registered in `lib/docs.ts` and rendered during the static build.
+Product documentation routes are registered in `lib/docs.ts` and rendered during the static build. The 0.14 site also includes dedicated `/studio/` and `/roadmap/` product pages.
 
 ## Deployment
 

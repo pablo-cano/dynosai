@@ -23,7 +23,7 @@ class ManagedAgentRuntime093Tests(unittest.TestCase):
         AgentConfiguration(self.project).init()
 
     def test_version_is_093(self):
-        self.assertEqual(__version__, "0.13.0")
+        self.assertEqual(__version__, "0.14.0")
 
     def test_tool_profiles_are_progressive_and_smaller_than_legacy_surface(self):
         names = {x["name"] for x in TOOLS}
@@ -84,9 +84,10 @@ class ManagedAgentRuntime093Tests(unittest.TestCase):
     def test_cursor_model_evidence_survives_max_runtime(self):
         fake = self.tmp / "cursor-agent"
         fake.write_text(
-            "#!/bin/sh\n"
-            "echo '{\"type\":\"system\",\"subtype\":\"init\",\"model\":\"Cursor Grok 4.6 Medium\"}'\n"
-            "sleep 3\n",
+            "#!/usr/bin/env python3\n"
+            "import json,time\n"
+            "print(json.dumps({'type':'system','subtype':'init','model':'Cursor Grok 4.6 Medium'}), flush=True)\n"
+            "time.sleep(3)\n",
             encoding="utf-8",
         )
         fake.chmod(fake.stat().st_mode | stat.S_IXUSR)

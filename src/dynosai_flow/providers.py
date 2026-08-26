@@ -14,7 +14,7 @@ from typing import Any
 
 from .db import Database
 from .runtime import user_home
-from .util import json_dumps, utc_now
+from .util import executable_command, json_dumps, utc_now
 
 
 @dataclass(slots=True)
@@ -150,7 +150,7 @@ class MachineProviderSetup:
     @staticmethod
     def _run(command: list[str], timeout: int = 10) -> dict[str, Any]:
         try:
-            r=subprocess.run(command,text=True,capture_output=True,timeout=timeout)
+            r=subprocess.run(executable_command(command[0], *command[1:]),text=True,capture_output=True,timeout=timeout)
             return {"ok":r.returncode==0,"exit_code":r.returncode,"output":((r.stdout or "")+(r.stderr or "")).strip()[:2000]}
         except Exception as exc:
             return {"ok":False,"error":str(exc),"output":""}

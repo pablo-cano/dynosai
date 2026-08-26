@@ -121,7 +121,7 @@ for line in sys.stdin:
         self.assertFalse(payload["probe"]["installed"])
 
     def test_provider_probe_supports_binary_override(self):
-        fake=self.tmp/"agent"; fake.write_text("#!/bin/sh\necho fake-provider-1.0\n",encoding="utf-8"); fake.chmod(fake.stat().st_mode|stat.S_IXUSR)
+        fake=self.tmp/"agent"; fake.write_text("#!/usr/bin/env python3\nprint('fake-provider-1.0')\n",encoding="utf-8"); fake.chmod(fake.stat().st_mode|stat.S_IXUSR)
         old=os.environ.get("DYNOSAI_CURSOR_BIN"); os.environ["DYNOSAI_CURSOR_BIN"]=str(fake)
         try:
             p=probe_provider("cursor"); self.assertTrue(p.installed); self.assertEqual(p.executable,str(fake)); self.assertIn("fake-provider",p.version)
