@@ -4,77 +4,259 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#ffffff" />
   <title>DynosAI Studio</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <script src="/theme-init.js"></script>
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <div class="brand"><div class="mark">D</div><div><strong>DynosAI</strong><span>Local Studio</span></div></div>
-      <nav>
-        <button class="nav-item active" data-view="overview">Overview</button>
-        <button class="nav-item" data-view="work">Work</button>
-        <button class="nav-item" data-view="quality">Quality & Risk</button>
-        <button class="nav-item" data-view="diagnostics">Diagnostics</button>
-      </nav>
-      <div class="sidebar-footer">
-        <label class="switch-row"><span>Advanced mode</span><input id="advanced-toggle" type="checkbox" /></label>
-        <div id="version" class="muted small">Loading…</div>
+      <div class="brand-row">
+        <button class="brand brand-button" type="button" data-view="home" aria-label="DynosAI Studio home">
+          <img class="brand-logo" src="/icon.svg" alt="" />
+          <div class="brand-copy"><strong>DynosAI</strong><span>Studio</span></div>
+        </button>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Change theme" title="Theme" data-i18n-aria="theme.change" data-i18n-title="theme.title"><span id="theme-icon" aria-hidden="true">◐</span></button>
       </div>
+
+      <nav aria-label="Studio navigation" data-i18n-aria="nav.aria">
+        <button class="nav-item active" data-view="home"><span class="nav-icon">⌂</span><span data-i18n="nav.home">Home</span></button>
+
+        <div id="project-nav" class="project-navigation hidden">
+          <div class="nav-divider"></div>
+          <p class="nav-section-label" data-i18n="nav.projectSection">Project</p>
+          <button id="project-identity" class="project-identity" type="button" data-view="project-overview">
+            <span class="project-dot ok"></span>
+            <span class="project-copy"><strong id="sidebar-project">Project</strong><small id="sidebar-project-path"></small></span>
+          </button>
+          <button class="nav-item nested" data-view="project-overview"><span class="nav-icon">⌂</span><span data-i18n="nav.projectOverview">Overview</span></button>
+          <button class="nav-item nested requires-initialized" data-view="new-task"><span class="nav-icon">＋</span><span data-i18n="nav.newChange">New change</span></button>
+          <button class="nav-item nested requires-initialized" data-view="work"><span class="nav-icon">↻</span><span data-i18n="nav.work">Work</span><span id="progress-badge" class="nav-badge hidden">0</span></button>
+          <button class="nav-item nested requires-initialized" data-view="approvals"><span class="nav-icon">✓</span><span data-i18n="nav.approvals">Approvals</span><span id="reviews-badge" class="nav-badge hidden">0</span></button>
+          <button class="nav-item nested" data-view="checks"><span class="nav-icon">◇</span><span data-i18n="nav.checks">Project checks</span></button>
+          <button class="nav-item nested" data-view="project-settings"><span class="nav-icon">⚙</span><span data-i18n="nav.projectSettings">Project settings</span></button>
+
+          <div id="technical-nav" class="technical-nav hidden">
+            <p class="nav-section-label nested-label" data-i18n="nav.technical">Technical details</p>
+            <button class="nav-item nested requires-initialized" data-view="governance"><span class="nav-icon">⌁</span><span data-i18n="nav.governance">Risk & governance</span></button>
+            <button class="nav-item nested requires-initialized" data-view="diagnostics"><span class="nav-icon">⌘</span><span data-i18n="nav.diagnostics">Diagnostics</span></button>
+            <button class="nav-item nested requires-initialized" data-view="activity"><span class="nav-icon">≡</span><span data-i18n="nav.activity">Activity log</span></button>
+          </div>
+        </div>
+
+        <div class="nav-divider"></div>
+        <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span><span data-i18n="nav.settings">Settings</span></button>
+        <button class="nav-item" data-view="help"><span class="nav-icon">?</span><span data-i18n="nav.help">Help</span></button>
+      </nav>
+
+      <div class="sidebar-footer"><span id="version" class="small muted">—</span></div>
     </aside>
 
     <main>
       <header class="topbar">
-        <div><p class="eyebrow">LOCAL-FIRST CONTROL PLANE</p><h1 id="project-name">DynosAI Studio</h1><p id="project-path" class="muted"></p></div>
-        <div class="top-actions"><span id="connection" class="pill neutral">Connecting</span><button id="refresh" class="secondary">Refresh</button></div>
+        <div class="topbar-copy">
+          <p id="top-context" class="eyebrow">STUDIO</p>
+          <h1 id="top-title" data-i18n="hub.title">Projects</h1>
+          <p id="top-subtitle" class="muted project-path" data-i18n="hub.subtitle">Create a project or open an existing folder to get started.</p>
+        </div>
+        <div class="top-actions">
+          <button id="top-projects" class="secondary compact hidden" type="button" data-view="home" data-i18n="top.allProjects">All projects</button>
+          <button id="top-new-task" class="primary compact hidden" type="button" data-view="new-task" data-i18n="nav.newChange">New change</button>
+        </div>
       </header>
 
-      <div id="alert" class="alert hidden"></div>
+      <div id="alert" class="alert hidden" role="status"></div>
 
-      <section id="overview" class="view active">
-        <div class="hero-card">
-          <div><p class="eyebrow">PROJECT STATUS</p><h2 id="project-classification">Scanning project…</h2><p id="project-message" class="muted">DynosAI keeps workflow authority in durable state and source authority in Git.</p></div>
-          <button id="initialize" class="primary hidden">Initialize DynosAI</button>
+      <!-- Global project hub. No project is selected by default. -->
+      <section id="home" class="view active">
+        <div class="hub-toolbar">
+          <button class="secondary compact" type="button" data-start-tutorial="1"><span class="button-icon">▷</span><span data-i18n="tutorial.start">Learn with the Fibonacci walkthrough</span></button>
         </div>
-        <div class="metric-grid">
-          <article class="metric"><span>Risk</span><strong id="risk-level">—</strong><small id="risk-score">—</small></article>
-          <article class="metric"><span>Active work</span><strong id="active-work">—</strong><small>governed items</small></article>
-          <article class="metric"><span>Validations</span><strong id="validation-count">—</strong><small>approved profiles</small></article>
-          <article class="metric"><span>Blockers</span><strong id="blocker-count">—</strong><small id="blocker-summary">current workflow</small></article>
-        </div>
-        <div class="two-col">
-          <article class="panel"><div class="panel-head"><div><p class="eyebrow">NEXT ACTION</p><h3>What needs attention</h3></div></div><div id="blockers"></div></article>
-          <article class="panel"><div class="panel-head"><div><p class="eyebrow">VALIDATION DISCOVERY</p><h3>Project checks</h3></div><button id="approve-validations" class="secondary small-button">Approve discovered</button></div><div id="validations"></div></article>
-        </div>
-      </section>
 
-      <section id="work" class="view">
-        <div class="two-col work-layout">
-          <article class="panel">
-            <div class="panel-head"><div><p class="eyebrow">NEW WORK</p><h3>Start from intent</h3></div></div>
-            <label>What do you want to build or change?</label>
-            <textarea id="work-description" rows="6" placeholder="Add Google authentication without changing the existing password login…"></textarea>
-            <div class="form-row"><label>Provider<select id="provider"><option value="codex">Codex</option><option value="cursor">Cursor</option><option value="claude">Claude</option></select></label><label>Workspace<select id="workspace"><option value="interactive_branch">Interactive branch</option><option value="isolated_worktree">Isolated worktree</option></select></label></div>
-            <button id="start-work" class="primary">Start governed work</button>
+        <div class="two-col hub-actions">
+          <article id="create-project-card" class="panel action-panel">
+            <div class="panel-head"><div><p class="eyebrow" data-i18n="hub.createEyebrow">NEW PROJECT</p><h3 data-i18n="hub.createTitle">Create a project</h3><p class="muted" data-i18n="hub.createText">Create a small starter folder, then let DynosAI guide the setup.</p></div></div>
+            <label class="field-label" for="new-project-name" data-i18n="hub.nameLabel">Project name</label>
+            <input id="new-project-name" class="text-input" type="text" autocomplete="off" data-i18n-placeholder="hub.namePlaceholder" placeholder="my-project" />
+
+            <label class="field-label" for="new-project-parent" data-i18n="hub.locationLabel">Location</label>
+            <div class="path-picker-row">
+              <input id="new-project-parent" class="text-input path-readonly" type="text" autocomplete="off" readonly aria-readonly="true" data-i18n-placeholder="hub.locationPlaceholder" placeholder="Choose the parent folder" />
+              <button id="browse-new-parent" class="secondary" type="button" data-i18n="common.browse">Browse…</button>
+            </div>
+
+            <button id="create-project" class="primary large-button" type="button" data-i18n="hub.createButton">Create project</button>
           </article>
-          <article class="panel"><div class="panel-head"><div><p class="eyebrow">RECENT WORK</p><h3>Workflow timeline</h3></div></div><div id="work-list"></div></article>
+
+          <article id="open-project-card" class="panel action-panel">
+            <div class="panel-head"><div><p class="eyebrow" data-i18n="hub.openEyebrow">EXISTING PROJECT</p><h3 data-i18n="hub.openTitle">Open a project</h3><p class="muted" data-i18n="hub.openText">Choose any existing folder. Opening it does not change its files.</p></div></div>
+            <label class="field-label" for="project-path-input" data-i18n="hub.pathLabel">Project folder</label>
+            <div class="path-picker-row">
+              <input id="project-path-input" class="text-input path-readonly" type="text" autocomplete="off" readonly aria-readonly="true" data-i18n-placeholder="hub.pathPlaceholder" placeholder="Choose or paste a folder path" />
+              <button id="browse-project" class="secondary" type="button" data-i18n="common.browse">Browse…</button>
+            </div>
+            <button id="open-project-path" class="primary large-button" type="button" data-i18n="hub.openButton">Open project</button>
+          </article>
         </div>
-        <article class="panel advanced-only"><div class="panel-head"><div><p class="eyebrow">EVENT STREAM</p><h3>Application events</h3></div></div><pre id="events">Advanced mode exposes provider-neutral workflow events.</pre></article>
+
+        <article class="panel recent-panel">
+          <div class="panel-head"><div><p class="eyebrow" data-i18n="hub.recentEyebrow">RECENT</p><h3 data-i18n="hub.recentTitle">Recent projects</h3><p class="muted" data-i18n="hub.recentText">Return to a project you opened before.</p></div></div>
+          <div id="recent-projects" class="project-list recent-project-list"></div>
+        </article>
       </section>
 
-      <section id="quality" class="view">
-        <div class="two-col">
-          <article class="panel"><p class="eyebrow">RISK ASSESSMENT</p><h3 id="risk-title">Deterministic advisory score</h3><div id="risk-signals"></div></article>
-          <article class="panel"><p class="eyebrow">GOVERNANCE</p><h3>Risk is not quality</h3><p class="muted">Risk predicts review intensity from blast radius and sensitive surfaces. Quality continues to measure workflow/evidence findings. Neither score grants authority or bypasses human gates.</p><div id="risk-recommendations"></div></article>
+      <!-- Everything below is scoped to the selected project. -->
+      <section id="project-overview" class="view project-view">
+        <article id="setup-card" class="hero-card setup-card">
+          <div class="hero-copy">
+            <div class="status-label"><span id="hero-status-dot" class="status-circle"></span><span id="hero-kicker" data-i18n="home.checking">Checking your project</span></div>
+            <h2 id="hero-title" data-i18n="home.gettingReady">Getting DynosAI ready…</h2>
+            <p id="hero-message" class="muted" data-i18n="home.checkingMessage">DynosAI is checking the selected project and will tell you only what needs your attention.</p>
+            <div id="hero-actions" class="hero-actions"></div>
+          </div>
+          <div class="setup-progress" aria-label="Project setup progress" data-i18n-aria="setup.progressAria"><div id="setup-steps" class="step-list"></div></div>
+        </article>
+
+        <div id="project-summary" class="summary-grid simple-summary">
+          <article class="summary-card"><span class="summary-icon">↻</span><div><small data-i18n="home.summaryWork">Current work</small><strong id="home-active">—</strong><span class="muted" data-i18n="home.summaryWorkNote">active tasks</span></div></article>
+          <article class="summary-card"><span class="summary-icon">✓</span><div><small data-i18n="home.summaryApprovals">Needs your approval</small><strong id="home-reviews">—</strong><span class="muted" data-i18n="home.summaryApprovalsNote">decisions waiting</span></div></article>
+          <article class="summary-card"><span class="summary-icon">◇</span><div><small data-i18n="home.summaryChecks">Project checks</small><strong id="home-checks">—</strong><span class="muted" data-i18n="home.summaryChecksNote">tests and build checks</span></div></article>
+        </div>
+
+      </section>
+
+      <section id="new-task" class="view project-view">
+        <div class="view-intro"><p class="eyebrow" data-i18n="new.eyebrow">NEW CHANGE</p><h2 data-i18n="new.title">Describe the change</h2><p class="muted" data-i18n="new.intro">Explain the outcome in normal language. DynosAI will use the execution settings configured for this project.</p></div>
+        <article id="new-change-card" class="panel change-composer">
+          <label class="composer-label" for="work-description" data-i18n="new.step1Title">What would you like to change?</label>
+          <p class="muted composer-help" data-i18n="new.step1Text">Describe the result, important constraints and anything that must keep working.</p>
+          <textarea id="work-description" rows="9" data-i18n-placeholder="new.placeholder" placeholder="Example: Add Google authentication without changing the existing password login…"></textarea>
+          <div class="example-row"><button class="example-chip" type="button" data-example-key="feature" data-i18n="new.exampleFeature">Feature example</button><button class="example-chip" type="button" data-example-key="bug" data-i18n="new.exampleBug">Bug fix example</button><button class="example-chip" type="button" data-example-key="refactor" data-i18n="new.exampleRefactor">Refactor example</button></div>
+          <div id="start-readiness" class="inline-note"></div>
+          <div class="composer-actions"><button id="start-work" class="primary large-button" type="button" data-i18n="new.start">Create change</button></div>
+        </article>
+      </section>
+
+      <section id="work" class="view project-view">
+        <div class="view-intro"><p class="eyebrow" data-i18n="work.eyebrow">WORK</p><h2 data-i18n="work.title">Current work</h2><p class="muted" data-i18n="work.intro">Follow progress in plain language. Open Approvals only when DynosAI needs a decision from you.</p></div>
+        <div id="work-list"></div>
+      </section>
+
+      <section id="approvals" class="view project-view">
+        <div class="view-intro"><p class="eyebrow" data-i18n="approvals.eyebrow">APPROVALS</p><h2 data-i18n="approvals.title">Decisions waiting for you</h2><p class="muted" data-i18n="approvals.intro">Read the requested decision, approve it when it matches your intent, or ask for changes.</p></div>
+        <div id="review-list"></div>
+        <div id="review-history" class="review-history"></div>
+      </section>
+
+      <section id="checks" class="view project-view">
+        <div class="view-intro"><p class="eyebrow" data-i18n="checks.eyebrow">PROJECT CHECKS</p><h2 data-i18n="checks.title">Tests and build checks</h2><p class="muted" data-i18n="checks.intro">These commands are not extra work now. DynosAI will run the ones you approve later, when it needs proof that a library, web app or other project still works — for example pytest, or the frontend test/lint command if one is detected. Nothing is executed on this screen.</p></div>
+        <article class="panel"><div id="validation-list"></div><div class="panel-actions"><button id="approve-selected-validations" class="primary" type="button" data-i18n="checks.approve">Approve selected checks</button></div></article>
+      </section>
+
+      <section id="project-settings" class="view project-view">
+        <div class="view-intro"><p class="eyebrow" data-i18n="projectSettings.eyebrow">PROJECT</p><h2 data-i18n="projectSettings.title">Project settings</h2><p class="muted" data-i18n="projectSettings.intro">Choose how new changes start and inspect the model used at each workflow step.</p></div>
+        <div class="settings-list">
+          <article class="setting-row"><div><h3 data-i18n="projectSettings.defaultAgent">Coding agent for new changes</h3><p class="muted" data-i18n="projectSettings.defaultAgentText">All new changes in this project use this agent unless you change this setting here.</p></div><div class="combobox setting-control" data-combobox="project-provider"><input id="project-provider" type="hidden" value="codex" /><button class="combobox-trigger" type="button" role="combobox" aria-expanded="false"><span class="combobox-value">Codex</span><span class="combobox-chevron">⌄</span></button><div class="combobox-content hidden" role="listbox"><button class="combobox-option selected" type="button" role="option" aria-selected="true" data-value="codex"><span>Codex</span></button><button class="combobox-option" type="button" role="option" aria-selected="false" data-value="cursor"><span>Cursor</span></button></div></div></article>
+          <article class="setting-row"><div><h3 data-i18n="projectSettings.defaultWorkspace">Workspace for new changes</h3><p class="muted" data-i18n="projectSettings.defaultWorkspaceText">Interactive branch works in your current Git branch. Isolated worktree creates a separate Git working directory for the change.</p></div><div class="combobox setting-control" data-combobox="project-workspace"><input id="project-workspace" type="hidden" value="interactive_branch" /><button class="combobox-trigger" type="button" role="combobox" aria-expanded="false"><span class="combobox-value" data-i18n="common.interactiveBranch">Interactive branch</span><span class="combobox-chevron">⌄</span></button><div class="combobox-content hidden" role="listbox"><button class="combobox-option selected" type="button" role="option" aria-selected="true" data-value="interactive_branch"><span data-i18n="common.interactiveBranch">Interactive branch</span><small data-i18n="projectSettings.workspaceInteractiveHelp">Work directly in the current Git branch.</small></button><button class="combobox-option" type="button" role="option" aria-selected="false" data-value="isolated_worktree"><span data-i18n="common.isolatedWorktree">Isolated worktree</span><small data-i18n="projectSettings.workspaceIsolatedHelp">Create a separate Git worktree for the change.</small></button></div></div></article>
+          <article class="setting-row"><div><h3 data-i18n="projectSettings.autoApprove">Auto-approve workflow gates</h3><p class="muted" data-i18n="projectSettings.autoApproveText">When this is on, DynosAI approves specification, plan, code, finish and ordinary scope requests without waiting. Questions still need your decision. DynosAI-owned spec and plan files do not need a scope decision. Every automatic approval is recorded.</p></div><label class="switch"><input id="auto-approve-toggle" type="checkbox" /><span></span></label></article>
+        </div>
+        <article class="panel routing-panel">
+          <div class="panel-head routing-head"><div><h3 data-i18n="projectSettings.routingTitle">Models by workflow step</h3><p class="muted" data-i18n="projectSettings.routingText">These model settings belong to the coding agent selected above.</p></div><span id="routing-provider-label" class="pill neutral">Codex</span></div>
+          <div id="model-routing-list" class="route-list"></div>
+        </article>
+      </section>
+
+      <section id="settings" class="view">
+        <div class="view-intro"><p class="eyebrow" data-i18n="settings.eyebrow">STUDIO</p><h2 data-i18n="settings.title">Settings</h2><p class="muted" data-i18n="settings.intro">Personalize Studio. These preferences do not change project governance.</p></div>
+        <div class="settings-list">
+          <article class="setting-row"><div><h3 data-i18n="settings.appearance">Appearance</h3><p class="muted" data-i18n="settings.appearanceText">Use your system theme or choose light or dark.</p></div><div class="segmented"><button type="button" data-theme-value="system" data-i18n="settings.system">System</button><button type="button" data-theme-value="light" data-i18n="settings.light">Light</button><button type="button" data-theme-value="dark" data-i18n="settings.dark">Dark</button></div></article>
+          <article class="setting-row"><div><h3 data-i18n="settings.language">Language</h3><p class="muted" data-i18n="settings.languageText">Choose the language used by Studio.</p></div><div class="combobox setting-control" data-combobox="language"><input id="language" type="hidden" value="en" /><button class="combobox-trigger" type="button" role="combobox" aria-expanded="false"><span class="combobox-value">English</span><span class="combobox-chevron">⌄</span></button><div class="combobox-content hidden" role="listbox"><button class="combobox-option selected" type="button" role="option" aria-selected="true" data-value="en"><span>English</span></button><button class="combobox-option" type="button" role="option" aria-selected="false" data-value="es"><span>Español</span></button></div></div></article>
+          <article class="setting-row"><div><h3 data-i18n="settings.technical">Show technical details</h3><p class="muted" data-i18n="settings.technicalText">Adds diagnostics, risk internals and the activity log to project navigation.</p></div><label class="switch"><input id="technical-toggle" type="checkbox" /><span></span></label></article>
         </div>
       </section>
 
-      <section id="diagnostics" class="view">
-        <article class="panel"><p class="eyebrow">LOCAL APP SERVER</p><h3>Runtime diagnostics</h3><pre id="health">Loading…</pre></article>
-        <article class="panel advanced-only"><p class="eyebrow">RAW OVERVIEW</p><h3>Bounded read model</h3><pre id="raw-overview">Loading…</pre></article>
+      <section id="help" class="view">
+        <div class="view-intro"><p class="eyebrow" data-i18n="help.eyebrow">HELP</p><h2 data-i18n="help.title">How Studio works</h2><p class="muted" data-i18n="help.intro">You can manage a small project without learning DynosAI commands first.</p></div>
+        <article class="panel tutorial-help"><div><h3 data-i18n="help.tutorialTitle">Learn by doing</h3><p class="muted" data-i18n="help.tutorialText">Start the Fibonacci walkthrough. It points to the exact screen, field and button to use, while you perform every action yourself.</p></div><button class="primary" type="button" data-start-tutorial="1" data-i18n="tutorial.start">Learn with the Fibonacci walkthrough</button></article>
+        <div class="three-col help-grid"><article class="panel"><h3 data-i18n="help.card1Title">Choose a project</h3><p class="muted" data-i18n="help.card1Text">Home is your project hub. Create or open a project there.</p></article><article class="panel"><h3 data-i18n="help.card2Title">Describe a change</h3><p class="muted" data-i18n="help.card2Text">Inside a project, New change is where you explain the result you want.</p></article><article class="panel"><h3 data-i18n="help.card3Title">Make the decisions</h3><p class="muted" data-i18n="help.card3Text">Approvals contains only the moments where DynosAI needs your decision.</p></article></div>
       </section>
+
+      <section id="governance" class="view project-view technical-view"><div class="view-intro"><p class="eyebrow" data-i18n="nav.technical">TECHNICAL DETAILS</p><h2 data-i18n="governance.title">Risk & governance</h2><p class="muted" data-i18n="governance.intro">Deterministic advisory signals for technical users. Risk is not a quality score and never grants authority.</p></div><div class="two-col"><article class="panel"><h3 data-i18n="governance.assessment">Risk assessment</h3><div id="risk-card"></div></article><article class="panel"><h3 data-i18n="governance.meaning">What this means</h3><p class="muted" data-i18n="risk.explain">Risk helps DynosAI recommend review intensity. It never bypasses approvals or validations.</p></article></div></section>
+      <section id="diagnostics" class="view project-view technical-view"><div class="view-intro"><p class="eyebrow" data-i18n="nav.technical">TECHNICAL DETAILS</p><h2 data-i18n="diagnostics.title">Diagnostics</h2><p class="muted" data-i18n="diagnostics.introSimple">Support information for the selected project.</p></div><article class="panel"><div class="diagnostic-grid"><div><span data-i18n="diagnostics.version">Version</span><strong id="diag-version">—</strong></div><div><span data-i18n="diagnostics.project">Project</span><strong id="diag-project">—</strong></div><div><span data-i18n="diagnostics.initialized">DynosAI initialized</span><strong id="diag-initialized">—</strong></div></div><div class="panel-actions"><button id="copy-support" class="secondary" type="button" data-i18n="diagnostics.copy">Copy support summary</button></div><pre id="support-summary" class="code-block"></pre><details class="technical-details"><summary data-i18n="diagnostics.raw">View raw project details</summary><pre id="raw-overview" class="code-block scroll-block"></pre></details></article></section>
+      <section id="activity" class="view project-view technical-view"><div class="view-intro"><p class="eyebrow" data-i18n="nav.technical">TECHNICAL DETAILS</p><h2 data-i18n="activity.title">Activity log</h2><p class="muted" data-i18n="activity.intro">A technical event history for troubleshooting.</p></div><article class="panel"><div id="event-list" class="event-list"></div><details class="technical-details"><summary data-i18n="activity.raw">View raw events</summary><pre id="events-raw" class="code-block scroll-block"></pre></details></article></section>
     </main>
   </div>
-  <script src="/app.js" defer></script>
+
+  <div id="operation-overlay" class="operation-overlay hidden" role="status" aria-live="assertive" aria-busy="true">
+    <div class="operation-card">
+      <span class="operation-spinner" aria-hidden="true"></span>
+      <div><strong id="operation-title" data-i18n="operation.working">Working…</strong><p id="operation-text" class="muted" data-i18n="operation.wait">Please wait while DynosAI finishes this action.</p></div>
+    </div>
+  </div>
+
+  <div id="folder-dialog" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="folder-dialog-title">
+    <section class="folder-dialog" aria-describedby="folder-dialog-text">
+      <header class="folder-dialog-head">
+        <div>
+          <p class="eyebrow" data-i18n="folders.eyebrow">FOLDERS</p>
+          <h2 id="folder-dialog-title">Choose a folder</h2>
+          <p id="folder-dialog-text" class="muted">Choose where DynosAI should work.</p>
+        </div>
+        <button id="folder-dialog-close" class="icon-button flat" type="button" data-i18n-aria="common.close" aria-label="Close">×</button>
+      </header>
+      <div class="folder-dialog-toolbar">
+        <button id="folder-dialog-home" class="secondary compact" type="button"><span>⌂</span><span data-i18n="folders.home">Home folder</span></button>
+        <button id="folder-dialog-up" class="secondary compact" type="button"><span>↑</span><span data-i18n="folders.up">Up one level</span></button>
+        <button id="folder-dialog-new" class="secondary compact" type="button"><span>＋</span><span data-i18n="folders.newFolder">New folder</span></button>
+        <div id="folder-dialog-roots" class="folder-roots"></div>
+      </div>
+      <div class="folder-current"><span data-i18n="folders.current">Current folder</span><code id="folder-dialog-current">—</code></div>
+      <div id="folder-dialog-list" class="folder-list" role="list"></div>
+      <div id="folder-dialog-selection" class="folder-selection"></div>
+      <footer class="folder-dialog-actions">
+        <button id="folder-dialog-cancel" class="secondary" type="button" data-i18n="common.cancel">Cancel</button>
+        <button id="folder-dialog-select" class="primary" type="button">Use this folder</button>
+      </footer>
+    </section>
+  </div>
+
+  <div id="confirm-dialog" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+    <section class="dialog-card compact-dialog">
+      <header class="dialog-card-head"><div><h2 id="confirm-dialog-title">Confirm</h2><p id="confirm-dialog-text" class="muted"></p></div></header>
+      <footer class="dialog-card-actions"><button id="confirm-dialog-cancel" class="secondary" type="button" data-i18n="common.cancel">Cancel</button><button id="confirm-dialog-confirm" class="primary" type="button">Confirm</button></footer>
+    </section>
+  </div>
+
+  <div id="new-folder-dialog" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="new-folder-dialog-title">
+    <section class="dialog-card compact-dialog">
+      <header class="dialog-card-head"><div><p class="eyebrow" data-i18n="folders.eyebrow">FOLDERS</p><h2 id="new-folder-dialog-title" data-i18n="folders.newFolderTitle">Create a folder</h2><p class="muted" data-i18n="folders.newFolderText">Create a new folder inside the current location.</p></div></header>
+      <div class="dialog-card-body"><div class="dialog-path"><span data-i18n="folders.current">Current folder</span><code id="new-folder-parent">—</code></div><label class="field-label" for="new-folder-name" data-i18n="folders.folderName">Folder name</label><input id="new-folder-name" class="text-input" type="text" autocomplete="off" placeholder="new-folder" data-i18n-placeholder="folders.folderNamePlaceholder" /></div>
+      <footer class="dialog-card-actions"><button id="new-folder-cancel" class="secondary" type="button" data-i18n="common.cancel">Cancel</button><button id="new-folder-create" class="primary" type="button" data-i18n="folders.createFolder">Create folder</button></footer>
+    </section>
+  </div>
+
+  <div id="route-dialog" class="dialog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="route-dialog-title">
+    <section class="dialog-card route-dialog-card">
+      <header class="dialog-card-head"><div><p class="eyebrow" data-i18n="projectSettings.routingEyebrow">MODEL ROUTING</p><h2 id="route-dialog-title">Model</h2><p id="route-dialog-provider" class="muted"></p></div><button id="route-dialog-close" class="icon-button flat" type="button" data-i18n-aria="common.close" aria-label="Close">×</button></header>
+      <div class="dialog-card-body">
+        <label class="field-label" for="route-model-input" data-i18n="projectSettings.model">Model</label>
+        <input id="route-model-input" class="text-input" type="text" autocomplete="off" />
+        <div><span class="field-hint" data-i18n="projectSettings.recommendedModels">Recommended models</span><div id="route-model-suggestions" class="suggestion-row"></div></div>
+        <div><span class="field-hint" data-i18n="projectSettings.effort">Reasoning effort</span><div id="route-effort-options" class="segmented route-effort"></div></div>
+      </div>
+      <footer class="dialog-card-actions route-dialog-actions"><button id="route-dialog-reset" class="ghost" type="button" data-i18n="projectSettings.useInherited">Use inherited setting</button><span class="dialog-spacer"></span><button id="route-dialog-cancel" class="secondary" type="button" data-i18n="common.cancel">Cancel</button><button id="route-dialog-save" class="primary" type="button" data-i18n="common.save">Save</button></footer>
+    </section>
+  </div>
+
+  <aside id="tutorial-coach" class="tutorial-coach hidden" aria-live="polite">
+    <div class="tutorial-coach-head"><div><span id="tutorial-progress" class="tutorial-progress">1 / 6</span><strong data-i18n="tutorial.walkthroughTitle">Fibonacci walkthrough</strong></div><button id="tutorial-close" class="icon-button flat" type="button" aria-label="Close tutorial">×</button></div>
+    <div class="tutorial-coach-body"><h3 id="tutorial-title">—</h3><p id="tutorial-text" class="muted">—</p><div id="tutorial-example" class="tutorial-example hidden"><code id="tutorial-example-text"></code><button id="tutorial-copy" class="secondary compact" type="button" data-i18n="common.copy">Copy</button></div></div>
+    <div class="tutorial-coach-actions"><button id="tutorial-back" class="secondary compact" type="button" data-i18n="common.back">Back</button><button id="tutorial-show" class="primary compact" type="button" data-i18n="tutorial.showMe">Show me where</button></div>
+  </aside>
+
+  <script src="/i18n.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>

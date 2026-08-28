@@ -188,11 +188,6 @@ def audit_managed_runtime(provider: str, managed: dict[str, Any] | None, logs: s
             m = re.match(r"config/skills/([^/]+)/SKILL\.md$", x)
             if m and m.group(1) not in selected:
                 external_skill_artifacts.append(x)
-    elif provider == "claude":
-        for x in files:
-            m = re.match(r"home/\.claude/skills/([^/]+)/SKILL\.md$", x)
-            if m and m.group(1) not in selected:
-                external_skill_artifacts.append(x)
 
     text = _trace_text(logs)
     low = text.lower()

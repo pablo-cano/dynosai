@@ -301,7 +301,7 @@ def discover_project_root(explicit:str|Path|None=None)->Path:
         if resolved and (resolved/".dynosai"/"knowledge.db").exists(): return resolved
     except Exception: pass
     try:
-        r=subprocess.run(["git","rev-parse","--path-format=absolute","--git-common-dir"],cwd=cwd,text=True,capture_output=True,timeout=5)
+        r=subprocess.run(["git","rev-parse","--path-format=absolute","--git-common-dir"],cwd=cwd,text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=5)
         if r.returncode==0:
             common=Path(r.stdout.strip()).resolve(); root=common.parent
             if (root/".dynosai"/"knowledge.db").exists(): return root
@@ -460,7 +460,9 @@ class MCPServer:
                 try: ProviderCapabilityService(self.engine.db).record(self.client_capabilities)
                 except Exception: pass
             transport_instruction=("For managed Codex tool results, structuredContent is authoritative and content.text may be only a compact compatibility envelope." if self.provider in {"codex","openai"} else "For Cursor and generic clients, content.text contains the complete authoritative tool result because some Cursor CLI streams do not expose MCP structuredContent to the model.")
-            return self._response(rid,{"protocolVersion":selected,"capabilities":{"tools":{"listChanged":True}},"serverInfo":{"name":"dynosai-flow","version":__version__},"instructions":f"DynosAI is provider-native. Start/adopt/attach with dynosai_project and start/resume a feature with dynosai_work/dynosai_resume. Keep one provider session for the feature. Human gates are requested through MCP Elicitation when the client advertises elicitation capability; never self-approve. {transport_instruction} Use dynosai_read for concrete reads, dynosai_ask for SQL/text and dynosai_find_symbol for code identifiers."})
+            studio_gates=os.environ.get("DYNOSAI_HUMAN_GATE_TRANSPORT","").lower()=="studio"
+            gate_instruction=("Human gates are returned as human_interaction tool payloads because DynosAI Studio owns the approval UI. Stop the current turn immediately when one is returned; never self-approve." if studio_gates else "Human gates are requested through MCP Elicitation when the client advertises elicitation capability; never self-approve.")
+            return self._response(rid,{"protocolVersion":selected,"capabilities":{"tools":{"listChanged":True}},"serverInfo":{"name":"dynosai-flow","version":__version__},"instructions":f"DynosAI is provider-native. Start/adopt/attach with dynosai_project and start/resume a feature with dynosai_work/dynosai_resume. Keep one provider session for the feature. {gate_instruction} {transport_instruction} Use dynosai_read for concrete reads, dynosai_ask for SQL/text and dynosai_find_symbol for code identifiers."})
         if method=="notifications/initialized": self.initialized=True; return None
         if method=="notifications/cancelled": return None
         if method=="ping": return self._response(rid,{})
@@ -491,7 +493,8 @@ class MCPServer:
                     self.engine.db.audit("MCPToolCalled",name,{"requested_tool":requested_name,"provider_session_id":self.provider_session and self.provider_session.get("id"),"session_id":self.session and self.session.get("id"),"work_id":self._session_work_id(),"run_id":self._run_id()})
                 except Exception:
                     pass
-                if isinstance(result,dict) and result.get("human_interaction") and self.client_capabilities.elicitation_form:
+                studio_gates=os.environ.get("DYNOSAI_HUMAN_GATE_TRANSPORT","").lower()=="studio"
+                if isinstance(result,dict) and result.get("human_interaction") and self.client_capabilities.elicitation_form and not studio_gates:
                     return ElicitationExchange(rid,dict(result["human_interaction"]),result,bool(args.get("execute",False)))
                 return self._response(rid,_tool_result_payload(result,provider=self.provider,tool_name=name))
             except ToolInputError as exc:
@@ -633,7 +636,7 @@ class MCPServer:
                 }
             result=app.initialize_project(
                 name=args.get("name"),
-                agent=self.provider if self.provider in {"cursor","codex","claude"} else None,
+                agent=self.provider if self.provider in {"cursor","codex"} else None,
                 allow_git_init=bool(args.get("allow_git_init",False)),
                 language=args.get("language"),
                 test_command=args.get("test_command"),

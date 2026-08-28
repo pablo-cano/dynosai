@@ -87,29 +87,6 @@ class MachineProviderSetup:
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         return {"provider": "cursor", "configured": True, "path": str(path), "installed": shutil.which("cursor-agent") is not None}
 
-    def configure_claude(self) -> dict[str, Any]:
-        """Configure DynosAI as a user-scoped Claude Code MCP server.
-
-        Claude Code also supports project-local `.mcp.json`; AgentConfiguration
-        compiles that form. Machine setup keeps the same provider-neutral MCP
-        registration available before a project is initialized.
-        """
-        path = self.home / ".claude.json"
-        data: dict[str, Any] = {}
-        if path.exists():
-            try:
-                data = json.loads(path.read_text(encoding="utf-8"))
-            except Exception:
-                data = {}
-        data.setdefault("mcpServers", {})["dynosai"] = {
-            "command": str(Path(sys.executable).absolute()),
-            "args": ["-m", "dynosai_flow.mcp"],
-            "env": {"DYNOSAI_AGENT_PROVIDER": "claude", "DYNOSAI_RUNTIME_BROKER": "1"},
-        }
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        return {"provider": "claude", "configured": True, "path": str(path), "installed": shutil.which("claude") is not None}
-
     def configure_codex(self) -> dict[str, Any]:
         path = self.home / ".codex" / "config.toml"
         current = path.read_text(encoding="utf-8") if path.exists() else ""
@@ -150,7 +127,7 @@ class MachineProviderSetup:
     @staticmethod
     def _run(command: list[str], timeout: int = 10) -> dict[str, Any]:
         try:
-            r=subprocess.run(executable_command(command[0], *command[1:]),text=True,capture_output=True,timeout=timeout)
+            r=subprocess.run(executable_command(command[0], *command[1:]),text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=timeout)
             return {"ok":r.returncode==0,"exit_code":r.returncode,"output":((r.stdout or "")+(r.stderr or "")).strip()[:2000]}
         except Exception as exc:
             return {"ok":False,"error":str(exc),"output":""}
@@ -249,7 +226,6 @@ class MachineProviderSetup:
         for provider in providers:
             if provider == "cursor": results.append(self.configure_cursor())
             elif provider == "codex": results.append(self.configure_codex())
-            elif provider == "claude": results.append(self.configure_claude())
             else: raise ValueError(f"Unsupported provider: {provider}")
         model = self.install_model() if install_model else {"installed":False,"skipped":True}
         return {"providers": results, "model": model, "ready": all(x.get("configured") for x in results) and (bool(model.get("installed")) or bool(model.get("skipped")))}

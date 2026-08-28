@@ -793,6 +793,13 @@ class CodexAppServerDriver:
                     if model_route:
                         turn_params["model"]=model_route.model
                         if model_route.effort: turn_params["effort"]=model_route.effort
+                    # Work around Codex app-server sandbox inheritance: turn/start may
+                    # need an explicit sandboxPolicy matching the thread request, or
+                    # the provider keeps a read-only policy even when thread/start
+                    # asked for workspace-write.
+                    if sandbox_mode=="workspace-write": turn_params["sandboxPolicy"]={"type":"workspaceWrite"}
+                    elif sandbox_mode=="workspaceWrite": turn_params["sandboxPolicy"]={"type":"workspaceWrite"}
+                    elif sandbox_mode=="read-only": turn_params["sandboxPolicy"]={"type":"readOnly"}
                     self._send(proc,{"method":"turn/start","id":turn_id_req,"params":turn_params},trace,mirror_dir); turn_sent=True
                     if logger: logger.emit("codex_turn_start_sent",phase="provider",provider="codex",message="Codex turn/start sent",thread_id=thread_id)
                     continue

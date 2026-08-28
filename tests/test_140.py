@@ -52,8 +52,8 @@ class DynosAI140Tests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp(prefix="dynosai-140-"))
         self.addCleanup(lambda: shutil.rmtree(self.tmp, ignore_errors=True))
 
-    def test_version_is_0140(self):
-        self.assertEqual(__version__, "0.14.0")
+    def test_version_is_at_least_0140(self):
+        self.assertGreaterEqual(tuple(int(part) for part in __version__.split(".")), (0, 14, 0))
 
     def test_project_detector_identifies_typescript_and_suggests_npm_test(self):
         (self.tmp / "package.json").write_text(json.dumps({"scripts": {"test": "vitest run", "build": "next build"}}), encoding="utf-8")
@@ -114,7 +114,7 @@ class DynosAI140Tests(unittest.TestCase):
         api = StudioAPI(self.tmp)
         status, health = api.get("/api/health")
         self.assertEqual(status, 200)
-        self.assertEqual(health["version"], "0.14.0")
+        self.assertEqual(health["version"], __version__)
         status, detection = api.get("/api/project/detect")
         self.assertEqual(status, 200)
         self.assertEqual(Path(detection["root"]), self.tmp.resolve())
@@ -144,7 +144,7 @@ class DynosAI140Tests(unittest.TestCase):
         try:
             with urllib.request.urlopen(f"http://{host}:{port}/api/health", timeout=3) as response:
                 health = json.load(response)
-            self.assertEqual(health["version"], "0.14.0")
+            self.assertEqual(health["version"], __version__)
             with urllib.request.urlopen(f"http://{host}:{port}/", timeout=3) as response:
                 page = response.read().decode("utf-8")
             self.assertIn("DynosAI Studio", page)
@@ -154,7 +154,7 @@ class DynosAI140Tests(unittest.TestCase):
 
     def test_studio_source_and_packaged_assets_are_identical(self):
         root = Path(__file__).resolve().parents[1]
-        for name in ("index.html", "styles.css", "app.js"):
+        for name in ("index.html", "styles.css", "app.js", "i18n.js", "theme-init.js", "icon.svg"):
             self.assertEqual((root / "apps" / "studio" / name).read_bytes(), (root / "src" / "dynosai_flow" / "studio_assets" / name).read_bytes())
 
 

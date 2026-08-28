@@ -28,7 +28,7 @@ class DynosAI100Tests(unittest.TestCase):
         self.tmp = Path(self.td.name)
 
     def test_version_is_0100(self):
-        self.assertEqual(__version__, "0.14.0")
+        self.assertEqual(__version__, "0.14.1")
 
     def test_cursor_exact_usage_is_normalized_without_double_counting_cache(self):
         raw = {"inputTokens": 179451, "outputTokens": 8018, "cacheReadTokens": 1008512, "cacheWriteTokens": 3}

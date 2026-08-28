@@ -36,12 +36,14 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `predictive_routing.py` | Historical predictive routing memory (shadow use) |
 | `predictive_validation.py` | Offline replay and authority-gate analysis |
 | `provider_debug.py` | Provider-native debug/certification adapters |
+| `provider_process.py` | Provider subprocess spawn/shutdown and Windows process-tree cleanup |
 | `providers.py` | Provider capability detection and command construction |
 | `retrieval.py` | Hybrid bounded retrieval of text, symbols, tasks and evidence |
 | `runtime.py` | Machine-local project/session broker |
 | `runtime_audit.py` | Runtime/provider isolation audit |
 | `semantic.py` | Local embeddings and semantic index |
 | `state.py` | Portable snapshots and atomic restore |
+| `studio_projects.py` | Local Studio project hub registry and directory browsing |
 | `token_usage.py` | Token normalization, phase attribution and usage reporting |
 | `util.py` | Shared low-level helpers |
 | `validation.py` | Workflow quality scoring and validation evaluation |

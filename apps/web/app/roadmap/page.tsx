@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const releases = [
-  ["0.14", "Control Plane & Studio Alpha", "Local App Server, Local Studio, onboarding, validation discovery, explainable blockers and deterministic risk assessment."],
+  ["0.14", "Control Plane & Guided Studio", "Local App Server, guided setup, task timelines, Review Center, project checks, themes, help, validation discovery and deterministic risk assessment."],
   ["0.15", "Harness & Loop Engine v2", "Context handles, pass-by-reference, long-running loops, skills plus skill evals, checkpoints and risk-aware governance."],
   ["0.16", "Governed Agent Teams", "Plan-DAG parallelism, isolated worktrees, task leases, specialist reviewer/tester roles and merge governance."],
   ["0.17", "Eval Intelligence", "Eval registry, failure classification, regression generation, provider/model comparison and learning loops."],

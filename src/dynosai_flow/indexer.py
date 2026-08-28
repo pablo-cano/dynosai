@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .db import Database
-from .util import iter_source_files, sha256_file, utc_now, json_dumps
+from .util import decode_git_path, iter_source_files, sha256_file, utc_now, json_dumps
 from .policy import PathPolicyEngine
 
 LANGUAGE_BY_SUFFIX = {
@@ -103,11 +103,12 @@ class CodeIndexer:
         """Prefer Git tracked/untracked source files over filesystem-wide walks."""
         import subprocess
         try:
-            proc=subprocess.run(["git","ls-files","--cached","--others","--exclude-standard"],cwd=self.root,text=True,capture_output=True,timeout=20)
+            proc=subprocess.run(["git","-c","core.quotepath=false","ls-files","--cached","--others","--exclude-standard"],cwd=self.root,text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=20)
             if proc.returncode==0:
                 paths=[]
                 policy=PathPolicyEngine(self.root)
                 for rel in proc.stdout.splitlines():
+                    rel=decode_git_path(rel)
                     path=self.root/rel
                     if path.is_file() and path.suffix.lower() in LANGUAGE_BY_SUFFIX and policy.decision(rel,"read",agent=True).allowed:
                         paths.append(path)

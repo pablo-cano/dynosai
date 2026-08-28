@@ -2,6 +2,75 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 0.14.1 - 2026-08-26
+
+### Added
+
+- Added a guided Studio setup model that explains project detection, Git readiness, DynosAI initialization and project-check approval in user-facing terms.
+- Added a Review Center backed by pending `human_interactions`, including bounded specification, plan and quality/evidence context for human gates.
+- Added `/api/setup` and `/api/reviews` to the loopback App Server.
+- Added System/Light/Dark Studio themes with browser-local persistence and the same DynosAI SVG mark used by the public website.
+- Added in-product Help, plain-language workflow timelines, project-check selection, support summary and user-friendly task creation guidance.
+- Added in-app project management with recent projects, local path opening and a contextual folder browser, without restarting Studio.
+- Added an English/Spanish localization layer with English as the default and browser-local language preference.
+- Added a contextual greenfield Fibonacci walkthrough that guides the user through the normal Studio UI without creating projects, starting agents or approving workflow steps on the user's behalf.
+- Added accessible shadcn/ui-style combobox controls for provider, workspace and language choices.
+- Added a neutral project hub: `dynosai studio` no longer selects the launch directory unless `--project` is explicitly supplied.
+- Added explicit neutral greenfield project creation from Home; technology-specific files are introduced by governed changes rather than by a starter selector.
+- Refined Home semantics so returning to Home closes the active project context and returns to a neutral project hub while keeping the project in Recents.
+- Replaced OS-dependent folder-picker calls with an in-Studio directory browser for both project creation locations and existing-project opening.
+- Fixed sidebar horizontal overflow and stopped rendering long project paths inside the navigation rail.
+- Replaced the dedicated Fibonacci tutorial page and automatic demo creation with a contextual, state-aware walkthrough that highlights the normal UI while the user performs every action.
+- Replaced browser-native confirmation dialogs with Studio-native shadcn/ui-style dialogs and styled the remaining checkbox/toggle controls consistently.
+- Added folder creation directly inside the Studio folder browser.
+- Added project-scoped execution settings and model routing inspection/editing for Codex and Cursor across discovery, specification, planning, implementation, code review, validation and merge.
+- Bounded Recent projects with an internal vertical scroll area and removed the manual Refresh button in favor of background synchronization.
+- Reduced repeated page headings/copy and corrected execution-summary spacing in the New change flow.
+- Simplified New change to the request itself; coding agent, workspace and per-phase model choices now live only in Project settings.
+- Locked project workflow pages until DynosAI initialization completes, removed the duplicated Next step panel/button, and added blocking progress feedback for mutating actions.
+- Made model routing follow the project coding agent automatically instead of exposing a second Codex/Cursor switch inside the routing panel.
+- Made Studio-created changes start the configured Codex/Cursor agent asynchronously instead of remaining in Inbox/Queued, with observable running/interrupted states and a safe Continue agent retry.
+- Made project path/location fields read-only and folder-browser controlled, and fixed the Fibonacci walkthrough so repeated approval cycles do not prematurely jump to the final result step.
+- Fixed Studio provider execution to use provider-native headless transports instead of terminal-oriented CLI launches, so Codex/Cursor can run from the browser-managed workflow without an interactive console; Studio now owns human gates and exposes provider diagnostic tails when a turn fails.
+- Fixed Windows Codex Studio execution with explicit UTF-8 JSON-RPC/MCP stdio, preventing Spanish/non-ASCII task text from being encoded through the Windows ANSI code page; headless launches also avoid creating project-local provider config as a launch side effect.
+- Fixed Cursor Studio execution by replacing terminal/print-mode automation with Cursor ACP (`agent acp`), including session-scoped DynosAI MCP injection, explicit provider-permission handling and actionable authentication failures.
+- Fixed headless CLI exit-code propagation so Studio receives the real provider failure instead of a successful wrapper process plus a large runtime JSON dump.
+- Made Work diagnostics use a Studio-native persistent disclosure panel, so background refresh no longer collapses diagnostic details while the user is reading them.
+- Expanded Approvals so specification and plan gates expose the actual requirements, acceptance criteria, tasks, files and risks before a user can approve them; standard gate guidance is localized by Studio.
+- Preserved request-change/clarification drafts across background refresh and prevented focused approval editors from being rebuilt while the user is typing.
+- Added a bounded live Agent activity stream to Work, fed by Cursor ACP/Codex provider progress plus governed workflow events.
+- Added an approval history on the Approvals page and a project-level auto-approve switch that records `studio_auto` decisions without answering clarifications. Ordinary product-file scope requests can be auto-approved; DynosAI-owned spec/plan overlays never become a human scope gate.
+- Explained Project checks as later evidence commands for a library or web app, not extra work on that screen.
+- Fixed Cursor planning turns so the provider-native `cursor/create_plan` transport gate is acknowledged without replacing or bypassing DynosAI's authoritative plan and human approval gate.
+- Fixed the contextual tutorial to advance automatically when a real approval appears and to keep following repeated approval/work cycles until the governed task is done.
+- Fixed Windows `WinError 32` after Cursor ACP workflow transitions: Studio now closes ACP stdin, waits for process exit, reaps the provider process tree, and refreshes the managed runtime without failing when leftover `acp-sessions` files are still unlocking.
+- Stopped Studio refresh from jumping the page, diagnostic log or Agent activity scrollbar back to the top, and show newest activity first with a timestamp.
+- Survived Windows locale subprocess output (`UnicodeDecodeError` in `_readerthread`) by decoding captured Git, pytest, tasklist and provider stdio as UTF-8 with replacement.
+- Decoded Git C-quoted pathnames (`core.quotepath`) so Spanish overlay paths such as `specs/...pequeña.../plan.md` are recognized as DynosAI-owned artifacts instead of failing implementation `register_result`.
+- Stopped exported `specs/**` overlays (including slash-corrupted Git octal names like `/303/261/plan.md`) from remaining as required task files, so an otherwise complete implementation can register and leave Implementar.
+- Fixed final merge on interactive branches so leftover verified files such as `tests/test_fibonacci.py` are scooped into the checkpoint instead of blocking squash as collapsed `?? tests/` dirt; DynosAI-owned overlays and caches are not merge blockers.
+- Unstuck Work when Final review has already been auto-approved but merge did not finish: Continue now completes the host-owned merge instead of demanding a missing Approvals card.
+- After a specification is auto-approved during a Codex/Cursor turn, Studio relaunches the agent to author the plan instead of treating the already-advanced `plan_review` state as a finished turn.
+- Stopped classifying requests that mention `ValueError` as bugs; exception type names are not bug reports.
+
+### Changed
+
+- Replaced the ambiguous 0.14.0 `Advanced mode` with opt-in **Show technical details** in Settings.
+- Reworked Studio navigation around global Home/Settings/Help plus a nested selected-project workflow for Overview, New change, Work, Approvals and Project checks.
+- Moved raw risk, diagnostics and activity/event views out of the default non-technical experience.
+- Simplified risk presentation to a user-facing change-sensitivity level while keeping the deterministic score available in technical details.
+- Aligned Studio branding, colors and interaction hierarchy more closely with `dynosai.com`.
+- Kept Git, schema v6 workflow state, validation approval and human-gate authority unchanged.
+- Removed Claude from Studio and public CLI provider choices; the supported public execution surface remains Codex and Cursor.
+- Separated global Studio navigation (Home, Settings, Help) from a nested selected-project workflow (Overview, New change, Work, Approvals, Project checks).
+- Removed normal-user UI wording about the underlying local server/loopback runtime; those implementation details remain architectural rather than product-navigation concepts.
+
+### Validation
+
+- Added 0.14.1 regression coverage for setup guidance, Review Center API, shared branding/favicon, theme persistence, non-technical navigation, local asset serving and technical-mode opt-in behavior.
+- Stable Python regression now contains 441 tests, including Windows locale-safe subprocess capture, Studio auto-approve history, activity-log ordering, managed spec/plan overlays, Git C-quoted Spanish overlay paths, leftover verified `tests/` files at merge, Continue-to-finish on Final review, auto-continue into plan authoring after a mid-turn spec approval, Cursor ACP process-tree/`acp-sessions` lifecycle coverage, neutral project-hub startup, project creation/switching, contextual Fibonacci walkthrough, localization, accessible combobox and current-provider-boundary coverage.
+- Repository-quality, Studio-sync and website check/typecheck/lint/build gates remain required for release.
+
 ## 0.14.0 - 2026-08-26
 
 ### Added

@@ -142,7 +142,7 @@ send({"method":"turn/completed","params":{"threadId":"thr","turn":{"id":"turn","
         self.assertEqual(result["model_route"]["activity"], "discovery")
 
     def test_version_is_087(self):
-        self.assertEqual(__version__, "0.14.0")
+        self.assertEqual(__version__, "0.14.1")
 
 
 if __name__ == "__main__":

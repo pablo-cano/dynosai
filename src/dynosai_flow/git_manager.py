@@ -10,8 +10,8 @@ import shutil
 from pathlib import Path
 
 from .db import Database
-from .util import run_command, slugify, utc_now
-from .policy import PathPolicyEngine
+from .util import decode_git_path, run_command, slugify, utc_now
+from .policy import PathPolicyEngine, is_managed_workflow_artifact
 
 
 class GitError(RuntimeError):
@@ -54,7 +54,7 @@ class GitManager:
 
     def _git(self, *args: str, cwd: Path | None = None, check: bool = True):
         try:
-            return run_command([self._git_executable(), *args], cwd or self.root, check=check)
+            return run_command([self._git_executable(), "-c", "core.quotepath=false", *args], cwd or self.root, check=check)
         except Exception as exc:
             raise GitError(f"git {' '.join(args)} failed: {exc}") from exc
 
@@ -84,8 +84,39 @@ class GitManager:
         return result.stdout.strip() or "main"
 
     def status(self, cwd: Path | None = None) -> list[str]:
-        result = self._git("status", "--porcelain", cwd=cwd, check=False)
+        result = self._git("status", "--porcelain", "--untracked-files=all", cwd=cwd, check=False)
         return [line for line in result.stdout.splitlines() if line.strip()]
+
+    @staticmethod
+    def _status_path(line: str) -> str:
+        raw = line[3:] if len(line) > 3 else line
+        if " -> " in raw:
+            raw = raw.split(" -> ", 1)[1]
+        return decode_git_path(raw).rstrip("/")
+
+    @staticmethod
+    def _is_merge_noise(rel: str) -> bool:
+        path = decode_git_path(rel).rstrip("/")
+        if not path or path == ".":
+            return True
+        if is_managed_workflow_artifact(path):
+            return True
+        parts = path.split("/")
+        if parts[0] in {".dynosai", ".cursor", ".codex", ".agents", ".claude", ".specify"}:
+            return True
+        if any(part in {"__pycache__", ".pytest_cache", ".venv"} or part.endswith(".pyc") for part in parts):
+            return True
+        return False
+
+    def merge_blockers(self, cwd: Path | None = None) -> list[str]:
+        """Return leftover source paths that must be committed or discarded before merge."""
+        seen: list[str] = []
+        for line in self.status(cwd):
+            rel = self._status_path(line)
+            if self._is_merge_noise(rel) or rel in seen:
+                continue
+            seen.append(rel)
+        return seen
 
     def ensure_initial_commit(self, message: str = "chore: initialize DynosAI project") -> str:
         if self.head():
@@ -212,13 +243,13 @@ class GitManager:
     def diff_files(self, cwd: Path, base_commit: str | None = None) -> list[str]:
         base = base_commit or self.db.get_meta("main_branch", "main") or "main"
         result = self._git("diff", "--name-only", f"{base}...HEAD", cwd=cwd, check=False)
-        files = {line.strip() for line in result.stdout.splitlines() if line.strip()}
+        files = {decode_git_path(line) for line in result.stdout.splitlines() if line.strip()}
         # Include uncommitted work as agent results are registered before the checkpoint commit.
         unstaged = self._git("diff", "--name-only", cwd=cwd, check=False)
         cached = self._git("diff", "--cached", "--name-only", cwd=cwd, check=False)
         untracked = self._git("ls-files", "--others", "--exclude-standard", cwd=cwd, check=False)
         for output in (unstaged.stdout, cached.stdout, untracked.stdout):
-            files.update(line.strip() for line in output.splitlines() if line.strip())
+            files.update(decode_git_path(line) for line in output.splitlines() if line.strip())
         return sorted(files)
 
     def diff_name_status(self, cwd: Path, base_commit: str | None = None) -> dict[str,str]:
@@ -230,10 +261,10 @@ class GitManager:
         for output in (committed.stdout,working.stdout,cached.stdout):
             for line in output.splitlines():
                 parts=line.split("\t")
-                if len(parts)>=2: statuses[parts[-1]]=parts[0][0]
+                if len(parts)>=2: statuses[decode_git_path(parts[-1])]=parts[0][0]
         untracked=self._git("ls-files","--others","--exclude-standard",cwd=cwd,check=False)
         for rel in untracked.stdout.splitlines():
-            if rel.strip(): statuses[rel.strip()]="A"
+            if rel.strip(): statuses[decode_git_path(rel)]="A"
         return statuses
 
     def diff_hunks(self,cwd:Path,base_commit:str|None=None)->dict[str,list[tuple[int,int]]]:
@@ -242,7 +273,7 @@ class GitManager:
         text=self._git("diff","--unified=0",f"{base}",cwd=cwd,check=False).stdout
         result:dict[str,list[tuple[int,int]]]={}; current=None
         for line in text.splitlines():
-            if line.startswith("+++ b/"): current=line[6:]; result.setdefault(current,[])
+            if line.startswith("+++ b/"): current=decode_git_path(line[6:]); result.setdefault(current,[])
             elif current and line.startswith("@@"):
                 m=re.search(r"\+(\d+)(?:,(\d+))?",line)
                 if m:
@@ -291,7 +322,7 @@ class GitManager:
         # Unstaged source work may already exist when an agent is connected late.
         # That is safe because we stage only exact DynosAI-generated paths. Pre-staged
         # user source is not safe: committing it would absorb work we do not own.
-        staged={x.strip() for x in self._git("diff","--cached","--name-only",cwd=worktree,check=False).stdout.splitlines() if x.strip()}
+        staged={decode_git_path(x) for x in self._git("diff","--cached","--name-only",cwd=worktree,check=False).stdout.splitlines() if x.strip()}
         managed=set(paths)
         unexpected_staged=staged-managed
         if unexpected_staged:
@@ -302,11 +333,19 @@ class GitManager:
         if changed.returncode!=0:self._git("commit","-m",message,cwd=worktree)
         return self.head(worktree)
 
-    def checkpoint(self, work_id: str, worktree: Path, message: str) -> str:
+    def checkpoint(self, work_id: str, worktree: Path, message: str, extra_paths: list[str] | None = None) -> str:
         # Stage only agent-authorized source changes. DynosAI/provider metadata is never
-        # swept into a feature commit by `git add -A`.
+        # swept into a feature commit by `git add -A`. extra_paths are verified run files
+        # that must not be missed if `diff_files` omitted them.
         policy=PathPolicyEngine(worktree)
-        for rel in self.diff_files(worktree):
+        paths={decode_git_path(rel) for rel in self.diff_files(worktree) if rel}
+        for rel in extra_paths or []:
+            decoded=decode_git_path(rel)
+            if decoded:
+                paths.add(decoded)
+        for rel in sorted(paths):
+            if is_managed_workflow_artifact(rel):
+                continue
             decision=policy.decision(rel,"write",agent=True)
             if decision.allowed:
                 self._git("add","-A","--",rel,cwd=worktree,check=False)
@@ -332,8 +371,12 @@ class GitManager:
         return commit
 
     def merge(self, work_id: str, branch: str, title: str) -> str:
-        if self.status():
-            raise GitError("The main workspace has unmanaged changes; run dynosai sync before merging")
+        blockers = self.merge_blockers()
+        if blockers:
+            raise GitError(
+                "The main workspace has unmanaged changes; run dynosai sync before merging: "
+                + ", ".join(blockers)
+            )
         main_branch = self.db.get_meta("main_branch", self.current_branch()) or "main"
         self._git("checkout", main_branch)
         self._git("merge", "--squash", branch)

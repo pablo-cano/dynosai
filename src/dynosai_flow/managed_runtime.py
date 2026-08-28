@@ -4,15 +4,78 @@
 
 from __future__ import annotations
 
+import errno
 import json
 import os
 import shutil
 import sys
+import time
 from dataclasses import dataclass, asdict, field
 from pathlib import Path
 from typing import Any
 
 from .agent_config import AgentConfiguration
+
+
+WINDOWS_LOCK_WINERRORS = {5, 32, 33}
+
+
+def is_windows_lock_error(exc: BaseException) -> bool:
+    winerror = getattr(exc, "winerror", None)
+    if winerror in WINDOWS_LOCK_WINERRORS:
+        return True
+    if os.name == "nt" and isinstance(exc, OSError) and getattr(exc, "errno", None) in {errno.EACCES, errno.EPERM}:
+        return True
+    return isinstance(exc, OSError) and getattr(exc, "errno", None) in {errno.EBUSY}
+
+
+def remove_tree_tolerant(path: Path, *, retries: int = 6, base_delay: float = 0.05) -> None:
+    """Delete a directory tree without failing the managed-runtime refresh.
+
+    Windows keeps provider session files locked until the ACP process tree
+    releases handles. DynosAI retries those sharing violations, then skips
+    leftover session files so the next turn can still rewrite config in place.
+    """
+    if not path.exists():
+        return
+
+    def onexc(fn, item, exc):
+        if not isinstance(exc, OSError):
+            raise exc
+        if not is_windows_lock_error(exc) and getattr(exc, "errno", None) not in {errno.EACCES, errno.EPERM, errno.ENOTEMPTY}:
+            raise exc
+        delay = base_delay
+        for _ in range(max(1, retries)):
+            time.sleep(delay)
+            delay = min(delay * 2, 0.8)
+            try:
+                fn(item)
+                return
+            except FileNotFoundError:
+                return
+            except OSError as retry_exc:
+                exc = retry_exc
+                if not is_windows_lock_error(retry_exc) and getattr(retry_exc, "errno", None) not in {errno.EACCES, errno.EPERM, errno.ENOTEMPTY}:
+                    raise
+        return
+
+    kwargs: dict[str, Any]
+    if sys.version_info >= (3, 12):
+        kwargs = {"onexc": onexc}
+    else:
+        kwargs = {"onerror": lambda fn, item, info: onexc(fn, item, info[1])}
+    try:
+        shutil.rmtree(path, **kwargs)
+    except FileNotFoundError:
+        return
+
+
+def _prune_unmanaged_skill_dirs(skills_root: Path, wanted: set[str]) -> None:
+    if not skills_root.exists():
+        return
+    for child in list(skills_root.iterdir()):
+        if child.is_dir() and child.name not in wanted:
+            remove_tree_tolerant(child)
 
 
 @dataclass(slots=True)
@@ -118,6 +181,11 @@ class ManagedProviderRuntime:
                 "DYNOSAI_PHASE_TOOL_DISCLOSURE": "adaptive",
                 "DYNOSAI_EVIDENCE_CACHE": "1",
                 "DYNOSAI_CONTEXT_CHECKPOINTS": "1",
+                # Codex app-server/MCP transport is UTF-8 on the wire. Windows
+                # Python otherwise inherits an ANSI code page for redirected
+                # stdio, which corrupts non-ASCII JSON payloads.
+                "PYTHONUTF8": "1",
+                "PYTHONIOENCODING": "utf-8",
             },
         }
         if extra_env:
@@ -168,13 +236,13 @@ class ManagedProviderRuntime:
         extra_env: dict[str, str] | None = None,
     ) -> ManagedRuntime:
         provider = provider.lower()
-        if provider not in {"cursor", "codex", "claude"}:
+        if provider not in {"cursor", "codex"}:
             raise ValueError(f"Unsupported provider: {provider}")
         effective = effective or AgentConfiguration(self.project).resolve(provider=provider, activity=activity)
         tool_profile = tool_profile or tool_profile_for_activity(activity)
         root = self.base / provider
         if clean and root.exists():
-            shutil.rmtree(root)
+            remove_tree_tolerant(root)
         root.mkdir(parents=True, exist_ok=True)
         files: list[str] = []
         env = {
@@ -191,6 +259,8 @@ class ManagedProviderRuntime:
             "DYNOSAI_PHASE_TOOL_DISCLOSURE": "adaptive",
             "DYNOSAI_EVIDENCE_CACHE": "1",
             "DYNOSAI_CONTEXT_CHECKPOINTS": "1",
+            "PYTHONUTF8": "1",
+            "PYTHONIOENCODING": "utf-8",
         }
         if extra_env:
             env.update({str(k): str(v) for k, v in extra_env.items() if v is not None})
@@ -211,6 +281,7 @@ class ManagedProviderRuntime:
                 p.parent.mkdir(parents=True, exist_ok=True)
                 p.write_text(self._skill_md(skill), encoding="utf-8")
                 files.append(str(p))
+            _prune_unmanaged_skill_dirs(config_dir / "skills", {str(skill["id"]) for skill in skill_catalog if skill.get("id")})
             mcp = config_dir / "mcp.json"
             mcp.write_text(json.dumps({"mcpServers": {"dynosai": server}}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
             files.append(str(mcp))
@@ -225,6 +296,7 @@ class ManagedProviderRuntime:
                 p.parent.mkdir(parents=True, exist_ok=True)
                 p.write_text(self._skill_md(skill), encoding="utf-8")
                 files.append(str(p))
+            _prune_unmanaged_skill_dirs(skills_dir, {str(skill["id"]) for skill in skill_catalog if skill.get("id")})
             instructions = home / "DYNOSAI.md"
             instructions.write_text(instruction_text, encoding="utf-8")
             files.append(str(instructions))
@@ -264,22 +336,6 @@ class ManagedProviderRuntime:
                     # If symlinks are unavailable, leave auth untouched rather than
                     # copying secrets into a generated runtime.
                     pass
-
-        else:  # Claude is materialized for future use but not part of current acceptance.
-            home = root / "home"
-            home.mkdir(parents=True, exist_ok=True)
-            instructions = home / "CLAUDE.md"
-            instructions.write_text(instruction_text, encoding="utf-8")
-            files.append(str(instructions))
-            mcp = home / ".mcp.json"
-            mcp.write_text(json.dumps({"mcpServers": {"dynosai": server}}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-            files.append(str(mcp))
-            for skill in skill_catalog:
-                p = home / ".claude" / "skills" / skill["id"] / "SKILL.md"
-                p.parent.mkdir(parents=True, exist_ok=True)
-                p.write_text(self._skill_md(skill), encoding="utf-8")
-                files.append(str(p))
-            env["CLAUDE_CONFIG_DIR"] = str(home)
 
         manifest = root / "runtime.json"
         manifest.write_text(json.dumps({

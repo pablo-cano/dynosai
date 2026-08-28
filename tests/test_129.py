@@ -8,7 +8,7 @@ from dynosai_flow.version import __version__
 
 class DynosAI129RC4RecoveredInfrastructureRetryTests(unittest.TestCase):
     def test_version_is_0129(self):
-        self.assertEqual(__version__, "0.14.0")
+        self.assertEqual(__version__, "0.14.1")
 
     def _child(self, **updates):
         child={

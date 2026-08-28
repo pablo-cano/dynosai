@@ -22,9 +22,9 @@ from .state import StateManager
 from .indexer import CodeIndexer
 from .retrieval import RetrievalEngine
 from .semantic import DEFAULT_DIMENSIONS, DEFAULT_MODEL, EmbeddingProvider, FastEmbedProvider, SemanticIndex, default_cache_dir
-from .util import json_dumps, json_loads, slugify, utc_now
+from .util import decode_git_path, json_dumps, json_loads, slugify, utc_now
 from .validation import QualityEngine
-from .policy import PathPolicyEngine, ValidationProfilePolicy
+from .policy import PathPolicyEngine, ValidationProfilePolicy, is_managed_workflow_artifact, product_scope_paths
 from .runtime import RuntimeBroker
 from .version import __version__
 
@@ -274,7 +274,8 @@ class DynosAI:
                 return {"approved":False,"state":"code_review","findings":[f.to_dict() for f in blocking]}
             run=self.db.one("SELECT * FROM runs WHERE work_id=? ORDER BY id DESC LIMIT 1",(work_id,))
             if not run or run.get("verification_status")!="verified": raise ValueError("Agent result has not been independently verified")
-            commit=self.git.checkpoint(work_id,Path(work["worktree"]),f"feat({work_id}): verified implementation checkpoint"); self._set_state(work_id,"validating")
+            extra=[decode_git_path(path) for path in json_loads(run.get("verified_files") or run.get("files_changed"), []) if path]
+            commit=self.git.checkpoint(work_id,Path(work["worktree"]),f"feat({work_id}): verified implementation checkpoint", extra_paths=extra); self._set_state(work_id,"validating")
             return {"approved":True,"state":"validating","checkpoint":commit}
         if approve == "merge":
             if work["state"] != "ready_to_merge": raise ValueError("Merge approval is only valid in ready_to_merge")
@@ -284,6 +285,9 @@ class DynosAI:
                 return {"approved":False,"state":"ready_to_merge","findings":[f.to_dict() for f in blocking]}
             self.state.snapshot(f"pre-merge-{work_id}")
             self.git.commit_main_changes(f"dynosai({work_id}): persist pre-merge state")
+            run=self.db.one("SELECT * FROM runs WHERE work_id=? ORDER BY id DESC LIMIT 1",(work_id,))
+            extra=[decode_git_path(path) for path in json_loads((run or {}).get("verified_files") or (run or {}).get("files_changed"), []) if path]
+            self.git.checkpoint(work_id,Path(work.get("worktree") or self.root),f"feat({work_id}): remaining verified source", extra_paths=extra)
             commit=self.git.merge(work_id,work["branch"],work["title"]); self.indexer.index(commit); feature=self.consolidate(work_id,commit)
             self._set_state(work_id,"done"); self.db.execute("UPDATE work_items SET active=0,quality_score=100 WHERE id=?",(work_id,))
             if (work.get("workspace_strategy") or "isolated_worktree") == "interactive_branch":
@@ -328,8 +332,16 @@ class DynosAI:
         work=self.get_work(work_id)
         if work["state"]!="implementing": raise ValueError("Scope can only be extended during implementation")
         root=Path(work.get("worktree") or self.root); policy=PathPolicyEngine(root); decision=policy.decision(path,"read" if action=="read" else "write",agent=True)
-        if not decision.allowed: raise PermissionError(decision.reason)
         if action not in {"read","modify","create","delete","test"}: raise ValueError("invalid scope action")
+        candidate = decision.path or str(path).replace("\\", "/")
+        if is_managed_workflow_artifact(path) or is_managed_workflow_artifact(candidate):
+            payload={"work_id":work_id,"path":candidate,"action":action,"reason":reason,"task_id":task_id}
+            self.db.audit("ScopeExtensionNotRequired", candidate, payload)
+            return {
+                "id": None, "status": "managed_artifact", "work_id": work_id, "path": candidate, "action": action,
+                "message": "DynosAI owns exported spec/plan overlays. Use dynosai_submit_spec or dynosai_submit_plan. Do not edit specs/** or plan.md directly.",
+            }
+        if not decision.allowed: raise PermissionError(decision.reason)
 
         # A scope extension is only for genuinely unplanned access. Earlier plans could
         # create a pending request for a path that was already approved under a
@@ -390,6 +402,14 @@ class DynosAI:
         """Resolve a pending scope-extension request with an auditable terminal decision."""
         req=self.db.one("SELECT * FROM scope_requests WHERE id=? AND status='pending'",(request_id,))
         if not req: raise KeyError(request_id)
+        if is_managed_workflow_artifact(req["path"]):
+            self.db.execute("UPDATE scope_requests SET status='cancelled',resolved_at=? WHERE id=?",(utc_now(),request_id))
+            payload={"work_id":req["work_id"],"path":req["path"],"action":req["action"],"reason":req.get("reason"),"task_id":task_id}
+            self.db.audit("ScopeExtensionNotRequired", req["path"], payload)
+            return {
+                "id": request_id, "status": "managed_artifact", "work_id": req["work_id"], "path": req["path"], "action": req["action"],
+                "message": "DynosAI owns exported spec/plan overlays. Use dynosai_submit_spec or dynosai_submit_plan. Do not edit specs/** or plan.md directly.",
+            }
         plan=self.artifacts.artifact(req["work_id"],"plan")
         if not plan: raise ValueError("No plan exists")
         metadata=dict(plan["metadata"]); files=list(metadata.get("files",[]))
@@ -445,7 +465,8 @@ class DynosAI:
         if work["state"]!="implementing": raise ValueError("Results can only be registered while implementing")
         run=self.db.one("SELECT * FROM runs WHERE id=? AND work_id=?",(run_id,work_id)) if run_id else self.db.one("SELECT * FROM runs WHERE work_id=? ORDER BY id DESC LIMIT 1",(work_id,))
         if not run: raise ValueError("No active run")
-        worktree=Path(run.get("worktree") or work["worktree"]); actual=self.git.diff_files(worktree,run.get("base_commit") or None); statuses=self.git.diff_name_status(worktree,run.get("base_commit") or None)
+        self._scrub_managed_overlays_from_tasks(work_id)
+        worktree=Path(run.get("worktree") or work["worktree"]); actual=[path for path in self.git.diff_files(worktree,run.get("base_commit") or None) if not is_managed_workflow_artifact(path)]; statuses={path:status for path,status in self.git.diff_name_status(worktree,run.get("base_commit") or None).items() if not is_managed_workflow_artifact(path)}
         declared=sorted(set(files_changed)); extra=sorted(set(actual)-set(declared)); missing=sorted(set(declared)-set(actual))
         plan=self.artifacts.artifact(work_id,"plan") or {}; entries=(plan.get("metadata") or {}).get("files",[])
         scope={str(item.get("path","")).replace("\\","/"):str(item.get("action","")).lower() for item in entries if item.get("path")}
@@ -485,7 +506,7 @@ class DynosAI:
         if verification=="verified":
             for task in self.db.query("SELECT * FROM tasks WHERE work_id=? ORDER BY id",(work_id,)):
                 if task["id"] not in requested or task["state"]=="completed": continue
-                task_files=set(json_loads(task.get("files"),[])); must_change={f for f in task_files if scope.get(f)!="read"}
+                task_files=set(product_scope_paths(json_loads(task.get("files"),[]))); must_change={f for f in task_files if scope.get(f)!="read"}
                 touched=sorted(must_change & set(actual)); missing_task=sorted(must_change-set(actual))
                 accepted=list(json_loads(task.get("acceptance"),[])); requirements=list(json_loads(task.get("requirements"),[]))
                 evidence_ok=bool(touched) and not missing_task and bool(accepted)
@@ -671,7 +692,7 @@ class DynosAI:
                 passed=False; results.append({"profile":profile,"status":"failed","exit_code":126,"output":"Validation profile not approved"}); continue
             parts=ValidationProfilePolicy.decode(row["command_json"]); command=" ".join(parts)
             try:
-                result=subprocess.run(parts,cwd=worktree,text=True,capture_output=True,timeout=180,env={**os.environ,"DYNOSAI_GIT_BYPASS":"1"}); output=(result.stdout+"\n"+result.stderr).strip(); status="passed" if result.returncode==0 else "failed"; passed=passed and result.returncode==0
+                result=subprocess.run(parts,cwd=worktree,text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=180,env={**os.environ,"DYNOSAI_GIT_BYPASS":"1"}); output=(result.stdout+"\n"+result.stderr).strip(); status="passed" if result.returncode==0 else "failed"; passed=passed and result.returncode==0
                 if record:self.db.execute("INSERT INTO validations(work_id,command,status,exit_code,output,created_at) VALUES(?,?,?,?,?,?)",(work_id,f"profile:{profile}",status,result.returncode,output[-12000:],utc_now()))
                 results.append({"profile":profile,"command":command,"status":status,"exit_code":result.returncode,"output":output[-2000:]})
             except FileNotFoundError: passed=False; results.append({"profile":profile,"command":command,"status":"failed","exit_code":127,"output":"Command not found"})
@@ -826,7 +847,7 @@ class DynosAI:
         worktree=Path(run.get("worktree")) if run and run.get("worktree") else self.root
         policy=PathPolicyEngine(worktree); visible=[]; denied=[]
         for line in self.git.status(worktree):
-            rel=line[3:] if len(line)>3 else line
+            rel=decode_git_path(line[3:] if len(line)>3 else line)
             decision=policy.decision(rel,"read",agent=True)
             if decision.allowed: visible.append(line)
             else: denied.append({"path":rel,"reason":decision.reason})
@@ -874,7 +895,16 @@ class DynosAI:
         parts.extend([str(work.get("title") or ""),str(work.get("description") or "")])
         return " ".join(x.strip() for x in parts if x and x.strip())
 
+    def _scrub_managed_overlays_from_tasks(self, work_id: str) -> None:
+        """Remove DynosAI-owned spec/plan overlays from persisted task file lists."""
+        for task in self.db.query("SELECT id,files FROM tasks WHERE work_id=?", (work_id,)):
+            files = json_loads(task.get("files"), [])
+            cleaned = product_scope_paths(files)
+            if cleaned != list(files):
+                self.db.execute("UPDATE tasks SET files=?,updated_at=? WHERE id=?", (json_dumps(cleaned), utc_now(), task["id"]))
+
     def _task_queue_contract(self, work_id: str) -> dict[str, Any]:
+        self._scrub_managed_overlays_from_tasks(work_id)
         rows=[Database.decode(t,"files","depends_on","requirements","acceptance","evidence_required","validation_commands") for t in self.db.query("SELECT * FROM tasks WHERE work_id=? ORDER BY id",(work_id,))]
         completed={t["id"] for t in rows if t["state"]=="completed"}
         remaining=[t for t in rows if t["state"]!="completed"]
@@ -1113,12 +1143,12 @@ class DynosAI:
         semantic_ready = bool(semantic.get("configured")) and semantic.get("documents", 0) >= 0
         parser_backends = {row["key"].split(":",1)[1]: row["value"] for row in self.db.query("SELECT key,value FROM meta WHERE key LIKE 'parser_backend:%'")}
         agent_health={}
-        commands={"claude":"claude","codex":"codex","cursor":"cursor-agent"}
+        commands={"codex":"codex","cursor":"cursor-agent"}
         for name,available in detected.items():
             item={"executable":available,"version_probe":"not-installed"}
             if available:
                 try:
-                    r=subprocess.run([commands[name],"--version"],text=True,capture_output=True,timeout=4)
+                    r=subprocess.run([commands[name],"--version"],text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=4)
                     item["version_probe"]="ok" if r.returncode==0 else "failed"; item["version"]=(r.stdout or r.stderr).strip()[:300]
                 except Exception as exc: item["version_probe"]="failed"; item["error"]=str(exc)
             agent_health[name]=item
@@ -1139,7 +1169,7 @@ class DynosAI:
         import platform, shutil, subprocess
         def version(command: list[str]) -> str | None:
             try:
-                r=subprocess.run(command,text=True,capture_output=True,timeout=5)
+                r=subprocess.run(command,text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=5)
                 return (r.stdout or r.stderr).strip().splitlines()[0][:300] if r.returncode==0 else None
             except Exception: return None
         return {
@@ -1147,7 +1177,6 @@ class DynosAI:
             "os_name": os.name, "cwd": str(Path.cwd().resolve()), "project_root": str(self.root),
             "git": version([self.git._git_executable(),"--version"]),
             "cursor": version([shutil.which("cursor-agent") or "cursor-agent","--version"]) if shutil.which("cursor-agent") else None,
-            "claude": version(["claude","--version"]) if shutil.which("claude") else None,
             "codex": version(["codex","--version"]) if shutil.which("codex") else None,
             "semantic": self.semantic.status(False), "runtime": self.runtime.status(),
         }
@@ -1170,7 +1199,7 @@ class DynosAI:
             current=env.get("PYTHONPATH","")
             env["PYTHONPATH"]=source_root + (os.pathsep + current if current else "")
         try:
-            r=subprocess.run(command,input="\n".join(json.dumps(x) for x in messages)+"\n",cwd=cwd,env=env,text=True,capture_output=True,timeout=15)
+            r=subprocess.run(command,input="\n".join(json.dumps(x) for x in messages)+"\n",cwd=cwd,env=env,text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=15)
             lines=[json.loads(x) for x in r.stdout.splitlines() if x.strip()]
             init=next((x for x in lines if x.get("id")==1),{}); tools=next((x for x in lines if x.get("id")==2),{})
             count=len(((tools.get("result") or {}).get("tools") or []))
@@ -1204,21 +1233,21 @@ class DynosAI:
         worktree_probe={"ok":False,"skipped":False}
         temp_parent=Path(tempfile.mkdtemp(prefix="dynosai-doctor-")); wt=temp_parent/"worktree"
         try:
-            r=subprocess.run([self.git._git_executable(),"worktree","add","--detach",str(wt),"HEAD"],cwd=self.root,text=True,capture_output=True,timeout=20)
+            r=subprocess.run([self.git._git_executable(),"worktree","add","--detach",str(wt),"HEAD"],cwd=self.root,text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=20)
             if r.returncode==0:
                 worktree_probe=self._mcp_handshake_probe(wt)
             else: worktree_probe={"ok":False,"error":(r.stderr or r.stdout)[-1000:]}
         finally:
-            if wt.exists(): subprocess.run([self.git._git_executable(),"worktree","remove","--force",str(wt)],cwd=self.root,text=True,capture_output=True,timeout=20)
+            if wt.exists(): subprocess.run([self.git._git_executable(),"worktree","remove","--force",str(wt)],cwd=self.root,text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=20)
             shutil.rmtree(temp_parent,ignore_errors=True)
         checks["mcp_worktree_handshake"]=bool(worktree_probe.get("ok")); details["mcp_worktree"]=worktree_probe
         cursor=shutil.which("cursor-agent")
         cursor_probe={"installed":bool(cursor)}
         if cursor:
             try:
-                status=subprocess.run([cursor,"status"],text=True,capture_output=True,timeout=8); cursor_probe["authenticated"]=status.returncode==0 and "logged in" in (status.stdout+status.stderr).lower()
-                listing=subprocess.run([cursor,"mcp","list"],text=True,capture_output=True,timeout=10); txt=listing.stdout+listing.stderr; cursor_probe["mcp_ready"]=listing.returncode==0 and "dynosai" in txt.lower() and "ready" in txt.lower(); cursor_probe["mcp_list"]=txt.strip()[:1000]
-                toolrun=subprocess.run([cursor,"mcp","list-tools","dynosai"],text=True,capture_output=True,timeout=10); cursor_probe["tools_visible"]=toolrun.returncode==0 and toolrun.stdout.count("dynosai_")>=20; cursor_probe["tool_count"]=toolrun.stdout.count("dynosai_")
+                status=subprocess.run([cursor,"status"],text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=8); cursor_probe["authenticated"]=status.returncode==0 and "logged in" in (status.stdout+status.stderr).lower()
+                listing=subprocess.run([cursor,"mcp","list"],text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=10); txt=listing.stdout+listing.stderr; cursor_probe["mcp_ready"]=listing.returncode==0 and "dynosai" in txt.lower() and "ready" in txt.lower(); cursor_probe["mcp_list"]=txt.strip()[:1000]
+                toolrun=subprocess.run([cursor,"mcp","list-tools","dynosai"],text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=10); cursor_probe["tools_visible"]=toolrun.returncode==0 and toolrun.stdout.count("dynosai_")>=20; cursor_probe["tool_count"]=toolrun.stdout.count("dynosai_")
             except Exception as exc: cursor_probe["error"]=str(exc)
         checks["cursor_authenticated"]=bool(cursor_probe.get("authenticated")) if cursor_connected else True
         checks["cursor_mcp_ready"]=bool(cursor_probe.get("mcp_ready")) if cursor_connected else True
@@ -1354,7 +1383,7 @@ class DynosAI:
     @staticmethod
     def _classify(description: str) -> str:
         lowered = description.lower()
-        if any(word in lowered for word in ("error", "bug", "falla", "no funciona", "corregir")):
+        if re.search(r"\b(error|bug|falla)\b", lowered) or "no funciona" in lowered or "corregir" in lowered:
             return "bug"
         if any(word in lowered for word in ("refactor", "limpiar", "reorganizar")):
             return "refactor"

@@ -248,18 +248,12 @@ class AgentConfigurator:
 
     def connect(self, agent: str, target_root: Path | None = None, write_scope: list[str] | None = None) -> list[Path]:
         agent = agent.lower()
-        if agent not in {"claude", "codex", "cursor", "all"}: raise ValueError("Agent must be claude, codex, cursor or all")
+        if agent not in {"codex", "cursor", "all"}: raise ValueError("Agent must be codex, cursor or all")
         root = (target_root or self.root).resolve(); created: list[Path] = []
-        agents = ["claude", "codex", "cursor"] if agent == "all" else [agent]
+        agents = ["codex", "cursor"] if agent == "all" else [agent]
         agents_md=root/"AGENTS.md"; _managed_markdown(agents_md,PROTOCOL); created.append(agents_md)
         def portable_server(provider: str) -> dict[str, Any]:
             return {"command":str(Path(sys.executable).absolute()),"args":["-m","dynosai_flow.mcp"],"env":{"DYNOSAI_AGENT_PROVIDER":provider}}
-        if "claude" in agents:
-            claude=root/"CLAUDE.md"; _managed_markdown(claude,PROTOCOL); created.append(claude)
-            mcp=root/".mcp.json"; _merge_json(mcp,lambda d:d.setdefault("mcpServers",{}).update({"dynosai":portable_server("claude")})); created.append(mcp)
-            command_dir=root/".claude"/"commands"; command_dir.mkdir(parents=True,exist_ok=True)
-            for name,content in COMMANDS.items():
-                p=command_dir/f"{name}.md"; p.write_text(content+"\n",encoding="utf-8"); created.append(p)
         if "cursor" in agents:
             cursor=root/".cursor"; (cursor/"rules").mkdir(parents=True,exist_ok=True); (cursor/"commands").mkdir(parents=True,exist_ok=True)
             # Cursor MCP is machine-global so it remains visible when DynosAI creates new Git worktrees.
@@ -297,7 +291,7 @@ class AgentConfigurator:
             cfg=root/".codex"/"config.toml"; _merge_toml_dynosai(cfg); created.append(cfg)
             p=root/".agents"/"skills"/"dynosai"/"SKILL.md"; p.parent.mkdir(parents=True,exist_ok=True); p.write_text(CODEX_SKILL+"\n",encoding="utf-8"); created.append(p)
         # Materialize the provider-neutral profile after the legacy protocol so
-        # Cursor, Codex and Claude receive the same semantic rules/skills/tools.
+        # Cursor and Codex receive the same semantic rules/skills/tools.
         compiled = AgentConfiguration(root).compile(providers=agents, activity="discovery", materialize_tools=False)
         for paths in compiled.get("written", {}).values():
             for raw in paths:
@@ -316,14 +310,9 @@ class AgentConfigurator:
     def disconnect(self, agent: str) -> list[Path]:
         """Remove only DynosAI-owned integration pieces and preserve user config."""
         agent=agent.lower()
-        if agent not in {"claude","codex","cursor","all"}: raise ValueError("Agent must be claude, codex, cursor or all")
-        agents=["claude","codex","cursor"] if agent=="all" else [agent]; touched=[]
+        if agent not in {"codex","cursor","all"}: raise ValueError("Agent must be codex, cursor or all")
+        agents=["codex","cursor"] if agent=="all" else [agent]; touched=[]
         _remove_managed_markdown(self.root/"AGENTS.md"); touched.append(self.root/"AGENTS.md")
-        if "claude" in agents:
-            _remove_managed_markdown(self.root/"CLAUDE.md"); _remove_json_server(self.root/".mcp.json"); touched += [self.root/"CLAUDE.md",self.root/".mcp.json"]
-            for name in COMMANDS:
-                p=self.root/".claude"/"commands"/f"{name}.md"
-                if p.exists(): p.unlink(); touched.append(p)
         if "cursor" in agents:
             # Use a global Cursor MCP entry so every generated worktree sees DynosAI.
             global_mcp=user_home()/".cursor"/"mcp.json"; _remove_json_server(global_mcp); touched.append(global_mcp)
@@ -379,7 +368,7 @@ class AgentConfigurator:
     def resolve_active_session(self, agent: str, worktree_hint: str | Path | None = None) -> dict[str,Any] | None:
         """Resolve a session through the machine-local runtime broker, then validate it in project DB."""
         agent=str(agent or "").lower().strip()
-        if agent not in {"claude","codex","cursor"}: return None
+        if agent not in {"codex","cursor"}: return None
         broker=self.runtime.resolve(agent,worktree_hint or Path.cwd())
         if broker and Path(broker["project_root"]).resolve()==self.root:
             row=self.db.one("SELECT * FROM agent_sessions WHERE id=? AND state='active'",(broker["session_id"],))
@@ -399,4 +388,4 @@ class AgentConfigurator:
 
     @staticmethod
     def detect() -> dict[str,bool]:
-        return {"claude":shutil.which("claude") is not None,"codex":shutil.which("codex") is not None,"cursor":shutil.which("cursor-agent") is not None}
+        return {"codex":shutil.which("codex") is not None,"cursor":shutil.which("cursor-agent") is not None}

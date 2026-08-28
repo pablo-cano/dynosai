@@ -6,7 +6,7 @@ This guide takes a new user from a clean clone to a governed DynosAI project.
 
 - Python 3.11 or newer.
 - Git for governed repository operations.
-- At least one supported coding-agent provider if you want provider-native execution (Codex or Cursor are the two providers covered by the stable core acceptance matrix; Claude configuration is available but not yet part of that real-provider certification matrix).
+- At least one supported coding-agent provider if you want provider-native execution. The current public provider surface is Codex or Cursor.
 - Internet access may be needed the first time the local embedding model is downloaded. Runtime project state remains local.
 
 ## 2. Install from source
@@ -57,7 +57,15 @@ dynosai studio --port 9876 --no-browser
 dynosai app-server --port 9876
 ```
 
-Studio can detect the repository stack and validation candidates before initialization. Discovered validation commands are only proposals until you explicitly approve them.
+Studio 0.14.1 is designed to guide first-time users. Start on **Home** and follow the primary action shown there. The normal Studio path is:
+
+```text
+Projects -> Home -> New change -> Work -> Approvals
+```
+
+Studio detects the repository stack and validation candidates before initialization. Discovered validation commands are only proposals until you explicitly approve them. If an uninitialized Git repository is dirty, Studio explains that the changes must be committed or stashed before adoption; it never discards user work automatically.
+
+Appearance can be System, Light or Dark. Settings also contains an optional **Show technical details** switch for risk internals, diagnostics and the provider-neutral activity log.
 
 ## 4. Configure providers once
 

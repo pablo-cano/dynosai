@@ -27,7 +27,7 @@ class AgentConfiguration091Tests(unittest.TestCase):
         self.assertEqual(profile["schema_version"], 1)
         self.assertEqual(profile["mode"], "recommended")
         self.assertEqual(profile["context"]["strategy"], "progressive")
-        self.assertEqual(set(profile["providers"]), {"cursor", "codex", "claude"})
+        self.assertEqual(set(profile["providers"]), {"cursor", "codex"})
         self.assertLess(len(cfg.profile_path.read_text(encoding="utf-8")), 2000)
 
     def test_project_analyzer_detects_python_api_and_postgres(self):
@@ -72,23 +72,18 @@ class AgentConfiguration091Tests(unittest.TestCase):
     def test_compile_all_materializes_common_semantics_in_native_provider_shapes(self):
         (self.root / "pyproject.toml").write_text('[project]\ndependencies=["fastapi"]\n', encoding="utf-8")
         (self.root / "AGENTS.md").write_text("# User instructions\n", encoding="utf-8")
-        (self.root / "CLAUDE.md").write_text("# User Claude instructions\n", encoding="utf-8")
         cfg = AgentConfiguration(self.root)
         cfg.init()
-        result = cfg.compile(providers=["cursor", "codex", "claude"], activity="implementation")
+        result = cfg.compile(providers=["cursor", "codex"], activity="implementation")
         self.assertFalse(result["dry_run"])
         self.assertTrue((self.root / ".cursor" / "skills" / "api-development" / "SKILL.md").exists())
         self.assertTrue((self.root / ".agents" / "skills" / "api-development" / "SKILL.md").exists())
-        self.assertTrue((self.root / ".claude" / "skills" / "api-development" / "SKILL.md").exists())
         self.assertIn("# User instructions", (self.root / "AGENTS.md").read_text(encoding="utf-8"))
-        self.assertIn("# User Claude instructions", (self.root / "CLAUDE.md").read_text(encoding="utf-8"))
         cursor_mcp = json.loads((self.root / ".cursor" / "mcp.json").read_text(encoding="utf-8"))
-        claude_mcp = json.loads((self.root / ".mcp.json").read_text(encoding="utf-8"))
         self.assertIn("dynosai", cursor_mcp["mcpServers"])
-        self.assertIn("dynosai", claude_mcp["mcpServers"])
         tomllib.loads((self.root / ".codex" / "config.toml").read_text(encoding="utf-8"))
         effective = json.loads((self.root / ".dynosai" / "generated" / "effective-config.json").read_text(encoding="utf-8"))
-        self.assertEqual(set(effective), {"cursor", "codex", "claude"})
+        self.assertEqual(set(effective), {"cursor", "codex"})
         lock = json.loads((self.root / ".dynosai" / "generated" / "lock.json").read_text(encoding="utf-8"))
         self.assertTrue(lock["effective_sha256"])
 
@@ -126,27 +121,21 @@ class AgentConfiguration091Tests(unittest.TestCase):
         self.assertFalse((self.root / ".git").exists())
         self.assertTrue((self.root / ".cursor" / "rules" / "dynosai.mdc").exists())
 
-    def test_machine_setup_supports_claude_without_destroying_existing_config(self):
+    def test_machine_setup_rejects_unsupported_provider(self):
         home = Path(self.td.name) / "home"
         home.mkdir()
-        path = home / ".claude.json"
-        path.write_text(json.dumps({"theme": "dark", "mcpServers": {"user": {"command": "x"}}}), encoding="utf-8")
-        result = MachineProviderSetup(home).setup(["claude"], install_model=False)
-        data = json.loads(path.read_text(encoding="utf-8"))
-        self.assertEqual(data["theme"], "dark")
-        self.assertIn("user", data["mcpServers"])
-        self.assertIn("dynosai", data["mcpServers"])
-        self.assertTrue(result["ready"])
+        with self.assertRaises(ValueError):
+            MachineProviderSetup(home).setup(["unsupported-provider"], install_model=False)
 
 
     def test_clean_removes_only_dynosai_generated_semantic_files(self):
         (self.root / "AGENTS.md").write_text("# User instructions\n", encoding="utf-8")
         cfg = AgentConfiguration(self.root)
         cfg.init()
-        cfg.compile(providers=["codex", "cursor", "claude"], activity="implementation")
+        cfg.compile(providers=["codex", "cursor"], activity="implementation")
         cursor_mcp = self.root / ".cursor" / "mcp.json"
         data = json.loads(cursor_mcp.read_text(encoding="utf-8")); data["mcpServers"]["user"]={"command":"x"}; cursor_mcp.write_text(json.dumps(data), encoding="utf-8")
-        cfg.clean(providers=["codex", "cursor", "claude"])
+        cfg.clean(providers=["codex", "cursor"])
         self.assertIn("# User instructions", (self.root / "AGENTS.md").read_text(encoding="utf-8"))
         self.assertNotIn("DYNOSAI:AGENT-CONFIG", (self.root / "AGENTS.md").read_text(encoding="utf-8"))
         self.assertFalse((self.root / ".agents" / "skills" / "api-development").exists())
@@ -155,7 +144,7 @@ class AgentConfiguration091Tests(unittest.TestCase):
         self.assertNotIn("dynosai", remaining["mcpServers"])
 
     def test_version_is_091(self):
-        self.assertEqual(__version__, "0.14.0")
+        self.assertEqual(__version__, "0.14.1")
 
 
 if __name__ == "__main__":

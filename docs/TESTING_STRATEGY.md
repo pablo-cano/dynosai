@@ -60,3 +60,21 @@ A release PASS is therefore a combination of deterministic regression, packaging
 - public `studio` and `app-server` CLI contracts.
 
 The 0.13.0 real-provider matrix remains the baseline certification for the unchanged governed provider/Core behavior. A later 0.14.x release may recertify real providers when Studio begins mutating additional workflow surfaces or provider runtime contracts change.
+
+### 0.14.1 guided-Studio regression
+
+`tests/test_141.py` adds deterministic coverage for the UX/application changes without browser automation or external providers:
+
+- user-facing setup status for clean and dirty Git repositories;
+- setup readiness after initialization;
+- Review Center pending-interaction reads;
+- `/api/setup` and `/api/reviews`;
+- shared public-web/Studio brand icon and favicon;
+- System/Light/Dark theme contract and persistence bootstrap;
+- non-technical primary navigation and absence of the 0.14.0 `Advanced mode`;
+- setup/task/review/help content surfaces;
+- loopback serving for new SVG/theme assets;
+- opt-in technical navigation contract;
+- source/package synchronization for all Studio assets.
+
+`tests/test_151.py` through `tests/test_158.py` extend that coverage to Cursor ACP, approval-contract rendering, Windows UTF-8 provider transport, the Windows ACP process-tree/`acp-sessions` lifecycle, Studio auto-approve history, activity timestamps, locale-safe subprocess decoding, managed spec/plan overlays, Git C-quoted Spanish overlay paths, leftover verified `tests/` files at merge, Continue-to-finish on Final review, auto-continue into plan authoring after a mid-turn spec approval, auto-continue after scope approval, and Studio scroll preservation.

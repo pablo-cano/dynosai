@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+import unicodedata
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable
@@ -25,6 +26,44 @@ def slugify(value: str, max_length: int = 48) -> str:
     value = re.sub(r"[^a-z0-9áéíóúñü]+", "-", value)
     value = value.strip("-") or "work"
     return value[:max_length].rstrip("-")
+
+
+def decode_git_path(value: str | Path) -> str:
+    """Decode Git C-quoted pathnames (octal UTF-8) into a POSIX NFC path.
+
+    ``core.quotepath`` defaults to true, so untracked files such as
+    ``specs/...pequeña.../plan.md`` appear as ``"specs/...peque\\303\\261a.../plan.md"``.
+    Scope matching and overlay detection need the decoded Unicode form.
+    """
+    text = str(value).strip()
+    if len(text) >= 2 and text[0] == '"' and text[-1] == '"':
+        body = text[1:-1]
+        out = bytearray()
+        index = 0
+        while index < len(body):
+            char = body[index]
+            if char != "\\":
+                out.extend(char.encode("utf-8"))
+                index += 1
+                continue
+            index += 1
+            if index >= len(body):
+                break
+            next_char = body[index]
+            if next_char in "01234567":
+                end = index
+                while end < len(body) and end < index + 3 and body[end] in "01234567":
+                    end += 1
+                out.append(int(body[index:end], 8) & 0xFF)
+                index = end
+                continue
+            out.append({"a": 7, "b": 8, "t": 9, "n": 10, "v": 11, "f": 12, "r": 13, '"': 34, "\\": 92}.get(next_char, ord(next_char)))
+            index += 1
+        text = bytes(out).decode("utf-8", "replace")
+    text = text.replace("\\", "/")
+    while text.startswith("./"):
+        text = text[2:]
+    return unicodedata.normalize("NFC", text)
 
 
 def sha256_text(value: str) -> str:
@@ -52,19 +91,32 @@ def json_loads(value: str | None, default: Any) -> Any:
         return default
 
 
+def captured_run(args: list[str], **kwargs: Any) -> subprocess.CompletedProcess[str]:
+    """Run a subprocess and decode stdout/stderr as UTF-8 without crashing on locale bytes.
+
+    Windows tools such as Git, pytest and tasklist often emit cp1252 even when
+    Studio sets PYTHONUTF8=1. ``errors='replace'`` keeps the parent process alive.
+    """
+    kwargs.setdefault("text", True)
+    kwargs.setdefault("encoding", "utf-8")
+    kwargs.setdefault("errors", "replace")
+    return subprocess.run(args, **kwargs)
+
+
 def run_command(
     args: list[str],
     cwd: Path,
     check: bool = True,
     timeout: int = 120,
 ) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    return captured_run(
         args,
         cwd=str(cwd),
-        text=True,
         capture_output=True,
         check=check,
         timeout=timeout,
+        encoding="utf-8",
+        errors="replace",
     )
 
 

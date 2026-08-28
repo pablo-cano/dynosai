@@ -1,13 +1,29 @@
 # DynosAI Local Studio
 
-This directory mirrors the dependency-free Local Studio frontend shipped inside the Python package under `dynosai_flow.studio_assets`.
+`apps/studio` contains the source assets for the loopback-only Local Studio shipped by the Python package.
 
-Run it through the governed local App Server:
+The Studio is deliberately dependency-free HTML/CSS/JavaScript. The source assets are mirrored byte-for-byte into `src/dynosai_flow/studio_assets/` so the wheel can serve them without Node.js at runtime.
+
+Run:
 
 ```bash
-dynosai studio --project /path/to/repository
+python scripts/check_studio_sync.py
 ```
 
-The server binds to loopback only. Studio never opens `.dynosai/knowledge.db` directly: every read/write goes through `DynosAIApplication` and the local App Server API.
+before release packaging.
 
-When changing these static sources, keep the packaged copies in `src/dynosai_flow/studio_assets/` synchronized. `scripts/check_studio_sync.py` enforces that invariant in CI/repository checks.
+## 0.14.1 UX model
+
+Primary navigation is intentionally non-technical:
+
+- Home
+- New task
+- In progress
+- Reviews
+- Project checks
+- Settings
+- Help
+
+Risk internals, diagnostics and the provider-neutral event stream are hidden until the user enables **Show technical details** in Settings.
+
+The public website and Studio share the same DynosAI brand SVG. Theme preference supports System, Light and Dark and is stored only in browser local storage.

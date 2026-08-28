@@ -35,7 +35,7 @@ class DynosAI123ExecutionWaveTests(unittest.TestCase):
         return e
 
     def test_version_is_0123(self):
-        self.assertEqual(__version__,"0.14.0")
+        self.assertEqual(__version__,"0.14.1")
 
     def test_dependency_chain_is_exposed_as_one_execution_wave(self):
         e=self._engine()

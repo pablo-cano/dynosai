@@ -1,18 +1,17 @@
-import json
 import unittest
 from dynosai_flow.version import __version__
 from dynosai_flow.db import Database
 
 
-class StableRelease0130Tests(unittest.TestCase):
-    def test_stable_version(self):
-        self.assertEqual(__version__, "0.14.0")
+class StableReleaseCompatibilityTests(unittest.TestCase):
+    def test_release_version(self):
+        self.assertEqual(__version__, "0.14.1")
 
     def test_schema_remains_v6(self):
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
 
-    def test_no_stable_release_schema_bump(self):
-        # 0.14.0 is a promotion of the validated RC, not an architecture release.
+    def test_product_patch_does_not_bump_authority_schema(self):
+        # 0.14.1 is a Studio/product patch over the established schema-v6 authority model.
         self.assertLessEqual(Database.CURRENT_SCHEMA_VERSION, 6)
 
 
