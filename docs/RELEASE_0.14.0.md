@@ -115,7 +115,7 @@ python -m pip wheel . --no-deps --no-build-isolation -w dist
 
 - Studio 0.14.0 focuses on onboarding/overview/risk/validations/start-work. Rich spec/plan editors, diff review and requirement-to-code visualization are planned for 0.14.x.
 - Local Studio is browser-based in this release; Tauri/desktop installers remain future roadmap work.
-- Claude configuration exists, but the final real-provider baseline currently remains Codex + Cursor.
+- The public supported provider baseline is Codex + Cursor.
 - Risk is deterministic and advisory, not a semantic security review.
 
 ## One-command release build

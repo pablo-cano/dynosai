@@ -26,7 +26,10 @@ REQUIRED = [
     "docs/STUDIO.md",
     "apps/studio/index.html",
     "apps/studio/app.js",
+    "apps/studio/i18n.js",
     "apps/studio/styles.css",
+    "apps/studio/theme-init.js",
+    "apps/studio/icon.svg",
     "docs/reference/MODULES.md",
 ]
 
@@ -53,9 +56,9 @@ def main() -> int:
     web_package = json.loads((ROOT / "apps" / "web" / "package.json").read_text(encoding="utf-8"))
     if str(web_package.get("version")) != version:
         fail("apps/web package version does not match dynosai_flow.version")
-    if '"dynosai_flow.studio_assets" = ["*.html", "*.css", "*.js"]' not in pyproject:
+    if '"dynosai_flow.studio_assets" = ["*.html", "*.css", "*.js", "*.svg"]' not in pyproject:
         fail("pyproject does not package Local Studio static assets")
-    for asset in ("index.html", "app.js", "styles.css"):
+    for asset in ("index.html", "app.js", "i18n.js", "styles.css", "theme-init.js", "icon.svg"):
         public_asset = ROOT / "apps" / "studio" / asset
         packaged_asset = SRC / "studio_assets" / asset
         if public_asset.read_bytes() != packaged_asset.read_bytes():

@@ -10,7 +10,9 @@ import os
 import shlex
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from typing import Any
+from typing import Any, Iterable
+
+from .util import decode_git_path
 
 
 SENSITIVE_PATTERNS = (
@@ -32,22 +34,41 @@ AGENT_WRITE_DENY = (
     "AGENTS.md", "CLAUDE.md", ".mcp.json", ".codex/**", ".cursor/**", ".agents/**",
 )
 
+MANAGED_WORKFLOW_ARTIFACT_PATTERNS = (
+    "specs/**",
+    ".specify/**",
+    "plan.md",
+    "spec.md",
+    "tasks.md",
+    "**/plan.md",
+    "**/spec.md",
+    "**/tasks.md",
+)
+
 
 class PolicyError(PermissionError):
     pass
 
 
 def _norm(value: str | Path) -> str:
-    text=str(value).replace("\\", "/")
-    while text.startswith("./"):
-        text=text[2:]
-    return text
+    return decode_git_path(value)
 
 
 def _matches(path: str, pattern: str) -> bool:
     p = PurePosixPath(path)
     # PurePath.match handles ** better than fnmatch for nested paths; keep both for root patterns.
     return p.match(pattern) or fnmatch.fnmatch(path, pattern)
+
+
+def is_managed_workflow_artifact(path: str | Path) -> bool:
+    """Return True for DynosAI-exported spec/plan overlays, not product source."""
+    rel = _norm(path)
+    return any(_matches(rel, pattern) for pattern in MANAGED_WORKFLOW_ARTIFACT_PATTERNS)
+
+
+def product_scope_paths(paths: Iterable[str | Path]) -> list[str]:
+    """Drop DynosAI-owned spec/plan overlays from a task or plan file list."""
+    return [str(path) for path in paths if not is_managed_workflow_artifact(path)]
 
 
 @dataclass(slots=True)

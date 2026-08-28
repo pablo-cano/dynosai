@@ -54,7 +54,7 @@ class ProjectDetector:
         if has_git:
             try:
                 import subprocess
-                r = subprocess.run(["git", "status", "--porcelain"], cwd=root, text=True, capture_output=True, timeout=8)
+                r = subprocess.run(["git", "status", "--porcelain"], cwd=root, text=True, encoding="utf-8", errors="replace", capture_output=True, timeout=8)
                 dirty = [x for x in r.stdout.splitlines() if x.strip()] if r.returncode == 0 else []
             except Exception:
                 dirty = []
@@ -223,7 +223,7 @@ class DynosAIApplication:
             normalized="codex" if str(provider).lower()=="openai" else str(provider).lower()
             model_control=ModelControlPlane(self.root).for_work(normalized,work,at_provider_boundary=at_provider_boundary).to_dict()
             route=model_control["route"]
-        agent_config=(AgentConfiguration(self.root).resolve(provider=("codex" if str(provider).lower()=="openai" else str(provider).lower()), state=work.get("state")) if str(provider).lower() in {"cursor","codex","openai","claude"} else None)
+        agent_config=(AgentConfiguration(self.root).resolve(provider=("codex" if str(provider).lower()=="openai" else str(provider).lower()), state=work.get("state")) if str(provider).lower() in {"cursor","codex","openai"} else None)
         checkpoint=ContextCheckpointStore(self.root).capture(self.engine,work["id"],label="work-start",reason="work_start")
         self.events.emit("WorkStarted", work_id=work["id"], session_id=session.get("id"), payload={"provider": provider, "workspace_strategy": workspace_strategy, "model_route": route, "model_control":model_control, "agent_config": agent_config,"context_checkpoint":checkpoint})
         return {**work, "provider_session": session, "workspace_strategy": workspace_strategy, "model_route": route, "model_control":model_control, "agent_config": agent_config,"context_checkpoint":checkpoint}
@@ -268,6 +268,39 @@ class DynosAIApplication:
         result = ValidationDiscovery.apply(self.engine.db, candidates, names, overwrite=overwrite)
         self.events.emit("ValidationProfilesApproved", payload=result)
         return {**result, "profiles": self.validation_discovery()}
+
+    def model_routing(self, provider: str | None = None) -> dict[str, Any]:
+        """Expose effective provider/model routes for project-facing clients."""
+        return ProviderModelRouting(self.root).show(provider)
+
+    def set_project_model_route(
+        self,
+        provider: str,
+        model: str,
+        *,
+        effort: str | None = None,
+        activity: str | None = None,
+    ) -> dict[str, Any]:
+        """Persist a project-scoped model route without changing workflow authority."""
+        result = ProviderModelRouting(self.root).set(
+            provider, model, effort=effort, activity=activity, scope="project"
+        )
+        if self.detector.detect(self.root).get("has_dynosai"):
+            self.events.emit(
+                "ProjectModelRouteUpdated",
+                payload={"provider": provider, "activity": activity, "model": model, "effort": effort},
+            )
+        return {**result, "effective": self.model_routing(provider)}
+
+    def reset_project_model_route(self, provider: str, *, activity: str | None = None) -> dict[str, Any]:
+        """Remove a project-scoped override and reveal the inherited route again."""
+        result = ProviderModelRouting(self.root).reset(provider, activity=activity, scope="project")
+        if self.detector.detect(self.root).get("has_dynosai"):
+            self.events.emit(
+                "ProjectModelRouteReset",
+                payload={"provider": provider, "activity": activity},
+            )
+        return {**result, "effective": self.model_routing(provider)}
 
     def risk_assessment(self, work_id: str | None = None) -> dict[str, Any]:
         """Return a deterministic advisory risk score for the project/current work."""
@@ -315,6 +348,214 @@ class DynosAIApplication:
         recommendation = items[0]["action"] if items else str(contract.get("next_action") or contract.get("message") or "Continue the governed workflow.")
         return {"blocked": bool(items), "items": items, "recommended_action": recommendation, "work_id": work["id"], "state": work.get("state"), "quality": score}
 
+    def setup_status(self) -> dict[str, Any]:
+        """Return a user-facing project setup model for Local Studio and other clients."""
+        info = self.detector.detect(self.root)
+        validations = self.validation_discovery()
+        candidates = validations.get("candidates") or []
+        approved = validations.get("approved") or {}
+        approved_count = sum(1 for item in approved.values() if item.get("approved"))
+        pending_checks = [item for item in candidates if not (approved.get(str(item.get("name") or "")) or {}).get("approved")]
+        dirty_count = len(info.get("dirty") or [])
+        initialized = bool(info.get("has_dynosai"))
+
+        steps: list[dict[str, str]] = []
+        if info.get("exists"):
+            stacks = ", ".join(info.get("stacks") or []) or "project files"
+            steps.append({"id": "project", "label": "Project detected", "state": "complete", "detail": f"Found {stacks}."})
+        else:
+            steps.append({"id": "project", "label": "Project detected", "state": "blocked", "detail": "The selected directory does not exist."})
+
+        if info.get("has_git"):
+            if dirty_count and not initialized:
+                steps.append({"id": "git", "label": "Git is ready", "state": "blocked", "detail": f"{dirty_count} uncommitted change(s) must be committed or stashed before adoption."})
+            elif dirty_count:
+                steps.append({"id": "git", "label": "Git is ready", "state": "complete", "detail": f"Repository detected; {dirty_count} working-tree change(s) are currently present."})
+            else:
+                steps.append({"id": "git", "label": "Git is ready", "state": "complete", "detail": "Repository detected and the working tree is clean."})
+        elif info.get("has_code"):
+            steps.append({"id": "git", "label": "Git is ready", "state": "ready", "detail": "DynosAI can initialize Git before governed work starts."})
+        else:
+            steps.append({"id": "git", "label": "Git is ready", "state": "ready", "detail": "Git will be initialized with the new DynosAI project."})
+
+        if initialized:
+            steps.append({"id": "dynosai", "label": "DynosAI initialized", "state": "complete", "detail": "Durable governed project state is available."})
+        elif dirty_count and info.get("has_git"):
+            steps.append({"id": "dynosai", "label": "DynosAI initialized", "state": "blocked", "detail": "Initialization is blocked until the Git working tree is clean."})
+        else:
+            steps.append({"id": "dynosai", "label": "DynosAI initialized", "state": "ready", "detail": "Ready to create or adopt governed project state."})
+
+        if candidates:
+            if pending_checks:
+                steps.append({"id": "checks", "label": "Project checks reviewed", "state": "ready", "detail": f"{len(pending_checks)} detected validation check(s) still need review."})
+            else:
+                steps.append({"id": "checks", "label": "Project checks reviewed", "state": "complete", "detail": f"{approved_count} governed validation check(s) approved."})
+        else:
+            steps.append({"id": "checks", "label": "Project checks reviewed", "state": "complete", "detail": "No common validation commands require approval."})
+
+        if not info.get("exists"):
+            primary = {"code": "inspect", "label": "Choose a valid project", "title": "Project folder not found", "description": "Launch Studio again with an existing project directory.", "short_status": "Project missing"}
+        elif not initialized and dirty_count and info.get("has_git"):
+            primary = {"code": "clean_git", "label": "Review Git changes", "title": "Clean the Git working tree first", "description": "DynosAI will not adopt a repository while it contains uncommitted changes. Commit or stash them, then refresh Studio.", "short_status": "Git needs attention"}
+        elif not initialized:
+            primary = {"code": "initialize", "label": "Initialize project", "title": "Initialize DynosAI for this project", "description": "Create durable local workflow state and connect the repository to DynosAI governance.", "short_status": "Needs initialization"}
+        elif pending_checks:
+            primary = {"code": "review_checks", "label": "Review project checks", "title": "Review the detected project checks", "description": "Choose which detected test, lint, type-check and build commands DynosAI may use as governed evidence.", "short_status": "Review checks"}
+        else:
+            primary = {"code": "new_task", "label": "Create a new task", "title": "Ready for governed work", "description": "Describe the outcome you want and DynosAI will guide the specification, plan, implementation, validation and review flow.", "short_status": "Ready"}
+
+        ready = initialized and not pending_checks
+        return {
+            "ready": ready,
+            "initialized": initialized,
+            "dirty_count": dirty_count,
+            "candidate_checks": len(candidates),
+            "approved_checks": approved_count,
+            "pending_checks": len(pending_checks),
+            "steps": steps,
+            "primary_action": primary,
+        }
+
+    def list_reviews(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        """Return pending human decisions with bounded, user-facing review context."""
+        info = self.detector.detect(self.root)
+        if not info.get("has_dynosai"):
+            return []
+        self.engine.db.initialize()
+        rows = self.engine.db.query(
+            "SELECT h.*, w.title AS work_title, w.state AS work_state "
+            "FROM human_interactions h LEFT JOIN work_items w ON w.id=h.work_id "
+            "WHERE h.status='pending' ORDER BY h.created_at LIMIT ?",
+            (limit,),
+        )
+        reviews: list[dict[str, Any]] = []
+        for row in rows:
+            item = {
+                "id": row["id"],
+                "work_id": row.get("work_id"),
+                "work_title": row.get("work_title"),
+                "work_state": row.get("work_state"),
+                "session_id": row.get("session_id"),
+                "kind": row.get("kind"),
+                "gate": row.get("gate"),
+                "message": row.get("message"),
+                "requested_schema": json_loads(row.get("schema_json"), {}),
+                "provider": row.get("provider"),
+                "created_at": row.get("created_at"),
+            }
+            work_id = row.get("work_id")
+            if work_id and row.get("kind") == "gate_approval":
+                try:
+                    summary = self.engine.review_summary(work_id)
+                    spec = ((summary.get("spec") or {}).get("metadata") or {})
+                    plan = ((summary.get("plan") or {}).get("metadata") or {})
+                    findings = summary.get("findings") or []
+                    item["detail"] = {
+                        "spec": {
+                            "objective": spec.get("objective"),
+                            "requirements": (spec.get("requirements") or [])[:12],
+                            "acceptance_criteria": (spec.get("acceptance_criteria") or [])[:18],
+                        } if spec else None,
+                        "plan": {
+                            "approach": plan.get("approach"),
+                            "tasks": (plan.get("tasks") or [])[:20],
+                            "files": (plan.get("files") or [])[:30],
+                            "risks": (plan.get("risks") or [])[:8],
+                            "architecture_delta": (plan.get("architecture_delta") or [])[:12],
+                            "task_count": len(plan.get("tasks") or []),
+                            "file_count": len(plan.get("files") or []),
+                        } if plan else None,
+                        "tasks": (summary.get("tasks") or [])[:20],
+                        "quality": {
+                            "score": summary.get("quality_score", 100),
+                            "findings": findings[:20],
+                            "finding_count": len(findings),
+                            "blocking": sum(1 for finding in findings if str(finding.get("severity") or "") == "blocking"),
+                        },
+                    }
+                except Exception:
+                    item["detail"] = {}
+            reviews.append(item)
+        return reviews
+
+    def auto_approve_enabled(self) -> bool:
+        info = self.detector.detect(self.root)
+        if not info.get("has_dynosai"):
+            return False
+        try:
+            self.engine.db.initialize()
+            return self.engine.db.get_meta("studio_auto_approve", "0").strip().lower() in {"1", "true", "yes", "on"}
+        except Exception:
+            return False
+
+    def set_auto_approve(self, enabled: bool) -> dict[str, Any]:
+        """Persist Studio auto-approval and apply it to pending workflow gates."""
+        self.engine._ensure_ready()
+        self.engine.db.set_meta("studio_auto_approve", "1" if enabled else "0")
+        applied: list[dict[str, Any]] = []
+        if enabled:
+            discovery = self.validation_discovery()
+            pending_checks = [
+                str(item.get("name") or "")
+                for item in (discovery.get("candidates") or [])
+                if str(item.get("name") or "") and not (discovery.get("approved") or {}).get(item.get("name") or {}, {}).get("approved")
+            ]
+            if pending_checks:
+                self.approve_discovered_validations(pending_checks)
+            for work in self.list_work(limit=100):
+                work_id = str(work.get("id") or "")
+                if not work_id or work_id == "PROJECT" or str(work.get("state") or "") == "done":
+                    continue
+                applied.extend(self.apply_auto_approvals(work_id))
+        return {"auto_approve": enabled, "applied": applied}
+
+    def apply_auto_approvals(self, work_id: str) -> list[dict[str, Any]]:
+        """Approve pending specification/plan/code/merge gates and ordinary scope requests when auto-mode is on."""
+        if not self.auto_approve_enabled():
+            return []
+        applied: list[dict[str, Any]] = []
+        for pending in list(self.interactions.pending_for_work(work_id)):
+            if pending.kind not in {"gate_approval", "scope_extension"}:
+                continue
+            try:
+                self.resolve_interaction(pending.id, "accept", {"decision": "approve", "source": "studio_auto"})
+            except GitError:
+                break
+            applied.append({"interaction_id": pending.id, "gate": pending.gate, "kind": pending.kind, "source": "studio_auto"})
+        return applied
+
+    def list_review_history(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        """Return resolved human decisions, including automatic Studio approvals."""
+        info = self.detector.detect(self.root)
+        if not info.get("has_dynosai"):
+            return []
+        self.engine.db.initialize()
+        rows = self.engine.db.query(
+            "SELECT h.*, w.title AS work_title, w.state AS work_state "
+            "FROM human_interactions h LEFT JOIN work_items w ON w.id=h.work_id "
+            "WHERE h.status!='pending' ORDER BY COALESCE(h.resolved_at, h.created_at) DESC LIMIT ?",
+            (limit,),
+        )
+        history: list[dict[str, Any]] = []
+        for row in rows:
+            response = json_loads(row.get("response_json"), {}) or {}
+            source = "studio_auto" if str(response.get("source") or "") == "studio_auto" else "human"
+            history.append({
+                "id": row["id"],
+                "work_id": row.get("work_id"),
+                "work_title": row.get("work_title"),
+                "work_state": row.get("work_state"),
+                "kind": row.get("kind"),
+                "gate": row.get("gate"),
+                "message": row.get("message"),
+                "status": row.get("status"),
+                "source": source,
+                "decision": response.get("decision"),
+                "created_at": row.get("created_at"),
+                "resolved_at": row.get("resolved_at"),
+            })
+        return history
+
     def project_overview(self, work_id: str | None = None) -> dict[str, Any]:
         """Aggregate the bounded read model used by Local Studio."""
         detection = self.detector.detect(self.root)
@@ -324,17 +565,21 @@ class DynosAIApplication:
             "initialized": bool(detection.get("has_dynosai")),
             "validations": self.validation_discovery(),
             "risk": self.risk_assessment(work_id),
+            "setup": self.setup_status(),
         }
         if not detection.get("has_dynosai"):
             overview["work"] = []
             overview["status"] = None
             overview["blockers"] = self.explain_blockers(work_id)
+            overview["auto_approve"] = False
             return overview
         self.engine.db.initialize()
         overview["project"] = self.engine.db.get_meta("project_name", self.root.name)
         overview["work"] = self.list_work(limit=12)
         overview["status"] = self.status(work_id)
         overview["blockers"] = self.explain_blockers(work_id)
+        overview["review_count"] = len(self.list_reviews(limit=100))
+        overview["auto_approve"] = self.auto_approve_enabled()
         return overview
 
     def resume(self, provider: str, work_id: str | None = None, *, at_provider_boundary: bool = True) -> dict[str, Any]:
@@ -349,7 +594,7 @@ class DynosAIApplication:
             normalized="codex" if str(provider).lower()=="openai" else str(provider).lower()
             model_control=ModelControlPlane(self.root).for_work(normalized,work,at_provider_boundary=at_provider_boundary).to_dict()
             route=model_control["route"]
-        agent_config=(AgentConfiguration(self.root).resolve(provider=("codex" if str(provider).lower()=="openai" else str(provider).lower()), state=work.get("state")) if str(provider).lower() in {"cursor","codex","openai","claude"} else None)
+        agent_config=(AgentConfiguration(self.root).resolve(provider=("codex" if str(provider).lower()=="openai" else str(provider).lower()), state=work.get("state")) if str(provider).lower() in {"cursor","codex","openai"} else None)
         checkpoint=ContextCheckpointStore(self.root).reference(work["id"])
         self.events.emit("WorkResumed", work_id=work["id"], session_id=session.get("id"), payload={"provider": provider, "state": work.get("state"), "model_route": route, "model_control":model_control, "agent_config": agent_config,"context_checkpoint":checkpoint})
         return {"work": work, "provider_session": session, "permissions": permissions, "next": self.engine.action_contract(work["id"]), "model_route": route, "model_control":model_control, "agent_config": agent_config,"context_checkpoint":checkpoint}
@@ -370,7 +615,11 @@ class DynosAIApplication:
         self.sessions.update_permissions(work["id"])
         session = self.sessions.active(provider, work["id"])
         interaction = self.interactions.gate_request(work, session_id=(session or {}).get("id"), provider=provider)
-        if interaction:
+        if interaction and interaction.kind == "gate_approval" and self.auto_approve_enabled():
+            self.resolve_interaction(interaction.id, "accept", {"decision": "approve", "source": "studio_auto"})
+            work = self.engine.get_work(work["id"])
+            interaction = None
+        elif interaction:
             # Dedupe in HumanInteractionService means repeated polling does not create
             # a second logical request; event consumers can safely correlate by id.
             previous = self.engine.db.one("SELECT COUNT(*) AS n FROM application_events WHERE event_type='HumanInteractionRequested' AND payload LIKE ?", (f'%{interaction.id}%',))
@@ -395,7 +644,7 @@ class DynosAIApplication:
             usage=align_usage_to_activity(usage, activity_for_state(work.get("state")))
             model_control=ModelControlPlane(self.root).for_work(normalized,work,usage=usage,at_provider_boundary=False).to_dict()
             route=model_control["route"]
-        agent_config=(AgentConfiguration(self.root).resolve(provider=("codex" if str(provider).lower()=="openai" else str(provider).lower()), state=work.get("state")) if str(provider).lower() in {"cursor","codex","openai","claude"} else None)
+        agent_config=(AgentConfiguration(self.root).resolve(provider=("codex" if str(provider).lower()=="openai" else str(provider).lower()), state=work.get("state")) if str(provider).lower() in {"cursor","codex","openai"} else None)
         latest_checkpoint=checkpoint_store.reference(work["id"])
         return {
             "work": {k: work.get(k) for k in ("id","title","work_type","state","quality_score","workspace_strategy","provider_session_id")},
@@ -429,7 +678,7 @@ class DynosAIApplication:
                 result = self.engine.resolve_scope_request(scope_id, terminal, str(payload.get("comments") or "")) if scope_id else {"approved": False, "message": "Scope interaction is not linked to a request"}
             work = self.engine.get_work(interaction.work_id)
             self.sessions.update_permissions(work["id"])
-            self.events.emit("HumanInteractionResolved", work_id=work["id"], session_id=interaction.session_id, payload={"interaction_id": interaction.id, "action": action, "status": interaction.status, "scope_status": result.get("status")})
+            self.events.emit("HumanInteractionResolved", work_id=work["id"], session_id=interaction.session_id, payload={"interaction_id": interaction.id, "action": action, "status": interaction.status, "scope_status": result.get("status"), "source": payload.get("source")})
             return {"interaction": interaction.to_dict(), "result": result, "work": work}
         if action == "cancel":
             self.engine.db.execute("UPDATE work_items SET active=0,updated_at=? WHERE id=?", (utc_now(), interaction.work_id))
@@ -456,7 +705,7 @@ class DynosAIApplication:
         work = self.engine.get_work(interaction.work_id)
         if work.get("state")=="done": self.sessions.close_for_work(work["id"],"completed")
         else: self.sessions.update_permissions(work["id"])
-        self.events.emit("HumanInteractionResolved", work_id=work["id"], session_id=interaction.session_id, payload={"interaction_id": interaction.id, "action": action, "status": interaction.status})
+        self.events.emit("HumanInteractionResolved", work_id=work["id"], session_id=interaction.session_id, payload={"interaction_id": interaction.id, "action": action, "status": interaction.status, "source": (content or {}).get("source")})
         return {"interaction": interaction.to_dict(), "result": result, "work": work}
 
     def list_events(self, *, after_id: int = 0, work_id: str | None = None, limit: int = 100) -> list[dict[str, Any]]:

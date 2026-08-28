@@ -17,7 +17,7 @@ from typing import Any
 from .model_routing import ProviderModelRouting, activity_for_state
 
 SCHEMA_VERSION = 1
-PROVIDERS = ("cursor", "codex", "claude")
+PROVIDERS = ("cursor", "codex")
 MODES = ("minimal", "recommended", "advanced")
 
 # Provider-neutral capabilities. Prefer native capabilities first and only require
@@ -25,7 +25,6 @@ MODES = ("minimal", "recommended", "advanced")
 NATIVE_CAPABILITIES: dict[str, set[str]] = {
     "cursor": {"repository.read", "repository.write", "repository.diff", "shell.execute", "tests.execute", "web.search"},
     "codex": {"repository.read", "repository.write", "repository.diff", "shell.execute", "tests.execute", "web.search"},
-    "claude": {"repository.read", "repository.write", "repository.diff", "shell.execute", "tests.execute", "web.search"},
 }
 
 RULES: dict[str, dict[str, Any]] = {
@@ -171,7 +170,7 @@ def _default_profile() -> dict[str, Any]:
         "schema_version": SCHEMA_VERSION,
         "mode": "recommended",
         "project": {"autodetect": True, "archetype": "auto"},
-        "providers": {"cursor": True, "codex": True, "claude": True},
+        "providers": {"cursor": True, "codex": True},
         "context": {"strategy": "progressive", "budget": "balanced"},
         "permissions": {"mode": "safe"},
         "components": {"rules": [], "skills": [], "tools": [], "agents": [], "hooks": []},
@@ -397,19 +396,6 @@ class AgentConfiguration:
         hp = self.generated_dir / "provider-hooks" / "cursor.json"; hp.parent.mkdir(parents=True, exist_ok=True); hp.write_text(json.dumps({"provider":"cursor","enforced_by":"dynosai","hooks":effective["hooks"]}, ensure_ascii=False, indent=2)+"\n", encoding="utf-8"); files.append(str(hp))
         return files
 
-    def _compile_claude(self, effective: dict[str, Any], *, materialize_tools: bool = True) -> list[str]:
-        files = self._compile_common(effective, self.root / ".claude" / "skills", self.root / "CLAUDE.md", "claude")
-        servers = {}
-        for t in (effective["tools"] if materialize_tools else []):
-            if t.get("kind") == "mcp":
-                env = dict(t.get("env") or {}); env["DYNOSAI_AGENT_PROVIDER"] = "claude" if t["id"] == "dynosai" else env.get("DYNOSAI_AGENT_PROVIDER", "claude")
-                servers[t["id"]] = {"command": t["command"], "args": t.get("args", []), "env": env}
-        p = self.root / ".mcp.json"; self._write_json_merge(p, "mcpServers", servers); files.append(str(p))
-        for agent in effective["agents"]:
-            p = self.root / ".claude" / "agents" / f"{agent['id']}.md"; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(f"---\nname: {agent['id']}\ndescription: {agent['description']}\n---\n\nUse skills: {', '.join(agent['skills'])}\n", encoding="utf-8"); files.append(str(p))
-        hp = self.generated_dir / "provider-hooks" / "claude.json"; hp.parent.mkdir(parents=True, exist_ok=True); hp.write_text(json.dumps({"provider":"claude","enforced_by":"dynosai","hooks":effective["hooks"]}, ensure_ascii=False, indent=2)+"\n", encoding="utf-8"); files.append(str(hp))
-        return files
-
     def _compile_codex(self, effective: dict[str, Any], *, materialize_tools: bool = True) -> list[str]:
         files = self._compile_common(effective, self.root / ".agents" / "skills", self.root / "AGENTS.md", "codex")
         p = self.root / ".codex" / "config.toml"; p.parent.mkdir(parents=True, exist_ok=True)
@@ -440,7 +426,8 @@ class AgentConfiguration:
         return files
 
     def compile(self, *, providers: list[str] | None = None, activity: str = "discovery", state: str | None = None, dry_run: bool = False, materialize_tools: bool = True) -> dict[str, Any]:
-        providers = providers or [p for p, enabled in (self.load().get("providers") or {}).items() if enabled]
+        profile_providers = self.load().get("providers") or {}
+        providers = providers or [p for p in PROVIDERS if profile_providers.get(p, True)]
         providers = [p.lower() for p in providers]
         for p in providers:
             if p not in PROVIDERS: raise ValueError(f"Unsupported provider: {p}")
@@ -451,7 +438,6 @@ class AgentConfiguration:
         for provider, e in effective.items():
             if provider == "cursor": written[provider] = self._compile_cursor(e, materialize_tools=materialize_tools)
             elif provider == "codex": written[provider] = self._compile_codex(e, materialize_tools=materialize_tools)
-            else: written[provider] = self._compile_claude(e, materialize_tools=materialize_tools)
         self.generated_dir.mkdir(parents=True, exist_ok=True)
         effective_path = self.generated_dir / "effective-config.json"
         effective_path.write_text(json.dumps(effective, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -503,15 +489,6 @@ class AgentConfiguration:
                     ap = self.root / ".cursor" / "agents" / f"{aid}.md"
                     if ap.exists(): ap.unlink(); removed.append(str(ap))
                 self._remove_json_tools(self.root / ".cursor" / "mcp.json", tool_ids)
-            elif provider == "claude":
-                self._remove_block(self.root / "CLAUDE.md", "AGENT-CONFIG")
-                for sid in built_skills:
-                    d = self.root / ".claude" / "skills" / sid
-                    if d.exists(): shutil.rmtree(d); removed.append(str(d))
-                for aid in built_agents:
-                    ap = self.root / ".claude" / "agents" / f"{aid}.md"
-                    if ap.exists(): ap.unlink(); removed.append(str(ap))
-                self._remove_json_tools(self.root / ".mcp.json", tool_ids)
             else:
                 self._remove_block(self.root / "AGENTS.md", "AGENT-CONFIG")
                 for sid in built_skills:

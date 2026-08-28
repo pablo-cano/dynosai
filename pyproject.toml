@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dynosai-flow"
-version = "0.14.0"
+version = "0.14.1"
 description = "Local-first SDD governance, evidence, Git control, validation, and semantic memory for coding agents"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -68,4 +68,4 @@ testpaths = ["tests"]
 addopts = "-ra"
 
 [tool.setuptools.package-data]
-"dynosai_flow.studio_assets" = ["*.html", "*.css", "*.js"]
+"dynosai_flow.studio_assets" = ["*.html", "*.css", "*.js", "*.svg"]

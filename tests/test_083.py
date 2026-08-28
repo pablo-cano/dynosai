@@ -83,9 +83,11 @@ class Acceptance083Tests(unittest.TestCase):
         self.assertFalse(_strict_zero_metric([{"status":"passed","mcp_failures":1}],"mcp_failures"))
 
     def test_codex_0147_workspace_write_sandbox_is_supported(self):
+        captured=self.tmp/"turn.json"
         fake=self.tmp/"codex"
         fake.write_text(r'''#!/usr/bin/env python3
 import json,sys
+captured=sys.argv[-1]
 
 def send(x): print(json.dumps(x),flush=True)
 for line in sys.stdin:
@@ -99,14 +101,27 @@ for line in sys.stdin:
         else:
             send({'id':rid,'result':{'thread':{'id':'thr'}}})
     elif method=='turn/start':
+        open(captured,'w',encoding='utf-8').write(json.dumps(m))
         send({'id':rid,'result':{'turn':{'id':'turn','status':'inProgress','items':[]}}})
         send({'method':'turn/completed','params':{'threadId':'thr','turn':{'id':'turn','status':'completed'}}}); break
 ''',encoding="utf-8"); fake.chmod(fake.stat().st_mode|stat.S_IXUSR)
         root=self.tmp/"codex-project"; root.mkdir(); logs=self.tmp/"codex-logs"
-        result=CodexAppServerDriver(str(fake),20).run(root,"prompt",logs,interaction_mode="auto")
+        # CodexAppServerDriver passes the executable only; we use a wrapper that
+        # strips the extra path argument to keep the fixture simple.
+        wrapper=self.tmp/"codex-wrap.py"
+        wrapper.write_text(
+            "import runpy,sys\nsys.argv=[sys.argv[1]]\nrunpy.run_path(sys.argv[0],run_name='__main__')\n",
+            encoding="utf-8",
+        )
+        fake2=self.tmp/"codex.py"
+        body=fake.read_text(encoding="utf-8").replace("captured=sys.argv[-1]", f"captured={str(captured)!r}")
+        fake2.write_text(body,encoding="utf-8"); fake2.chmod(fake2.stat().st_mode|stat.S_IXUSR)
+        result=CodexAppServerDriver(str(fake2),20).run(root,"prompt",logs,interaction_mode="auto")
         self.assertEqual(result["exit_code"],0,result)
         self.assertEqual(result["sandbox_mode"],"workspace-write")
         self.assertEqual(result["sandbox_attempts"],1)
+        turn=json.loads(captured.read_text(encoding="utf-8"))
+        self.assertEqual(turn["params"].get("sandboxPolicy"),{"type":"workspaceWrite"})
 
     def test_codex_sandbox_falls_back_to_camel_case_for_newer_protocols(self):
         fake=self.tmp/"codex-camel"

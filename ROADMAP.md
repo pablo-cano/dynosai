@@ -19,9 +19,28 @@ Delivered in 0.14.0:
 - provider-neutral project overview/event APIs for graphical clients;
 - public website pages for Local Studio and the product roadmap.
 
-0.14.x follow-up priorities:
+Delivered in 0.14.1:
 
-- richer specification/plan/review surfaces in Studio;
+- Studio branding aligned with `dynosai.com`, including the shared favicon/logo;
+- in-app project management and switching without restarting Studio;
+- English/Spanish localization with an extensible translation dictionary;
+- guided greenfield Fibonacci tutorial;
+- shadcn/ui-style accessible combobox controls and removal of native select styling;
+- Codex/Cursor-only public provider choices;
+- System / Light / Dark appearance with browser-local persistence;
+- guided Home and first-use project setup model;
+- non-technical primary navigation and opt-in technical details;
+- natural-language New Task wizard with clear execution expectations;
+- plain-language workflow timeline for active work;
+- Review Center for pending human decisions with bounded spec/plan/evidence summaries;
+- explicit Project Checks selection/approval experience;
+- simplified diagnostics, copyable support summary, embedded Help/usage guide;
+- `/api/setup` and `/api/reviews` application surfaces;
+- responsive Studio visual refresh without changing the 0.13/0.14 authority model.
+
+Remaining 0.14.x follow-up priorities:
+
+- richer full specification/plan/diff review surfaces in Studio;
 - requirement → task → evidence → code trace visualization;
 - provider setup/doctor UX inside Studio;
 - installer/user-environment hardening across Windows, macOS and Linux;
@@ -95,7 +114,7 @@ Planned capabilities:
 
 - ACP adapter at the application boundary;
 - provider capability manifests;
-- broader provider certification, including Claude and additional coding-agent runtimes;
+- broader provider certification for additional coding-agent runtimes after they meet the same acceptance bar as Codex and Cursor;
 - Skills/validation pack ecosystem;
 - extension APIs for project-specific quality and policy integrations;
 - stronger static-analysis, security and coverage integrations.
