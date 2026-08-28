@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Pablo Cano
-"""Spawn and stop provider subprocesses, including Windows process trees."""
+"""Spawn and stop provider subprocesses, including process trees."""
 
 from __future__ import annotations
 
@@ -195,6 +195,20 @@ def _close_pipe(stream: Any) -> None:
         pass
 
 
+def _posix_group_is_running(pgid: int) -> bool:
+    if pgid <= 0:
+        return False
+    try:
+        os.killpg(pgid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    return True
+
+
 def _posix_signal_group(pgid: int, sig: int) -> None:
     try:
         os.killpg(pgid, sig)
@@ -203,6 +217,17 @@ def _posix_signal_group(pgid: int, sig: int) -> None:
             os.kill(pgid, sig)
         except OSError:
             pass
+
+
+def _wait_posix_group_exit(proc: subprocess.Popen, pgid: int, timeout: float) -> bool:
+    deadline = time.monotonic() + timeout
+    while True:
+        proc.poll()
+        if not _posix_group_is_running(pgid):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.05)
 
 
 def _windows_taskkill(pid: int, *, force: bool) -> None:
@@ -260,8 +285,10 @@ def stop_provider_process(
     """Shut down a provider stdio process and wait until it has exited.
 
     ACP/app-server agents treat stdin EOF as the graceful close signal. Windows
-    descendants are snapshotted *before* the parent can exit, because a child
-    that outlives ``agent acp`` keeps ``acp-sessions`` locked with WinError 32.
+    Windows descendants are snapshotted *before* the parent can exit, because a
+    child that outlives ``agent acp`` keeps ``acp-sessions`` locked with
+    WinError 32. On POSIX the process group is stopped even after the direct
+    child exits cleanly, because its descendants can keep the group alive.
     """
     job = getattr(proc, "_dynosai_job", None)
     pgid = getattr(proc, "_dynosai_pgid", None)
@@ -275,34 +302,35 @@ def stop_provider_process(
             pass
     _close_pipe(proc.stdin)
     _wait_exit(proc, stdin_grace)
-    if proc.poll() is None:
-        if os.name == "nt":
+    if os.name == "nt":
+        if proc.poll() is None:
             _windows_taskkill(proc.pid, force=False)
             try:
                 proc.terminate()
             except OSError:
                 pass
-        else:
-            _posix_signal_group(pgid or proc.pid, signal.SIGTERM)
-            try:
-                proc.terminate()
-            except OSError:
-                pass
-        _wait_exit(proc, term_grace)
-    if proc.poll() is None:
-        if os.name == "nt":
+            _wait_exit(proc, term_grace)
+        if proc.poll() is None:
             _windows_taskkill(proc.pid, force=True)
             try:
                 proc.kill()
             except OSError:
                 pass
-        else:
-            _posix_signal_group(pgid or proc.pid, signal.SIGKILL)
+            _wait_exit(proc, kill_grace)
+    else:
+        group_id = pgid or proc.pid
+        if _posix_group_is_running(group_id):
+            _posix_signal_group(group_id, signal.SIGTERM)
+            _wait_posix_group_exit(proc, group_id, term_grace)
+        if _posix_group_is_running(group_id):
+            _posix_signal_group(group_id, signal.SIGKILL)
+            _wait_posix_group_exit(proc, group_id, kill_grace)
+        if proc.poll() is None:
             try:
                 proc.kill()
             except OSError:
                 pass
-        _wait_exit(proc, kill_grace)
+            _wait_exit(proc, kill_grace)
     _reap_known_children(descendants)
     _close_windows_job(job, terminate=proc.poll() is None)
     proc._dynosai_job = None  # type: ignore[attr-defined]
