@@ -49,6 +49,7 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `runtime_audit.py` | Runtime/provider isolation audit |
 | `semantic.py` | Local embeddings and semantic index |
 | `state.py` | Portable snapshots and atomic restore |
+| `team_scheduler.py` | Plan-DAG waves, file-disjoint leases, claim rules and wave-scoped fan-in |
 | `studio_projects.py` | Local Studio project hub registry and directory browsing |
 | `token_usage.py` | Token normalization, phase attribution and usage reporting |
 | `util.py` | Shared low-level helpers |

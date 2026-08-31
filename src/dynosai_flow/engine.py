@@ -27,6 +27,7 @@ from .validation import QualityEngine
 from .policy import PathPolicyEngine, PolicyError, ValidationProfilePolicy, is_managed_workflow_artifact, product_scope_paths
 from .runtime import RuntimeBroker
 from .execution_runtime import LocalExecutionRuntime
+from .team_scheduler import build_team_plan, claim_allowed, fan_in_conflicts
 from .version import __version__
 
 
@@ -871,20 +872,43 @@ class DynosAI:
         return self.git.policy_filtered_diff(worktree,base,max_chars=max(1000,min(int(max_chars),100000)))
 
     def schedule(self, work_id: str | None = None) -> dict[str, Any]:
-        """Return or update lightweight scheduling metadata for governed work."""
-        work=self.get_work(work_id); tasks=[Database.decode(t,"files","depends_on","requirements","acceptance") for t in self.db.query("SELECT * FROM tasks WHERE work_id=? ORDER BY id",(work["id"],))]; pending={t["id"]:t for t in tasks if t["state"]!="completed"}; batches=[]; completed={t["id"] for t in tasks if t["state"]=="completed"}
-        while pending:
-            ready=[t for t in pending.values() if set(t["depends_on"])<=completed]
-            if not ready: break
-            batch=[]; owned:set[str]=set()
-            for t in ready:
-                files=set(t["files"])
-                if files & owned: continue
-                batch.append(t["id"]); owned |= files
-            if not batch: batch=[ready[0]["id"]]
-            batches.append(batch); completed.update(batch)
-            for tid in batch: pending.pop(tid,None)
-        return {"work_id":work["id"],"parallel_batches":batches,"blocked":list(pending),"policy":"Tasks sharing predicted files are not scheduled in parallel."}
+        """Return governed team waves and leases for the approved task DAG.
+
+        Parallel batches remain file-disjoint. This does not spawn provider processes.
+        """
+        work=self.get_work(work_id)
+        tasks=[Database.decode(t,"files","depends_on","requirements","acceptance","validation_commands","evidence_required") for t in self.db.query("SELECT * FROM tasks WHERE work_id=? ORDER BY id",(work["id"],))]
+        plan=build_team_plan(tasks)
+        plan["work_id"]=work["id"]
+        return plan
+
+    def claim_lease(self, work_id: str, task_id: str, agent: str, role: str = "implementer") -> dict[str, Any]:
+        """Claim a current-wave lease for a governed session. Never starts a second provider."""
+        decision=claim_allowed(self.schedule(work_id), task_id)
+        if not decision.get("allowed"):
+            raise ValueError(decision.get("reason") or "lease cannot be claimed")
+        if role == "reviewer":
+            return {**decision, "status": "human_gate", "role": role, "message": "Reviewer role is the human code-review gate, not a spawned agent."}
+        claimed=self.prepare_task_run(work_id, task_id, agent)
+        self.db.audit("WorkerLeaseClaimed", task_id, {"work_id": work_id, "role": role, "run_id": claimed.get("run_id"), "spawn_provider": False})
+        return {**claimed, "lease": decision.get("lease"), "spawn_provider": False, "role": role}
+
+    def fan_in_report(self, work_id: str) -> dict[str, Any]:
+        """Report whether verified worker scopes in a wave can merge without silent overlap."""
+        plan=self.schedule(work_id)
+        waves=[]
+        for wave in plan.get("waves") or []:
+            item=fan_in_conflicts(list(wave.get("leases") or []))
+            item["wave_id"]=wave.get("id")
+            item["kind"]=wave.get("kind")
+            waves.append(item)
+        return {
+            "work_id":work_id,
+            "waves":waves,
+            "blocked":any(item.get("blocked") for item in waves),
+            "spawn_providers":False,
+            "policy":"Fan-in is wave-scoped. Overlapping verified scopes require a human merge resolution.",
+        }
 
     def _context_query(self, work: dict[str, Any], spec: dict[str, Any] | None = None) -> str:
         """Build phase-aware retrieval text from authoritative structured knowledge.
@@ -1070,6 +1094,7 @@ class DynosAI:
                 "operation": "implement_tasks",
                 "work_id": work["id"],
                 "task_queue":queue,
+                "team": self.schedule(work["id"]),
                 "context": preview,
                 "repository_context":self._repository_context_contract(preview.get("impact") or {}),
                 "rules": [
@@ -1080,6 +1105,7 @@ class DynosAI:
                     "If execution_wave.validation_required=true, run dynosai_run_validation once after all wave edits, not between wave tasks.",
                     "Register the whole wave atomically with completed_tasks=execution_wave.registration_order. Do not register T01 alone when T02 is in the same wave.",
                     "After the final wave result DynosAI may auto-advance directly to code review; do not poll get_next_action merely to discover that boundary.",
+                    "team.current_wave leases are the only parallel slots. DynosAI does not spawn extra provider processes. Stay inside the claimed lease scope_ceiling.",
                 ],
             }
         return None

@@ -34,7 +34,7 @@ class DynosAI121AcceptanceRegressionTests(unittest.TestCase):
         return db
 
     def test_version_is_0121(self):
-        self.assertEqual(__version__, "0.15.0")
+        self.assertEqual(__version__, "0.16.0")
 
     def test_unittest_missing_start_dir_is_precondition_when_test_task_is_pending(self):
         output = "ImportError: Start directory is not importable: 'tests'"

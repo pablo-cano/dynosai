@@ -16,6 +16,7 @@ const capabilities = [
   ["Independent verification", "An agent cannot simply mark its own work verified. Repository state and recorded evidence are checked by the Core."],
   ["Validation profiles", "Run governed unit, lint, type-check, build, integration, security, or project-specific commands and store real outcomes."],
   ["Brownfield support", "Index existing code, symbols, tests, and relationships to build an evidence-backed inferred baseline."],
+  ["Governed teams", "Approved plans become serial or parallel leases only when files do not overlap. Extra coding agents are not spawned."],
   ["Model control", "Track phase budgets, complexity, failures, context pressure, route candidates, and historical recommendations without reckless escalation."],
 ];
 
@@ -115,9 +116,9 @@ export default function HomePage() {
       <section className="border-y border-border bg-muted/45">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <div>
-            <Badge>New in 0.15.0</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Verified Agent Harness: longer work, same authority boundaries.</h2>
-            <p className="mt-5 leading-7 text-muted-foreground">0.15 keeps Studio as the local control plane and adds context handles, an ExecutionRuntime boundary, Validation Integrity on completion reviews, and an offline eval registry. Coding agents stay workers. DynosAI still owns scope, evidence and completion.</p>
+            <Badge>New in 0.16.0</Badge>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Governed Agent Teams: parallel only when the plan is isolated.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">0.16 keeps Studio and the 0.15 harness, and adds file-disjoint leases, claim/fan-in and team slots on Work. DynosAI does not spawn extra coding agents. A second worker exists only if the host opens another governed session.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">

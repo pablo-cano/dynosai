@@ -31,3 +31,7 @@ The public website and Studio share the same DynosAI brand SVG. Theme preference
 ## 0.15.0 completion reviews
 
 Code and merge approvals can expand the resulting diff, validation results and Validation Integrity risks. Studio remains a loopback client of `DynosAIApplication`; it does not open `knowledge.db`.
+
+## 0.16.0 team slots
+
+Work cards show current-wave leases (role, files, status). DynosAI does not start extra agents from Studio; another slot needs another governed session.

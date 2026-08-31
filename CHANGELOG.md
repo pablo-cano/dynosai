@@ -2,6 +2,31 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 0.16.0 - 2026-08-31
+
+### Added
+
+- Introduced governed agent-team scheduling: approved task DAGs become serial or parallel waves with file-disjoint leases, scope ceilings, token/time budgets, and follow-on reviewer/tester contracts.
+- Added `team_scheduler.py` as a Core scheduling module. Leases are derived from existing `tasks.claimed_run` / runs; schema remains v6.
+- Exposed team waves on `engine.schedule`, `engine.claim_lease` and `engine.fan_in_report`. Fan-in is wave-scoped so sequential overlap of the same file is not a false conflict.
+- Studio Work cards show current-wave team slots (role, files, lease status) with an explicit note that DynosAI does not spawn extra provider processes.
+- `dynosai_schedule` now returns the team plan plus a `fan_in` report. A second worker exists only if the host opens another governed session against an open lease.
+
+### Changed
+
+- Parallel batches remain the compatibility view of a team wave. Overlapping planned files are never leased in the same parallel wave.
+- Reviewer is the existing human `code_review` gate, not a spawned agent. Tester is the governed validation contract on the same lease.
+- Predictive routing remains shadow-only.
+
+### Security
+
+- Team scheduling does not expand agent authority, spawn extra Codex/Cursor processes, or bypass human gates.
+
+### Validation
+
+- Added `tests/test_170.py` for DAG waves, claim denial, fan-in conflicts, schema-v6 integration and reviewer-as-human-gate.
+- Studio asset tests require team-slot rendering and EN/ES copy that DynosAI does not start extra agents.
+
 ## 0.15.0 - 2026-08-31
 
 ### Added

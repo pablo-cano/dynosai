@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 const releases = [
   ["0.14", "Control Plane & Guided Studio", "Local App Server, guided setup, task timelines, Review Center, Cursor ACP, Codex app-server, project checks, themes, help, validation discovery and deterministic risk assessment."],
   ["0.15", "Verified Agent Harness", "Context handles, ExecutionRuntime, validation integrity, eval registry v0, execution policy outside the model, and measurable skill/handle comparisons."],
-  ["0.16", "Governed Agent Teams", "Plan-DAG parallelism, isolated worktrees, task leases, specialist reviewer/tester roles and merge governance."],
+  ["0.16", "Governed Agent Teams", "Plan-DAG serial/parallel waves, file-disjoint leases, claim/fan-in and reviewer/tester as contracts. DynosAI does not spawn extra provider processes."],
   ["0.17", "Eval Intelligence", "Eval registry, failure classification, regression generation, provider/model comparison and learning loops."],
   ["0.18", "Secure Autonomous Runtime", "Runtime interface, filesystem/network policy, secret brokering and Strict/Balanced/Autonomous profiles."],
   ["0.19", "Ecosystem", "Broader ACP/client adapters on top of the existing Cursor ACP baseline, provider capability manifests, additional certified providers, skills and validation packs."],

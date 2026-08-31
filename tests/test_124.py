@@ -21,7 +21,7 @@ class DynosAI124StabilizationOptimizationTests(unittest.TestCase):
         self.root=Path(self.td.name)/"project"; self.root.mkdir(parents=True)
 
     def test_version_is_0124(self):
-        self.assertEqual(__version__,"0.15.0")
+        self.assertEqual(__version__,"0.16.0")
 
     def test_codex_transport_uses_structured_content_once_with_small_text_envelope(self):
         value={

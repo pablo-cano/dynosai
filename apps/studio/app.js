@@ -476,6 +476,18 @@ function executionActivityHtml(item) {
     : `<div class="agent-activity-empty">${esc(run.status === "running" ? t("execution.activityWaiting") : t("execution.activityEmpty"))}</div>`;
   return `<div class="agent-activity"><div class="agent-activity-head"><div><strong>${esc(t("execution.activityTitle"))}</strong><small>${esc(t("execution.activityText"))}</small></div>${provider ? `<span class="pill neutral">${esc(provider)}</span>` : ""}</div><div class="agent-activity-log" data-work-id="${esc(item.id)}">${content}</div></div>`;
 }
+function teamSlotsHtml(item) {
+  const team = item.team;
+  const wave = team && team.current_wave;
+  if (!wave || !(wave.leases || []).length) return "";
+  const kind = wave.kind === "parallel" ? t("work.teamParallel") : t("work.teamSerial");
+  const slots = (wave.leases || []).map((lease) => {
+    const tasks = (lease.task_ids || []).join(", ");
+    const files = (lease.scope_ceiling || lease.files || []).slice(0, 4).join(", ");
+    return `<div class="team-slot"><strong>${esc(lease.role || "implementer")}</strong><small>${esc(tasks)}${files ? ` · ${files}` : ""}</small><span class="state-chip">${esc(lease.status || "open")}</span></div>`;
+  }).join("");
+  return `<div class="team-slots"><div class="team-slots-head"><strong>${esc(t("work.teamTitle"))}</strong><small>${esc(kind)}</small></div><div class="team-slot-grid">${slots}</div><p class="team-slots-note">${esc(t("work.teamNoSpawn"))}</p></div>`;
+}
 function renderWork(data) {
   captureActivityScroll();
   const work = (data.work || []).filter((item) => item.id !== "PROJECT");
@@ -486,7 +498,7 @@ function renderWork(data) {
     const waiting = reviews.some((review) => review.work_id === item.id);
     const run = executionFor(item.id);
     const chip = waiting ? t("approvals.waiting") : run?.status === "running" ? t("execution.workingChip") : stateLabel(item.state);
-    return `<article class="work-card"><div class="work-card-head"><div><h3>${esc(item.title)}</h3><p>${esc(item.description)}</p></div><span class="state-chip">${esc(chip)}</span></div>${workflowTimeline(item.state)}${executionStatusHtml(item, waiting)}${waiting ? `<div class="review-actions"><button class="primary compact" data-view="approvals">${esc(t("action.openApprovals"))}</button></div>` : ""}${executionActivityHtml(item)}</article>`;
+    return `<article class="work-card"><div class="work-card-head"><div><h3>${esc(item.title)}</h3><p>${esc(item.description)}</p></div><span class="state-chip">${esc(chip)}</span></div>${workflowTimeline(item.state)}${teamSlotsHtml(item)}${executionStatusHtml(item, waiting)}${waiting ? `<div class="review-actions"><button class="primary compact" data-view="approvals">${esc(t("action.openApprovals"))}</button></div>` : ""}${executionActivityHtml(item)}</article>`;
   }).join("");
   const recentHtml = recent.length ? `<div class="list">${recent.slice(0,8).map((item) => `<div class="list-item"><strong>${esc(item.title)}</strong><small>${esc(item.description)}</small></div>`).join("")}</div>` : "";
   $("work-list").innerHTML = `${activeHtml}${recentHtml ? `<article class="panel recent-work"><h3>${esc(t("work.recentTitle"))}</h3>${recentHtml}</article>` : ""}`;

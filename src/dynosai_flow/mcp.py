@@ -103,7 +103,7 @@ TOOLS=[
  tool("dynosai_git_diff","Diff Git filtrado por PathPolicy.",{"max_chars":{"type":"integer"}}),
  tool("dynosai_refresh_overlay","Actualiza el índice overlay del run para archivos modificados."),
  tool("dynosai_analyze_impact","Analiza impacto.",{"query":{"type":"string"},"limit":{"type":"integer"}},["query"]),
- tool("dynosai_schedule","Planifica lotes paralelizables.",{"work_id":{"type":"string"}}),
+ tool("dynosai_schedule","Plan de equipo gobernado: oleadas paralelas/serie, leases y techo de scope. No lanza procesos extra; un segundo worker existe solo si el host abre otra sesión gobernada.",{"work_id":{"type":"string"}}),
  tool("dynosai_semantic_status","Estado semántico.",{"probe":{"type":"boolean"}}),
  tool("dynosai_sync","Reconcilia Git/código/memoria."),
  tool("dynosai_stats","Métricas locales."),
@@ -791,7 +791,8 @@ class MCPServer:
             if not self._run_id(): raise ValueError("run session required")
             work=e.get_work(); actual=e.git.diff_files(self._session_root(),(e.db.one("SELECT base_commit FROM runs WHERE id=?",(self._run_id(),)) or {}).get("base_commit")); return e.indexer.refresh_overlay(self._run_id(),self._session_root(),actual)
         if name=="dynosai_analyze_impact":return e.retrieval.impact(args["query"],int(args.get("limit",12)))
-        if name=="dynosai_schedule":return e.schedule(self._scoped_work(args))
+        if name=="dynosai_schedule":
+            wid=self._scoped_work(args); plan=e.schedule(wid); plan["fan_in"]=e.fan_in_report(wid); return plan
         if name=="dynosai_semantic_status":return e.model_status(bool(args.get("probe",False)))
         if name=="dynosai_sync":return e.sync()
         if name=="dynosai_stats":return e.stats()
