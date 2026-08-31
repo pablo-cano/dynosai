@@ -51,7 +51,7 @@ codegraph = [
   "tree-sitter-language-pack>=1.13.3,<2",
 ]
 dev = [
-  "pytest>=8,<9",
+  "pytest>=8,<10",
   "build>=1.2,<2",
 ]
 
