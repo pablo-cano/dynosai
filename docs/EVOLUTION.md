@@ -25,6 +25,7 @@ DynosAI has been developed through repeated local and real-provider acceptance l
 | 0.14.1 | Guided Studio UX refresh | Setup guidance, themes/branding, task flow, Review Center, project checks, help, opt-in technical details |
 | 0.15.0 | Verified Agent Harness | Context handles, ExecutionRuntime, Validation Integrity, Eval Registry v0, execution policy; 0.14.1 Studio baseline preserved |
 | 0.16.0 | Governed Agent Teams | DAG waves, file-disjoint leases, claim/fan-in, reviewer/tester as contracts; no extra provider spawn; schema v6 |
+| 0.17.0 | Eval Intelligence | Failure attribution, local-trace mining, inbox-only improvement loop, offline regression evidence; predictive routing still shadow |
 
 ## How changes are recorded now
 

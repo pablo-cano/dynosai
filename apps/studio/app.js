@@ -488,6 +488,26 @@ function teamSlotsHtml(item) {
   }).join("");
   return `<div class="team-slots"><div class="team-slots-head"><strong>${esc(t("work.teamTitle"))}</strong><small>${esc(kind)}</small></div><div class="team-slot-grid">${slots}</div><p class="team-slots-note">${esc(t("work.teamNoSpawn"))}</p></div>`;
 }
+function evalCasesHtml(data) {
+  const intel = data.eval_intelligence;
+  const cases = (intel && intel.cases) || [];
+  if (!cases.length) return "";
+  const rows = cases.slice(0, 6).map((item) => {
+    const layer = (item.attribution && item.attribution.layer) || "harness";
+    const proposed = item.status === "proposed" || item.status === "regressed";
+    const action = proposed ? "" : `<button class="compact" data-eval-propose="${esc(item.case_id)}">${esc(t("eval.propose"))}</button>`;
+    return `<div class="eval-case"><div><strong>${esc(item.case_id)}</strong><small>${esc(layer)} · ${esc(item.summary || "")}</small></div><span class="state-chip">${esc(item.status || "open")}</span>${action}</div>`;
+  }).join("");
+  return `<div class="eval-cases"><div class="eval-cases-head"><strong>${esc(t("eval.title"))}</strong><small>${esc(String(cases.length))}</small></div>${rows}<p class="eval-cases-note">${esc(t("eval.shadow"))}</p></div>`;
+}
+async function proposeEvalImprovement(caseId) {
+  try {
+    await withOperation("operation.saveSettings", async () => {
+      await api("/api/eval/propose", {method:"POST", body:JSON.stringify({case_id: caseId})});
+      await refresh({preserveView:true});
+    });
+  } catch (error) { showAlert(error.message); }
+}
 function renderWork(data) {
   captureActivityScroll();
   const work = (data.work || []).filter((item) => item.id !== "PROJECT");
@@ -737,6 +757,8 @@ function renderProject(data) {
   const active = (data.work || []).filter((item) => item.id !== "PROJECT" && item.state !== "done");
   $("home-active").textContent = String(active.length);
   $("home-reviews").textContent = String(reviews.length);
+  const evalRoot = $("eval-intelligence");
+  if (evalRoot) evalRoot.innerHTML = evalCasesHtml(data);
   renderChecks(data);
   renderWork(data);
   renderReviews();
@@ -1132,6 +1154,7 @@ function wireEvents() {
     if (target.dataset.routeEdit) openRouteDialog(target.dataset.routeEdit);
     if (target.dataset.routeModel && routeDialogState) { $("route-model-input").value = target.dataset.routeModel; routeDialogState.model = target.dataset.routeModel; document.querySelectorAll("[data-route-model]").forEach((node) => node.classList.toggle("active", node === target)); renderRouteEfforts(target.dataset.routeModel, recommendedModel(routingProvider, target.dataset.routeModel)?.recommended_effort); }
     if (target.hasAttribute("data-route-effort") && routeDialogState) { routeDialogState.effort = target.dataset.routeEffort || null; document.querySelectorAll("[data-route-effort]").forEach((node) => node.classList.toggle("active", node === target)); }
+    if (target.dataset.evalPropose) { proposeEvalImprovement(target.dataset.evalPropose); return; }
     if (target.dataset.reviewAction) {
       const card = target.closest("[data-review-id]");
       if (!card) return;

@@ -32,6 +32,7 @@ Coding Agent / CLI / Local Studio
 | ExecutionRuntime (local)      |
 | Context handles               |
 | Team scheduler (leases)       |
+| Eval intelligence             |
 | Audit / token telemetry       |
 +-------------------------------+
       |                  |
@@ -92,13 +93,17 @@ An execution wave is a conservative bounded chain of dependent tasks that may be
 
 Leases are derived from existing `tasks.claimed_run` / runs. Schema remains v6.
 
+## Eval intelligence
+
+`eval_intelligence.py` attributes failures to a layer before they become eval cases. It mines local validations, audit events, eval records and model-control traces into bounded runtime files. Improvement work is created in inbox only. Predictive routing remains shadow. Live-provider quality claims are out of scope.
+
 ## State recovery
 
 `StateManager` creates portable authoritative snapshots and SQLite backups. Restore happens into a temporary database, applies migrations, verifies SQLite integrity/foreign keys, and only then atomically replaces the live database.
 
 ## Model-control boundary
 
-Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.16.0.
+Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.17.0.
 
 ## ExecutionRuntime
 

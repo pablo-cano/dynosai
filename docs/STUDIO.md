@@ -1,6 +1,6 @@
 # DynosAI Local Studio
 
-DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.16 line keeps the 0.14.1 guided product and the 0.15 completion-review surfaces, and shows current-wave team slots on Work without turning Studio into a process launcher.
+DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.17 line keeps the 0.14.1 guided product, 0.15 reviews and 0.16 team slots, and shows mined eval cases on Overview without starting extra agents.
 
 ## What Studio is for
 
@@ -79,6 +79,8 @@ Use **Browse…** beside Location to choose the parent folder in Studio. The dia
 ### Project → Overview
 
 Overview is the only project page available before DynosAI initialization. It shows the setup state and the single action required to continue. New change, Work and Approvals remain disabled until initialization succeeds. Project checks stay visible for inspection, and Project settings remains available so the coding agent/workspace can be chosen before initialization; model-route editing becomes available after initialization. If initialization discovers checks that still need approval, Studio opens Project checks automatically; otherwise it stays on Overview.
+
+When local traces contain failures, Overview also shows **eval cases**. Creating an improvement task from a case puts work in the inbox only; Studio does not start a coding agent from that button. Predictive routing stays in shadow mode.
 
 ### Project → New change
 

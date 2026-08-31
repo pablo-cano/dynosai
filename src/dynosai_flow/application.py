@@ -639,6 +639,10 @@ class DynosAIApplication:
         overview["blockers"] = self.explain_blockers(work_id)
         overview["review_count"] = len(self.list_reviews(limit=100))
         overview["auto_approve"] = self.auto_approve_enabled()
+        try:
+            overview["eval_intelligence"] = self.engine.eval_intelligence()
+        except Exception:
+            overview["eval_intelligence"] = {"cases": [], "predictive_routing": "shadow", "live_provider_evals": False}
         return overview
 
     def resume(self, provider: str, work_id: str | None = None, *, at_provider_boundary: bool = True) -> dict[str, Any]:
@@ -769,3 +773,13 @@ class DynosAIApplication:
 
     def list_events(self, *, after_id: int = 0, work_id: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
         return self.events.list(after_id=after_id, work_id=work_id, limit=limit)
+
+    def propose_eval_improvement(self, case_id: str) -> dict[str, Any]:
+        """Host-owned eval improvement: inbox work only, no provider spawn."""
+        result = self.engine.propose_eval_improvement(case_id)
+        self.events.emit(
+            "EvalImprovementProposed",
+            work_id=(result.get("work") or {}).get("id"),
+            payload={"case_id": case_id, "spawn_provider": False, "auto_start": False},
+        )
+        return result

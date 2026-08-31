@@ -22,6 +22,14 @@ class DynosAI015StudioReviewabilityTests(unittest.TestCase):
         self.assertIn("does not start extra agents", i18n)
         self.assertIn("no arranca agentes extra", i18n)
 
+    def test_overview_exposes_eval_cases(self):
+        app = resources.files("dynosai_flow.studio_assets").joinpath("app.js").read_text(encoding="utf-8")
+        i18n = resources.files("dynosai_flow.studio_assets").joinpath("i18n.js").read_text(encoding="utf-8")
+        self.assertIn("evalCasesHtml", app)
+        self.assertIn("eval.title", i18n)
+        self.assertIn("Predictive routing stays in shadow mode", i18n)
+        self.assertIn("routing predictivo sigue en sombra", i18n)
+
     def test_studio_assets_remain_in_sync(self):
         root = Path(__file__).resolve().parents[1]
         for name in ("index.html", "styles.css", "app.js", "i18n.js", "theme-init.js", "icon.svg"):

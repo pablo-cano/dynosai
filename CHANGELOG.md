@@ -2,6 +2,27 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 0.17.0 - 2026-08-31
+
+### Added
+
+- Introduced eval intelligence on top of Eval Registry v0: failure attribution by layer (model, harness, provider, project, infrastructure, governance), mining of local validations/audit/eval/model-control traces, and bounded regression cases under `.dynosai/runtime/`.
+- Added `eval_intelligence.py`. Improvement work is created in **inbox only**; DynosAI does not auto-start a provider. Regression evidence does not complete or approve the work.
+- Studio Overview shows mined eval cases with an explicit note that predictive routing stays in shadow mode.
+- `dynosai_stats` includes an eval-intelligence summary. Offline fixtures cover `team_overlap` and `mined_regression` without live providers.
+
+### Changed
+
+- Predictive routing remains shadow-only. Non-model failures remain ineligible for capability learning.
+
+### Security
+
+- Eval mining writes runtime files only. Schema remains v6. Agents cannot spawn improvement sessions through MCP.
+
+### Validation
+
+- Added `tests/test_180.py` for attribution, mining, inbox-only propose, and regression evidence. Studio tests require eval-case rendering and EN/ES shadow-mode copy.
+
 ## 0.16.0 - 2026-08-31
 
 ### Added

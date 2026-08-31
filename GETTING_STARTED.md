@@ -57,7 +57,7 @@ dynosai studio --port 9876 --no-browser
 dynosai app-server --port 9876
 ```
 
-Studio 0.16 keeps the 0.14.1 guided product and the 0.15 harness reviews. Start on **Home** and follow the primary action shown there. The normal Studio path is:
+Studio 0.17 keeps the 0.14.1 guided product, the 0.15 harness reviews and 0.16 team slots. Start on **Home** and follow the primary action shown there. The normal Studio path is:
 
 ```text
 Projects -> Home -> New change -> Work -> Approvals

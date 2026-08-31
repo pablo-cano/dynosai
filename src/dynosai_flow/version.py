@@ -2,4 +2,4 @@
 # Copyright (c) 2026 Pablo Cano
 """Single source of truth for the DynosAI package version."""
 
-__version__ = "0.16.0"
+__version__ = "0.17.0"

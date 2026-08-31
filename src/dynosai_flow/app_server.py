@@ -608,6 +608,14 @@ class StudioAPI:
                     return 200, app.reset_project_model_route(provider, activity=payload.get("activity"))
                 except ValueError as exc:
                     return 400, {"error": "validation", "message": str(exc)}
+            if path == "/api/eval/propose":
+                case_id = str(payload.get("case_id") or "").strip()
+                if not case_id:
+                    return 400, {"error": "validation", "message": "case_id is required"}
+                try:
+                    return 200, app.propose_eval_improvement(case_id)
+                except ValueError as exc:
+                    return 400, {"error": "validation", "message": str(exc)}
             if path == "/api/interaction/resolve":
                 interaction_id = str(payload.get("interaction_id") or "").strip()
                 action = str(payload.get("action") or "").strip()
