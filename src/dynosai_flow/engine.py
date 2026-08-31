@@ -28,6 +28,8 @@ from .policy import PathPolicyEngine, PolicyError, ValidationProfilePolicy, is_m
 from .runtime import RuntimeBroker
 from .execution_runtime import LocalExecutionRuntime
 from .team_scheduler import build_team_plan, claim_allowed, fan_in_conflicts
+from .eval_intelligence import build_report, case_by_id, improvement_description, load_cases, mark_proposed, mark_regressed
+from .eval_registry import EvalRegistry
 from .version import __version__
 
 
@@ -848,7 +850,8 @@ class DynosAI:
         mcp_failures=int((self.db.one("SELECT COUNT(*) n FROM audit WHERE event_type='MCPToolFailed'") or {"n":0})["n"])
         scope_requests=int((self.db.one("SELECT COUNT(*) n FROM scope_requests") or {"n":0})["n"])
         validation_runs=int((self.db.one("SELECT COUNT(*) n FROM validations") or {"n":0})["n"])
-        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs}
+        cases=load_cases(self.root)
+        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False}}
 
     def agent_git_status(self, run_id: str | None = None) -> dict[str, Any]:
         """Policy-safe Git status metadata for coding agents."""
@@ -909,6 +912,40 @@ class DynosAI:
             "spawn_providers":False,
             "policy":"Fan-in is wave-scoped. Overlapping verified scopes require a human merge resolution.",
         }
+
+    def eval_intelligence(self) -> dict[str, Any]:
+        """Mine local traces into bounded eval cases. Does not start providers or enable predictive routing."""
+        self._ensure_ready()
+        return build_report(self.db, self.root)
+
+    def propose_eval_improvement(self, case_id: str) -> dict[str, Any]:
+        """Create inbox work for a mined eval case. Never auto-starts a provider session."""
+        self.eval_intelligence()
+        case = case_by_id(self.root, case_id)
+        if not case:
+            raise ValueError(f"unknown eval case: {case_id}")
+        if case.get("improvement_work_id"):
+            work = self.get_work(case["improvement_work_id"])
+            return {"work": work, "case": case, "spawn_provider": False, "auto_start": False, "status": "already_proposed"}
+        work = self.start(improvement_description(case))
+        updated = mark_proposed(self.root, case_id, work["id"])
+        self.db.audit("EvalImprovementProposed", case_id, {"work_id": work["id"], "layer": (updated.get("attribution") or {}).get("layer"), "spawn_provider": False})
+        return {"work": work, "case": updated, "spawn_provider": False, "auto_start": False, "status": "inbox"}
+
+    def register_eval_regression(self, case_id: str) -> dict[str, Any]:
+        """Record an offline eval pass as regression evidence. Does not complete or approve work."""
+        self.eval_intelligence()
+        case = case_by_id(self.root, case_id)
+        if not case:
+            raise ValueError(f"unknown eval case: {case_id}")
+        scenario_id = str(case.get("scenario") or "mined_regression")
+        record = EvalRegistry(self.root).run_offline(scenario_id)
+        if not record.get("success"):
+            return {"case": case, "eval": record, "status": "eval_failed", "work_completed": False}
+        evidence = {"eval_path": record.get("path"), "scenario": scenario_id, "success": True, "recorded_at": record.get("recorded_at")}
+        updated = mark_regressed(self.root, case_id, evidence)
+        self.db.audit("EvalRegressionRecorded", case_id, evidence)
+        return {"case": updated, "eval": record, "status": "regressed", "work_completed": False, "auto_approved": False}
 
     def _context_query(self, work: dict[str, Any], spec: dict[str, Any] | None = None) -> str:
         """Build phase-aware retrieval text from authoritative structured knowledge.

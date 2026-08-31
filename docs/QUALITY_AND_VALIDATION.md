@@ -74,7 +74,7 @@ The deterministic 0.14 scorer can raise risk for security/authentication surface
 
 Managed-agent guidance asks the coding agent to inspect the diff, trace behavior to requirements, look for regressions, and check maintainability/validation gaps. A human code-review gate remains explicit.
 
-0.16.0 still does not automatically launch a second independent reviewer model for every change. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. The deterministic Core checks and human gate remain independent.
+0.17.0 still does not automatically launch a second independent reviewer model for every change. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. Eval intelligence can open an inbox improvement task from a mined failure; it does not auto-start a provider.
 
 ## 7. Failure classification
 
@@ -86,7 +86,7 @@ DynosAI avoids learning "the model failed" from every non-zero outcome. It disti
 - human-gate/governance outcomes;
 - orchestrator/telemetry failures.
 
-Only evidence that is explicitly eligible should influence predictive model-capability learning.
+Only evidence that is explicitly eligible should influence predictive model-capability learning. 0.17 attributes each failure to a layer first; governance, provider, harness and infrastructure outcomes stay out of predictive learning.
 
 ## 8. Stable acceptance evidence
 

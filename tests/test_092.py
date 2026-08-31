@@ -23,7 +23,7 @@ class AcceptanceTelemetry092Tests(unittest.TestCase):
         self.tmp = Path(self.td.name)
 
     def test_version_is_092(self):
-        self.assertEqual(__version__, "0.16.0")
+        self.assertEqual(__version__, "0.17.0")
 
     def test_cli_exposes_persistent_acceptance_telemetry(self):
         args = parser().parse_args([

@@ -4,7 +4,8 @@
 
 This is not hundreds of synthetic tests. It records a representative offline
 baseline so later harness changes can be compared. Live provider quality is
-out of scope until a recorded run exists.
+out of scope until a recorded run exists. 0.17 adds offline multi-agent and
+mined-regression fixtures; they still do not call providers.
 """
 
 from __future__ import annotations
@@ -33,6 +34,8 @@ SCENARIOS: tuple[dict[str, Any], ...] = (
     {"id": "validation_failure", "version": "1", "family": "validation", "summary": "Configured checks fail; completion must not be claimed."},
     {"id": "requirement_mismatch", "version": "1", "family": "integrity", "summary": "Implementation evidence does not cover the requirement."},
     {"id": "context_pressure", "version": "1", "family": "context", "summary": "Large artifacts should be referenced, not replayed."},
+    {"id": "team_overlap", "version": "1", "family": "multi_agent", "summary": "Overlapping worker scopes must fail fan-in without live providers."},
+    {"id": "mined_regression", "version": "1", "family": "intelligence", "summary": "Placeholder target for a mined local-trace regression case."},
 )
 
 
@@ -122,7 +125,16 @@ class EvalRegistry:
             result["success"] = bool(result["recovery"]["can_resume"])
         elif scenario_id == "validation_failure":
             result = {"success": True, "validation_result": "failed", "completion_claimed": False, "failure_category": "validation"}
-        elif scenario_id in {"greenfield_implementation", "brownfield_feature", "bug_fix", "refactor"}:
+        elif scenario_id == "team_overlap":
+            from .team_scheduler import detect_path_conflicts
+            conflicts = detect_path_conflicts(["src/a.py", "src/shared.py"], ["src/b.py", "src/shared.py"])
+            result = {
+                "success": bool(conflicts),
+                "conflicts": conflicts,
+                "failure_category": None if conflicts else "multi_agent_overlap_missed",
+                "note": "offline fixture; no live providers",
+            }
+        elif scenario_id in {"greenfield_implementation", "brownfield_feature", "bug_fix", "refactor", "mined_regression"}:
             result = {"success": True, "validation_result": "fixture", "failure_category": None, "note": "structural fixture only; no live provider"}
         else:
             result = {"success": False, "failure_category": "unknown_scenario"}

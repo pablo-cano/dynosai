@@ -116,9 +116,9 @@ export default function HomePage() {
       <section className="border-y border-border bg-muted/45">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <div>
-            <Badge>New in 0.16.0</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Governed Agent Teams: parallel only when the plan is isolated.</h2>
-            <p className="mt-5 leading-7 text-muted-foreground">0.16 keeps Studio and the 0.15 harness, and adds file-disjoint leases, claim/fan-in and team slots on Work. DynosAI does not spawn extra coding agents. A second worker exists only if the host opens another governed session.</p>
+            <Badge>New in 0.17.0</Badge>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Eval Intelligence: failures become cases, not autonomous routing.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">0.17 keeps Studio, the 0.15 harness and 0.16 team leases. Local failures are attributed and mined into bounded eval cases. Improvement work stays in inbox. Predictive routing stays in shadow mode.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">

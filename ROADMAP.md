@@ -77,12 +77,19 @@ DynosAI will not treat an unconstrained agent swarm as a product feature. Multi-
 
 **Goal:** turn real failures into durable quality improvements.
 
-0.15 moved only Eval Registry v0 and skill-size comparison here. Remaining:
+Delivered in 0.17.0:
 
-- broader scenario families including live-provider and multi-agent cases;
-- failure attribution across model, harness, provider, project and infrastructure;
-- production/acceptance trace mining into bounded regression cases;
-- learning loop from failure → eval → improvement task → regression evidence.
+- failure attribution across model, harness, provider, project, infrastructure and governance;
+- mining of local validations, audit, eval records and model-control traces into bounded regression cases;
+- learning loop: attributed failure → eval case → inbox improvement work → offline regression evidence;
+- Studio Overview cases and `dynosai_stats` summary;
+- offline `team_overlap` / `mined_regression` fixtures.
+
+Still incomplete inside 0.17 (do not advertise as done):
+
+- live-provider eval quality claims or leaderboards;
+- autonomous enablement of predictive routing;
+- mining of production/acceptance zip bundles into the registry as a first-class importer.
 
 Predictive routing remains shadow-only until this evidence shows autonomous decisions improve cost/quality without unsafe downshifts.
 

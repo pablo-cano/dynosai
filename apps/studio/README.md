@@ -35,3 +35,7 @@ Code and merge approvals can expand the resulting diff, validation results and V
 ## 0.16.0 team slots
 
 Work cards show current-wave leases (role, files, status). DynosAI does not start extra agents from Studio; another slot needs another governed session.
+
+## 0.17.0 eval cases
+
+Overview can list mined eval cases. Creating an improvement task from a case stays in inbox and does not launch Codex or Cursor.

@@ -87,3 +87,7 @@ The 0.13.0 real-provider matrix remains the baseline certification for the uncha
 
 `tests/test_170.py` covers file-disjoint parallel waves, serialization of overlapping files, dependency-blocked claims, follow-on roles as contracts (not spawns), claim denial, fan-in conflicts, schema-v6 engine integration, and reviewer as a human gate. `tests/test_161.py` also requires Studio team-slot rendering and EN/ES copy that extra agents are not started.
 
+### 0.17.0 eval-intelligence regression
+
+`tests/test_180.py` covers failure attribution (non-model layers are ineligible for predictive learning), mining a failed validation into a case, inbox-only propose without provider spawn, regression evidence that does not complete work, and the offline `team_overlap` fixture. Studio tests require eval-case rendering and shadow-mode copy.
+

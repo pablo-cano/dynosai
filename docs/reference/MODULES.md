@@ -19,6 +19,7 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `cost_telemetry.py` | Usage/cost telemetry and cost-per-successful-governed-change aggregation |
 | `context_handles.py` | Persistent pass-by-reference handles for large artifacts |
 | `eval_registry.py` | Versioned eval scenarios and offline harness comparisons |
+| `eval_intelligence.py` | Failure attribution, local-trace mining and inbox-only improvement loop |
 | `execution_runtime.py` | Provider-neutral ExecutionRuntime and local hands implementation |
 | `harness_contracts.py` | Typed execution/recovery/handle contracts and component flags |
 | `secrets.py` | Credential redaction and refuse-closed secret broker |
