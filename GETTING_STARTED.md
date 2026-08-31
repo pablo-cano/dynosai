@@ -57,7 +57,7 @@ dynosai studio --port 9876 --no-browser
 dynosai app-server --port 9876
 ```
 
-Studio 0.14.1 is designed to guide first-time users. Start on **Home** and follow the primary action shown there. The normal Studio path is:
+Studio 0.15 keeps the 0.14.1 guided product. Start on **Home** and follow the primary action shown there. The normal Studio path is:
 
 ```text
 Projects -> Home -> New change -> Work -> Approvals

@@ -19,7 +19,7 @@ class StrictManagedRuntime094Tests(unittest.TestCase):
         AgentConfiguration(self.project).init()
 
     def test_version_is_094(self):
-        self.assertEqual(__version__, "0.14.1")
+        self.assertEqual(__version__, "0.15.0")
 
     def test_codex_strict_config_disables_provider_extensions(self):
         effective = AgentConfiguration(self.project).resolve(provider="codex", activity="discovery")

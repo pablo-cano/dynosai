@@ -25,6 +25,8 @@ from .util import utc_now
 from .model_routing import activity_for_state
 from .context_control import EvidenceCache, ContextCheckpointStore
 from .model_control import ModelControlPlane, classify_validation_failure
+from .context_handles import ContextHandleStore
+from .secrets import redact_value
 
 SUPPORTED_PROTOCOLS=("2025-11-25","2025-06-18")
 CURRENT_PROTOCOL=SUPPORTED_PROTOCOLS[0]
@@ -89,6 +91,7 @@ TOOLS=[
  tool("dynosai_ask","Búsqueda híbrida en código, SQL, documentación y memoria validada. Para SQL/texto usa esta herramienta; dynosai_find_symbol es solo para identificadores de código.",{"query":{"type":"string"},"limit":{"type":"integer"}},["query"]),
  tool("dynosai_context_preview","Contexto mínimo por tarea.",{"work_id":{"type":"string"},"task_id":{"type":"string"},"max_tokens":{"type":"integer"}}),
  tool("dynosai_checkpoint","Carga dirigida de secciones del checkpoint autoritativo actual. Úsalo antes de releer spec/plan/contexto ya consolidado. sections admite work|decisions|spec|plan|tasks|validations|recent_runs|scope_requests.",{"work_id":{"type":"string"},"sections":{"type":"array","minItems":1,"maxItems":4,"items":{"type":"string","enum":["work","decisions","spec","plan","tasks","validations","recent_runs","scope_requests"]}}}),
+ tool("dynosai_retrieve_handle","Recupera el contenido de un context handle persistente. Usa handle_id del resultado compactado; offset/limit recortan textos grandes; section selecciona una clave si el cuerpo es un objeto.",{"handle_id":{"type":"string"},"offset":{"type":"integer"},"limit":{"type":"integer"},"section":{"type":"string"}},["handle_id"]),
  tool("dynosai_register_decision","Registra una o varias decisiones. Prefiere decisions=[{question,answer}, ...] para agrupar decisiones conocidas y reducir round-trips; question+answer sigue soportado.",{"work_id":{"type":"string"},"question":{"type":"string"},"answer":{"type":"string"},"decisions":{"type":"array","items":{"type":"object"}}},["work_id"]),
  tool("dynosai_submit_spec","Entrega spec estructurada.",{"work_id":{"type":"string"},"spec":{"type":"object"}},["work_id","spec"]),
  tool("dynosai_submit_plan","Entrega plan/tareas estructurados. En files.action usa solo read|modify|create|delete; los tests nuevos usan action=create y role=test.",{"work_id":{"type":"string"},"plan":{"type":"object"}},["work_id","plan"]),
@@ -118,14 +121,14 @@ MCP_TOOL_PROFILES = {
     "design": {
         "dynosai_project", "dynosai_work", "dynosai_resume", "dynosai_events",
         "dynosai_project_overview", "dynosai_get_next_action", "dynosai_start",
-        "dynosai_continue", "dynosai_ask", "dynosai_context_preview", "dynosai_checkpoint",
+        "dynosai_continue", "dynosai_ask", "dynosai_context_preview", "dynosai_checkpoint", "dynosai_retrieve_handle",
         "dynosai_register_decision", "dynosai_submit_spec", "dynosai_submit_plan",
         "dynosai_find_symbol", "dynosai_read", "dynosai_analyze_impact",
         "dynosai_semantic_status"
     },
     "delivery": {
         "dynosai_work", "dynosai_resume", "dynosai_events", "dynosai_project_overview",
-        "dynosai_get_next_action", "dynosai_continue", "dynosai_context_preview", "dynosai_checkpoint",
+        "dynosai_get_next_action", "dynosai_continue", "dynosai_context_preview", "dynosai_checkpoint", "dynosai_retrieve_handle",
         "dynosai_register_result", "dynosai_request_scope_extension",
         "dynosai_find_symbol", "dynosai_read", "dynosai_git_status", "dynosai_git_diff",
         "dynosai_refresh_overlay", "dynosai_analyze_impact", "dynosai_run_validation",
@@ -139,7 +142,7 @@ MCP_TOOL_PROFILES = {
         "dynosai_project", "dynosai_work", "dynosai_get_next_action",
         "dynosai_register_decision", "dynosai_submit_spec", "dynosai_submit_plan",
         "dynosai_register_result", "dynosai_request_scope_extension",
-        "dynosai_ask", "dynosai_context_preview", "dynosai_read",
+        "dynosai_ask", "dynosai_context_preview", "dynosai_read", "dynosai_retrieve_handle",
         "dynosai_git_status", "dynosai_git_diff", "dynosai_run_validation"
     },
 }
@@ -149,13 +152,13 @@ MCP_TOOL_PROFILES = {
 # initial list still receive the same policy in dynosai_get_next_action, so
 # correctness never depends on dynamic refresh support.
 PHASE_TOOL_SURFACES: dict[str,set[str]] = {
-    "discovery": {"dynosai_project","dynosai_work","dynosai_get_next_action","dynosai_register_decision","dynosai_submit_spec","dynosai_ask","dynosai_context_preview","dynosai_read"},
-    "specification": {"dynosai_get_next_action","dynosai_register_decision","dynosai_submit_spec","dynosai_ask","dynosai_context_preview","dynosai_read"},
-    "planning": {"dynosai_get_next_action","dynosai_submit_plan","dynosai_ask","dynosai_context_preview","dynosai_checkpoint","dynosai_read","dynosai_git_status"},
-    "implementation": {"dynosai_get_next_action","dynosai_register_result","dynosai_request_scope_extension","dynosai_context_preview","dynosai_checkpoint","dynosai_read","dynosai_git_status","dynosai_git_diff","dynosai_run_validation"},
-    "code_review": {"dynosai_get_next_action","dynosai_context_preview","dynosai_checkpoint","dynosai_read","dynosai_git_status","dynosai_git_diff","dynosai_run_validation"},
-    "validation": {"dynosai_get_next_action","dynosai_checkpoint","dynosai_read","dynosai_git_status","dynosai_git_diff","dynosai_run_validation","dynosai_register_result"},
-    "merge": {"dynosai_get_next_action","dynosai_checkpoint","dynosai_git_status","dynosai_git_diff","dynosai_run_validation"},
+    "discovery": {"dynosai_project","dynosai_work","dynosai_get_next_action","dynosai_register_decision","dynosai_submit_spec","dynosai_ask","dynosai_context_preview","dynosai_retrieve_handle","dynosai_read"},
+    "specification": {"dynosai_get_next_action","dynosai_register_decision","dynosai_submit_spec","dynosai_ask","dynosai_context_preview","dynosai_retrieve_handle","dynosai_read"},
+    "planning": {"dynosai_get_next_action","dynosai_submit_plan","dynosai_ask","dynosai_context_preview","dynosai_checkpoint","dynosai_retrieve_handle","dynosai_read","dynosai_git_status"},
+    "implementation": {"dynosai_get_next_action","dynosai_register_result","dynosai_request_scope_extension","dynosai_context_preview","dynosai_checkpoint","dynosai_retrieve_handle","dynosai_read","dynosai_git_status","dynosai_git_diff","dynosai_run_validation"},
+    "code_review": {"dynosai_get_next_action","dynosai_context_preview","dynosai_checkpoint","dynosai_retrieve_handle","dynosai_read","dynosai_git_status","dynosai_git_diff","dynosai_run_validation"},
+    "validation": {"dynosai_get_next_action","dynosai_checkpoint","dynosai_retrieve_handle","dynosai_read","dynosai_git_status","dynosai_git_diff","dynosai_run_validation","dynosai_register_result"},
+    "merge": {"dynosai_get_next_action","dynosai_checkpoint","dynosai_retrieve_handle","dynosai_git_status","dynosai_git_diff","dynosai_run_validation"},
 }
 
 def phase_tool_surface(activity:str|None)->dict[str,Any]:
@@ -282,7 +285,7 @@ def _normalize_read_only_call(name:str,args:dict[str,Any])->tuple[str,dict[str,A
             }
     return name,args,None
 
-READ_ONLY_TOOLS={"dynosai_project_overview","dynosai_events","dynosai_board","dynosai_ask","dynosai_context_preview","dynosai_checkpoint","dynosai_find_symbol","dynosai_read","dynosai_get_symbol","dynosai_get_file_slice","dynosai_git_status","dynosai_git_diff","dynosai_analyze_impact","dynosai_schedule","dynosai_semantic_status","dynosai_stats"}
+READ_ONLY_TOOLS={"dynosai_project_overview","dynosai_events","dynosai_board","dynosai_ask","dynosai_context_preview","dynosai_checkpoint","dynosai_retrieve_handle","dynosai_find_symbol","dynosai_read","dynosai_get_symbol","dynosai_get_file_slice","dynosai_git_status","dynosai_git_diff","dynosai_analyze_impact","dynosai_schedule","dynosai_semantic_status","dynosai_stats"}
 
 
 def discover_project_root(explicit:str|Path|None=None)->Path:
@@ -330,6 +333,7 @@ class MCPServer:
         self.session=None; self.provider_session=None
         self._managed_response_cache: dict[str,str] = {}
         self._evidence_cache = EvidenceCache()
+        self.handles = ContextHandleStore(self.engine.root)
         self._last_advertised_activity: str | None = None
         if (self.engine.root/".dynosai"/"knowledge.db").exists():
             try:
@@ -354,6 +358,7 @@ class MCPServer:
         self.engine=DynosAI(root); self.app=DynosAIApplication(root)
         self.engine.db.initialize()
         self.provider_session=self.app.sessions.active(self.provider)
+        self.handles=ContextHandleStore(self.engine.root)
     def _compact_managed_result(self,name:str,result:Any)->Any:
         if name!="dynosai_get_next_action" or not isinstance(result,dict): return result
         if os.environ.get("DYNOSAI_MANAGED_AGENT")!="1" or os.environ.get("DYNOSAI_COMPACT_RESPONSES","1")!="1": return result
@@ -486,7 +491,16 @@ class MCPServer:
                 if name not in READ_ONLY_TOOLS and not self._mutation_authorized(name,args):
                     raise PermissionError("No active governed provider session. Start/resume work through DynosAI first.")
                 result=self.call_tool(name,args)
+                if name in {"dynosai_git_diff","dynosai_ask","dynosai_run_validation"}:
+                    try:
+                        result=self.handles.wrap_tool_result(name,result,work_id=self._session_work_id(),session_id=(self.session or {}).get("id"))
+                    except Exception:
+                        pass
                 result=self._compact_managed_result(name,result)
+                try:
+                    result=redact_value(result)
+                except Exception:
+                    pass
                 try:
                     if normalization:
                         self.engine.db.audit("MCPToolNormalized",str(requested_name),{**normalization,"session_id":self.session and self.session.get("id"),"work_id":self._session_work_id(),"run_id":self._run_id()})
@@ -699,6 +713,8 @@ class MCPServer:
         if name=="dynosai_checkpoint":
             wid=self._scoped_work(args,required=True)
             return ContextCheckpointStore(e.root).load_sections(wid,list(args.get("sections") or ["work","tasks","validations"]))
+        if name=="dynosai_retrieve_handle":
+            return self.handles.retrieve(str(args["handle_id"]),offset=int(args.get("offset") or 0),limit=args.get("limit"),section=args.get("section"))
         if name=="dynosai_register_decision":
             wid=self._scoped_work(args,required=True)
             if args.get("decisions"):

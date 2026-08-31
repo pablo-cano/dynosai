@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Pablo Cano
-"""Path scope and validation-profile policy enforcement."""
+"""Path scope, validation-profile, network and dependency policy enforcement."""
 
 from __future__ import annotations
 
@@ -193,6 +193,116 @@ class ValidationProfilePolicy:
         if not isinstance(data, list) or not data or not all(isinstance(x, str) and x for x in data):
             raise ValueError("invalid validation profile command")
         return data
+
+
+NETWORK_PROFILES = ("unrestricted", "allowlist", "default_deny", "offline")
+DEPENDENCY_PROFILES = ("compatibility", "governed")
+
+_INSTALL_PREFIXES: tuple[tuple[str, ...], ...] = (
+    ("pip", "install"),
+    ("python", "-m", "pip", "install"),
+    ("py", "-m", "pip", "install"),
+    ("npm", "install"),
+    ("npm", "i"),
+    ("npx", "npm", "install"),
+    ("pnpm", "add"),
+    ("pnpm", "install"),
+    ("yarn", "add"),
+    ("yarn", "install"),
+    ("cargo", "add"),
+    ("cargo", "install"),
+    ("go", "get"),
+    ("composer", "require"),
+    ("gem", "install"),
+    ("dotnet", "add"),
+    ("pipx", "install"),
+    ("uv", "add"),
+    ("uv", "pip", "install"),
+    ("poetry", "add"),
+)
+
+
+@dataclass(slots=True)
+class NetworkDecision:
+    allowed: bool
+    profile: str
+    target: str
+    reason: str
+
+
+class NetworkPolicy:
+    """Authoritative network decision for DynosAI-mediated operations.
+
+    LocalExecutionRuntime does not intercept child-process sockets; OS-level
+    enforcement belongs to a future sandboxed runtime. The model still cannot
+    grant itself network access: callers must consult this policy.
+    """
+
+    def __init__(self, profile: str | None = None, allowlist: Iterable[str] | None = None):
+        env = (os.environ.get("DYNOSAI_NETWORK_PROFILE") or "").strip().lower()
+        chosen = (profile or env or "unrestricted").strip().lower()
+        if chosen not in NETWORK_PROFILES:
+            raise ValueError(f"unknown network profile: {chosen}")
+        self.profile = chosen
+        self.allowlist = {str(item).strip().lower() for item in (allowlist or ()) if str(item).strip()}
+
+    def decide(self, host: str, port: int | None = None) -> NetworkDecision:
+        target = str(host or "").strip().lower()
+        if port is not None:
+            target = f"{target}:{int(port)}"
+        if not str(host or "").strip():
+            return NetworkDecision(False, self.profile, target, "missing network target")
+        if self.profile == "unrestricted":
+            return NetworkDecision(True, self.profile, target, "compatibility unrestricted")
+        if self.profile == "offline":
+            return NetworkDecision(False, self.profile, target, "offline sandbox denies network")
+        host_only = str(host).strip().lower()
+        allowed = host_only in self.allowlist or target in self.allowlist
+        if self.profile == "allowlist":
+            return NetworkDecision(allowed, self.profile, target, "allowlist match" if allowed else "host not in allowlist")
+        # default_deny
+        return NetworkDecision(allowed, self.profile, target, "explicit allowlist exception" if allowed else "default deny")
+
+
+@dataclass(slots=True)
+class DependencyDecision:
+    kind: str
+    allowed: bool
+    reason: str
+    argv: list[str]
+
+
+class DependencyPolicy:
+    """Distinguish using installed dependencies from installing new ones."""
+
+    def __init__(self, profile: str | None = None, install_allowlist: Iterable[tuple[str, ...]] | None = None):
+        env = (os.environ.get("DYNOSAI_DEPENDENCY_PROFILE") or "").strip().lower()
+        chosen = (profile or env or "compatibility").strip().lower()
+        if chosen not in DEPENDENCY_PROFILES:
+            raise ValueError(f"unknown dependency profile: {chosen}")
+        self.profile = chosen
+        self.install_allowlist = [tuple(item) for item in (install_allowlist or ())]
+
+    @staticmethod
+    def classify(argv: list[str]) -> str:
+        parts = [str(item).strip() for item in argv if str(item).strip()]
+        lowered = tuple(part.lower() for part in parts)
+        for prefix in _INSTALL_PREFIXES:
+            if lowered[: len(prefix)] == prefix:
+                return "install"
+        return "use"
+
+    def decide(self, argv: list[str]) -> DependencyDecision:
+        parts = [str(item) for item in argv]
+        kind = self.classify(parts)
+        if kind == "use":
+            return DependencyDecision("use", True, "using installed dependencies", parts)
+        if self.profile == "compatibility":
+            return DependencyDecision("install", True, "install allowed in compatibility profile; record for future policy", parts)
+        lowered = tuple(part.lower() for part in parts)
+        if any(lowered[: len(prefix)] == prefix for prefix in self.install_allowlist):
+            return DependencyDecision("install", True, "install allowlisted", parts)
+        return DependencyDecision("install", False, "autonomous dependency installation requires explicit policy", parts)
 
 
 def validate_scope_entry(root: Path, entry: dict[str, Any], policy: PathPolicyEngine) -> str | None:

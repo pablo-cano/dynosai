@@ -2,6 +2,34 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 0.15.0 - 2026-08-31
+
+### Added
+
+- Introduced the Verified Agent Harness: typed execution/recovery contracts, persistent context handles, `dynosai_retrieve_handle`, and pass-by-reference compaction of large diffs/search/validation outputs.
+- Formalized `ExecutionRuntime` / `LocalExecutionRuntime` as the provider-neutral hands boundary (filesystem, processes, network decisions, dependency classification). Local remains the default; Docker/VMs are not required.
+- Added minimum execution policy outside the model: path-root/escape/symlink denial, process timeouts, network profiles (`unrestricted` default, `allowlist`, `default_deny`, `offline`), dependency use-vs-install classification, credential redaction, and a refuse-closed secret broker.
+- Added Validation Integrity reports (requirement → acceptance → evidence → validation) and exposed them on Studio code/merge reviews together with bounded diffs and validation results.
+- Added Eval Registry v0 (nine representative offline scenarios) and a skill on/off context-size comparison. No live-provider quality claim is made from these fixtures.
+- Added cost-per-successful-governed-change raw observability (tokens, tools, retries, human gates; catalog price only when configured).
+- Added mechanical architecture-import checks in `scripts/check_repository.py`.
+
+### Changed
+
+- Reframed 0.15 in the public roadmap around a verified harness rather than a vague loop-engine slogan. Cursor ACP remains documented as a 0.14.1 capability, not future 0.19 greenfield work.
+- Studio completion reviews can expand the governed chain (requirements, acceptance, tasks, files, diff, validation, integrity) without making technical internals the default UX.
+- Predictive routing remains shadow-only.
+
+### Security
+
+- Secrets matching known credential patterns are redacted from MCP tool results before they reach prompts, evidence-shaped payloads, or Studio review diffs.
+- The secret broker refuses to materialize values into model context.
+
+### Validation
+
+- Added `tests/test_160.py` and `tests/test_161.py` for handles, runtime policy, integrity, evals, cost, MCP retrieve, and Studio reviewability.
+- Schema remains v6; handles and eval records are runtime files under `.dynosai/runtime/`, not workflow-authority tables.
+
 ## 0.14.1 - 2026-08-26
 
 ### Added

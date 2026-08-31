@@ -5,13 +5,13 @@ from dynosai_flow.db import Database
 
 class StableReleaseCompatibilityTests(unittest.TestCase):
     def test_release_version(self):
-        self.assertEqual(__version__, "0.14.1")
+        self.assertEqual(__version__, "0.15.0")
 
     def test_schema_remains_v6(self):
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
 
     def test_product_patch_does_not_bump_authority_schema(self):
-        # 0.14.1 is a Studio/product patch over the established schema-v6 authority model.
+        # 0.15.0 keeps the established schema-v6 authority model; harness artifacts stay in runtime files.
         self.assertLessEqual(Database.CURRENT_SCHEMA_VERSION, 6)
 
 

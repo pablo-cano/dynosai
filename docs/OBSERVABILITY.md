@@ -18,7 +18,8 @@ Tracked signals include:
 - response/checkpoint compaction;
 - execution waves and expected round trips saved;
 - model-control decisions and transitions;
-- acceptance retries and actual spend including retries.
+- acceptance retries and actual spend including retries;
+- cost-per-successful-governed-change raw counts (tokens, tools, retries, human gates). Monetary figures appear only when the public catalog matches a provider/model.
 
 ## Acceptance bundles
 

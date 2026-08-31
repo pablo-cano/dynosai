@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from typing import Any
+import json
 
 # Versioned public list-price metadata. These values are observability inputs,
 # not billing authority. They must never affect governance unless a user enables
@@ -111,6 +112,74 @@ def estimate_list_price(provider: str, model: str | None, usage: dict[str, Any] 
         estimated_list_price_usd=round(total, 8),
         note="Estimated public list-price equivalent, not an invoice. Subscription pools, discounts, regional uplifts and provider-specific billing can differ.",
     ).to_dict()
+
+
+def _audit_for_work(db: Any, work_id: str, event_type: str) -> int:
+    rows = db.query("SELECT entity_id,payload FROM audit WHERE event_type=?", (event_type,))
+    total = 0
+    for row in rows:
+        if str(row.get("entity_id") or "") == work_id:
+            total += 1
+            continue
+        payload = row.get("payload")
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except json.JSONDecodeError:
+                payload = {}
+        if isinstance(payload, dict) and str(payload.get("work_id") or "") == work_id:
+            total += 1
+    return total
+
+
+def governed_change_cost(db: Any, work_id: str, *, usage: dict[str, Any] | None = None, provider: str | None = None, model: str | None = None, elapsed_seconds: float | None = None) -> dict[str, Any]:
+    """Raw observability for COST PER SUCCESSFUL GOVERNED CHANGE.
+
+    Monetary figures are derived only when the public catalog matches. Tokens,
+    tools, retries and human gates are always stored as raw counts.
+    """
+    work = db.one("SELECT * FROM work_items WHERE id=?", (work_id,))
+    if not work:
+        raise ValueError(f"unknown work: {work_id}")
+    usage = usage or {}
+    validations = db.query("SELECT status,exit_code FROM validations WHERE work_id=?", (work_id,))
+    validation_status = "passed" if validations and all(int(row.get("exit_code") or 1) == 0 for row in validations) else ("failed" if validations else "not_run")
+    human = db.query("SELECT kind,status,gate,response_json FROM human_interactions WHERE work_id=?", (work_id,))
+    gates = [row for row in human if str(row.get("kind")) == "gate_approval"]
+    corrections = [row for row in human if str(row.get("status")) in {"declined", "cancelled"}]
+    metrics = db.query(
+        "SELECT m.context_tokens,m.retries,m.test_passed FROM runs r LEFT JOIN run_metrics m ON m.run_id=r.id WHERE r.work_id=?",
+        (work_id,),
+    )
+    input_tokens = _n(usage.get("input_tokens"))
+    output_tokens = _n(usage.get("output_tokens"))
+    cached = _n(usage.get("cached_input_tokens"))
+    context_tokens = sum(_n(row.get("context_tokens")) for row in metrics) or _n(usage.get("context_tokens"))
+    estimate = estimate_list_price(provider or "", model, usage) if provider and model and usage else None
+    success = str(work.get("state") or "") == "done"
+    return {
+        "metric": "cost_per_successful_governed_change",
+        "work_id": work_id,
+        "success": success,
+        "state": work.get("state"),
+        "requirements_satisfied": None,
+        "validation_status": validation_status,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "context_tokens": context_tokens,
+        "cached_input_tokens": cached,
+        "model_calls": _n(usage.get("model_calls")),
+        "tool_calls": _audit_for_work(db, work_id, "MCPToolCalled"),
+        "retries": sum(_n(row.get("retries")) for row in metrics),
+        "provider_failures": _audit_for_work(db, work_id, "MCPToolFailed"),
+        "elapsed_seconds": elapsed_seconds,
+        "human_gates": len(gates),
+        "human_corrections": len(corrections),
+        "replans": _audit_for_work(db, work_id, "ReplanRequested") + _audit_for_work(db, work_id, "BoundedReplan"),
+        "estimated_list_price_usd": None if not estimate else estimate.get("estimated_list_price_usd"),
+        "cost_estimate": estimate,
+        "note": "Raw usage. Monetary cost is catalog-derived observability, not an invoice.",
+    }
 
 
 def aggregate_cost(estimates: list[dict[str, Any] | None]) -> dict[str, Any]:

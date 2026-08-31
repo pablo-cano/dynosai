@@ -27,7 +27,7 @@ class DynosAI110Tests(unittest.TestCase):
         self.tmp = Path(self.td.name)
 
     def test_version_is_0110(self):
-        self.assertEqual(__version__, "0.14.1")
+        self.assertEqual(__version__, "0.15.0")
 
     def test_phase_aware_model_control_starts_cheap_and_escalates_complex_work(self):
         control = ModelControlPlane(self.tmp)
@@ -152,10 +152,11 @@ class DynosAI110Tests(unittest.TestCase):
         with patch.dict(os.environ, {"DYNOSAI_PHASE_TOOL_DISCLOSURE": "adaptive", "DYNOSAI_MCP_TOOL_PROFILE": "acceptance"}, clear=False):
             first = server.handle({"jsonrpc":"2.0","id":1,"method":"tools/list"})["result"]
             second = server.handle({"jsonrpc":"2.0","id":2,"method":"tools/list"})["result"]
-        self.assertEqual(len(first["tools"]), 14)
+        self.assertEqual(len(first["tools"]), 15)
         self.assertTrue(first["dynosaiToolSurface"]["initial_safe_superset"])
         self.assertEqual(len(second["tools"]), phase_tool_surface("discovery")["tool_count"])
-        self.assertLess(len(second["tools"]), 14)
+        self.assertLess(len(second["tools"]), 15)
+        self.assertIn("dynosai_retrieve_handle", [item["name"] for item in first["tools"]])
 
     def test_context_checkpoint_creates_bounded_authoritative_resume_capsule(self):
         class DB:

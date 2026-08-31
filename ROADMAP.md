@@ -8,63 +8,53 @@ The roadmap follows one rule: new autonomy must preserve the existing authority 
 
 **Goal:** make the existing governed core usable without requiring users to learn the full CLI first.
 
-Delivered in 0.14.0:
+Delivered in 0.14.0 and 0.14.1 (stable baseline):
 
-- local-only App Server built on `DynosAIApplication`;
-- `dynosai studio` graphical control plane served on loopback;
-- stack-aware project detection and onboarding hints;
-- validation auto-discovery with explicit approval before persistence;
-- deterministic Risk Assessment v1;
-- user-facing blocker explanations;
-- provider-neutral project overview/event APIs for graphical clients;
-- public website pages for Local Studio and the product roadmap.
+- local-only App Server on `DynosAIApplication`;
+- guided Local Studio (project hub, reviews, checks, themes, EN/ES, Fibonacci walkthrough);
+- Cursor ACP (`agent acp`) and Codex app-server headless transports;
+- cross-platform provider process-tree shutdown, stdin EOF, Windows `acp-sessions` lifecycle;
+- validation discovery, Risk Assessment v1, Review Center with spec/plan contract content.
 
-Delivered in 0.14.1:
+0.14.x follow-ups that are **not** required to start 0.15 (installer/UX polish):
 
-- Studio branding aligned with `dynosai.com`, including the shared favicon/logo;
-- in-app project management and switching without restarting Studio;
-- English/Spanish localization with an extensible translation dictionary;
-- guided greenfield Fibonacci tutorial;
-- shadcn/ui-style accessible combobox controls and removal of native select styling;
-- Codex/Cursor-only public provider choices;
-- System / Light / Dark appearance with browser-local persistence;
-- guided Home and first-use project setup model;
-- non-technical primary navigation and opt-in technical details;
-- natural-language New Task wizard with clear execution expectations;
-- plain-language workflow timeline for active work;
-- Review Center for pending human decisions with bounded spec/plan/evidence summaries;
-- explicit Project Checks selection/approval experience;
-- simplified diagnostics, copyable support summary, embedded Help/usage guide;
-- `/api/setup` and `/api/reviews` application surfaces;
-- responsive Studio visual refresh without changing the 0.13/0.14 authority model.
-
-Remaining 0.14.x follow-up priorities:
-
-- richer full specification/plan/diff review surfaces in Studio;
-- requirement → task → evidence → code trace visualization;
 - provider setup/doctor UX inside Studio;
 - installer/user-environment hardening across Windows, macOS and Linux;
 - additional validation discovery profiles and monorepo-aware selection;
 - characterization-driven decomposition of orchestration hotspots.
 
-## 0.15 — Harness & Loop Engine v2
+## 0.15 — Verified Agent Harness
 
-**Goal:** improve reliability and efficiency for long-running work without buying correctness through larger prompts.
+**Goal:** make longer, more complex provider work possible while intent, authority, evidence, security and completion stay in deterministic systems outside the model.
 
-Planned research/delivery:
+DynosAI is not a replacement for Codex, Cursor or future coding agents. It is the governed harness around them.
 
-- persistent context handles and pass-by-reference artifacts;
-- bounded previews for large evidence/tool results;
-- long-running work loop with checkpoints, stagnation detection and bounded replanning;
-- Skills contract with progressive disclosure;
-- Skill Evals comparing behavior with/without a skill;
-- risk-aware review/governance profiles;
-- improved context/cache/cost accounting;
-- `ExecutionRuntime` interface introduced while retaining the local runtime as default.
+Delivered in 0.15.0:
+
+- persistent typed context handles and `dynosai_retrieve_handle` (reference → selective retrieval);
+- typed harness contracts for execution/recovery/completion state;
+- `ExecutionRuntime` / `LocalExecutionRuntime` (brain / hands / session split; local default, no Docker required);
+- minimum execution policy: path roots/escape/symlink, process timeout, network profile API, dependency install vs use, secret redaction and secret-broker refuse-closed;
+- Validation Integrity (requirement → acceptance → evidence → validation) exposed on code/merge review;
+- Eval Registry v0 plus skill on/off context-size comparison;
+- cost-per-successful-governed-change raw observability;
+- mechanical architecture import checks;
+- Studio completion reviews that can expand diff, validation and integrity without dumping internals by default.
+
+Still incomplete inside 0.15 (do not advertise as done):
+
+- OS-level network interception for child processes (policy API exists; sandbox enforcement is 0.18);
+- configured secret vault materialization for runtimes;
+- live-provider eval quality claims (v0 is offline/fixture measurement);
+- a fully autonomous long-running loop with all budgets always enforced at the workflow layer (checkpoints, token budgets and stagnation signals already exist from 0.12–0.14; bounded replanning is not silent scope expansion).
+
+No general multi-agent execution in 0.15.
 
 ## 0.16 — Governed Agent Teams
 
 **Goal:** parallelize work only when the approved plan proves that work can be isolated safely.
+
+Prerequisite: single-agent execution is measurable, resumable, contained and independently verifiable.
 
 Planned capabilities:
 
@@ -76,48 +66,46 @@ Planned capabilities:
 - conflict-aware fan-in and merge gates;
 - token/time budgets per worker and per team.
 
-DynosAI will not treat an unconstrained agent swarm as a product feature. Multi-agent authority remains plan-derived and auditable.
+DynosAI will not treat an unconstrained agent swarm as a product feature. Multi-agent is a scheduling problem before it is a prompting problem.
 
 ## 0.17 — Eval Intelligence
 
 **Goal:** turn real failures into durable quality improvements.
 
-Planned capabilities:
+0.15 moved only Eval Registry v0 and skill-size comparison here. Remaining:
 
-- versioned Eval Registry;
-- greenfield, brownfield, migration, bug-fix, refactor, security, recovery and multi-agent scenario families;
+- broader scenario families including live-provider and multi-agent cases;
 - failure attribution across model, harness, provider, project and infrastructure;
-- provider/model/harness comparison with quality, tokens, cost, time and human intervention metrics;
 - production/acceptance trace mining into bounded regression cases;
 - learning loop from failure → eval → improvement task → regression evidence.
 
-Predictive routing remains shadow-only until this evidence shows autonomous decisions improve cost/quality without unsafe downshifts or missed capability escalations.
+Predictive routing remains shadow-only until this evidence shows autonomous decisions improve cost/quality without unsafe downshifts.
 
 ## 0.18 — Secure Autonomous Runtime
 
 **Goal:** allow longer autonomous work while placing authoritative security policy outside the model/harness.
 
-Planned capabilities:
+0.15 introduced the `ExecutionRuntime` interface, local default, filesystem/process policy, network **decision** profiles, dependency classification and a refuse-closed secret broker. Remaining:
 
-- pluggable execution runtime;
-- filesystem/process/network policy boundaries;
-- credential/secret brokering without placing secrets in model context;
-- controlled dependency installation and external MCP access;
+- container/VM/remote runtime implementations;
+- OS-level network enforcement for child processes;
+- credential brokering that can materialize secrets to a runtime without model context;
 - `Strict`, `Balanced` and `Autonomous` execution profiles;
-- policy evidence included in review and certification bundles.
+- policy evidence in review and certification bundles.
 
 ## 0.19 — Ecosystem & Interoperability
 
 **Goal:** keep DynosAI provider-neutral while making the governed core available in more clients and stacks.
 
-Planned capabilities:
+**Baseline already shipped:** Cursor ACP is implemented in 0.14.1 Studio (`agent acp`, MCP injection, permission handling, process-tree shutdown). Codex uses app-server. Do not treat ACP as a greenfield invention.
 
-- ACP adapter at the application boundary;
+Remaining:
+
+- broader ACP/application adapters for additional clients;
 - provider capability manifests;
-- broader provider certification for additional coding-agent runtimes after they meet the same acceptance bar as Codex and Cursor;
+- certification for additional coding-agent runtimes after they meet the Codex/Cursor bar;
 - Skills/validation pack ecosystem;
-- extension APIs for project-specific quality and policy integrations;
-- stronger static-analysis, security and coverage integrations.
+- extension APIs for project-specific quality and policy integrations.
 
 ## 1.0 — Stable Agentic Development Control Plane
 
@@ -146,3 +134,4 @@ Across every release:
 7. **Evals are part of product development, not only release testing.**
 8. **Security policy must not depend on the model choosing to obey it.**
 9. **A feature is not finished when only the Core supports it.** User-visible capabilities must update Studio, website, documentation and tests as applicable.
+10. **Harness features are hypotheses.** Independently disable components that stop helping.

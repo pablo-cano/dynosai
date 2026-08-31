@@ -75,6 +75,42 @@ def main() -> int:
         if not ast.get_docstring(tree):
             fail(f"missing module docstring: {path.relative_to(ROOT)}")
 
+    architecture_deny = {
+        "engine.py": {"app_server", "cli"},
+        "application.py": {"app_server"},
+        "db.py": {"app_server", "cli", "mcp"},
+        "execution_runtime.py": {"app_server", "cli", "mcp"},
+        "validation_integrity.py": {"app_server", "cli"},
+        "context_handles.py": {"app_server", "cli", "mcp"},
+        "harness_contracts.py": {"app_server", "cli", "mcp", "engine"},
+        "eval_registry.py": {"app_server", "cli", "mcp"},
+    }
+    for filename, denied in architecture_deny.items():
+        path = SRC / filename
+        if not path.exists():
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        imported: set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                if node.level and node.module:
+                    imported.add(node.module.split(".")[0])
+                elif node.module and node.module.startswith("dynosai_flow"):
+                    parts = node.module.split(".")
+                    if len(parts) > 1:
+                        imported.add(parts[1])
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    if alias.name.startswith("dynosai_flow."):
+                        imported.add(alias.name.split(".")[1])
+        blocked = imported & denied
+        if blocked:
+            fail(f"architecture import violation in {filename}: {', '.join(sorted(blocked))}")
+
+    studio_js = (ROOT / "apps" / "studio" / "app.js").read_text(encoding="utf-8")
+    if "knowledge.db" in studio_js or re.search(r"\bSELECT\b", studio_js):
+        fail("Studio must not query knowledge.db or embed SQL")
+
     forbidden_prefixes = (
         "src/dynosai_flow.egg-info/",
         "dist/",

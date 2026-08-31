@@ -24,8 +24,9 @@ from .retrieval import RetrievalEngine
 from .semantic import DEFAULT_DIMENSIONS, DEFAULT_MODEL, EmbeddingProvider, FastEmbedProvider, SemanticIndex, default_cache_dir
 from .util import decode_git_path, json_dumps, json_loads, slugify, utc_now
 from .validation import QualityEngine
-from .policy import PathPolicyEngine, ValidationProfilePolicy, is_managed_workflow_artifact, product_scope_paths
+from .policy import PathPolicyEngine, PolicyError, ValidationProfilePolicy, is_managed_workflow_artifact, product_scope_paths
 from .runtime import RuntimeBroker
+from .execution_runtime import LocalExecutionRuntime
 from .version import __version__
 
 
@@ -59,6 +60,7 @@ class DynosAI:
         self.agents = AgentConfigurator(self.root, self.db, self.runtime)
         self.state = StateManager(self.root, self.db)
         self.git_guard = GitGuard(self.root)
+        self.execution = LocalExecutionRuntime(self.root)
         self._injected_semantic_provider = semantic_provider is not None
         # Reuse stable task-scoped context previews while authoritative task/file state is unchanged.
         # Byte-stable contracts let the managed MCP delta compressor return a compact reference
@@ -683,7 +685,7 @@ class DynosAI:
 
     def run_validations(self, work_id: str, record: bool = True, cwd: Path | None = None, profiles: list[str] | None = None, scope: str = "work") -> dict[str, Any]:
         """Execute the approved validation profiles for a work item and persist their real results."""
-        work=self.get_work(work_id); worktree=Path(cwd or work["worktree"]); plan=self.artifacts.artifact(work_id,"plan")
+        work=self.get_work(work_id); worktree=Path(cwd or work.get("worktree") or self.root); plan=self.artifacts.artifact(work_id,"plan")
         selected=profiles or (plan or {}).get("metadata",{}).get("validation_profiles",[]) or ["unit"]
         results=[]; passed=True
         for profile in dict.fromkeys(selected):
@@ -692,11 +694,17 @@ class DynosAI:
                 passed=False; results.append({"profile":profile,"status":"failed","exit_code":126,"output":"Validation profile not approved"}); continue
             parts=ValidationProfilePolicy.decode(row["command_json"]); command=" ".join(parts)
             try:
-                result=subprocess.run(parts,cwd=worktree,text=True,encoding="utf-8",errors="replace",capture_output=True,timeout=180,env={**os.environ,"DYNOSAI_GIT_BYPASS":"1"}); output=(result.stdout+"\n"+result.stderr).strip(); status="passed" if result.returncode==0 else "failed"; passed=passed and result.returncode==0
-                if record:self.db.execute("INSERT INTO validations(work_id,command,status,exit_code,output,created_at) VALUES(?,?,?,?,?,?)",(work_id,f"profile:{profile}",status,result.returncode,output[-12000:],utc_now()))
-                results.append({"profile":profile,"command":command,"status":status,"exit_code":result.returncode,"output":output[-2000:]})
+                executed=self.execution.run(parts,cwd=worktree,timeout=180,env={**os.environ,"DYNOSAI_GIT_BYPASS":"1"})
+                if executed.timed_out:
+                    passed=False
+                    results.append({"profile":profile,"command":command,"status":"failed","exit_code":124,"output":"Timed out"})
+                    continue
+                output=(executed.stdout+"\n"+executed.stderr).strip(); status="passed" if executed.returncode==0 else "failed"; passed=passed and executed.returncode==0
+                if record:self.db.execute("INSERT INTO validations(work_id,command,status,exit_code,output,created_at) VALUES(?,?,?,?,?,?)",(work_id,f"profile:{profile}",status,executed.returncode,output[-12000:],utc_now()))
+                results.append({"profile":profile,"command":command,"status":status,"exit_code":executed.returncode,"output":output[-2000:]})
+            except PolicyError as exc:
+                passed=False; results.append({"profile":profile,"command":command,"status":"failed","exit_code":126,"output":str(exc)})
             except FileNotFoundError: passed=False; results.append({"profile":profile,"command":command,"status":"failed","exit_code":127,"output":"Command not found"})
-            except subprocess.TimeoutExpired: passed=False; results.append({"profile":profile,"command":command,"status":"failed","exit_code":124,"output":"Timed out"})
         return {"passed":passed,"results":results,"scope":scope,"skipped":False}
 
     def consolidate(self, work_id: str, commit: str) -> dict[str, Any]:

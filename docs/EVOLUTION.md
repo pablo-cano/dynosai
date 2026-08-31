@@ -23,6 +23,7 @@ DynosAI has been developed through repeated local and real-provider acceptance l
 | 0.13.0 | Stable promotion with no functional change from accepted RC4 | Final matrix certification, promotion invariants, offline predictive replay |
 | 0.14.0 | Product/control-plane layer on stable governed core | Local App Server, Studio alpha, validation discovery, risk, explainable blockers, roadmap/web refresh |
 | 0.14.1 | Guided Studio UX refresh | Setup guidance, themes/branding, task flow, Review Center, project checks, help, opt-in technical details |
+| 0.15.0 | Verified Agent Harness | Context handles, ExecutionRuntime, Validation Integrity, Eval Registry v0, execution policy; 0.14.1 Studio baseline preserved |
 
 ## How changes are recorded now
 

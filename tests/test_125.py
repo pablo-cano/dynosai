@@ -29,7 +29,7 @@ def make_bundle(root: Path, name: str, events: list[dict], *, provider='codex', 
 
 class PredictiveValidation0125Tests(unittest.TestCase):
     def test_version(self):
-        self.assertEqual(__version__,'0.14.1')
+        self.assertEqual(__version__,'0.15.0')
 
     def test_cli_exposes_offline_history_validation(self):
         args=parser().parse_args(['model-control','validate-history','one.zip','two.zip','--output','report.json'])
