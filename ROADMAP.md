@@ -56,15 +56,20 @@ No general multi-agent execution in 0.15.
 
 Prerequisite: single-agent execution is measurable, resumable, contained and independently verifiable.
 
-Planned capabilities:
+Delivered in 0.16.0:
 
-- Plan DAG → execution-wave/parallel-team scheduling;
-- isolated worktrees and task leases;
-- scope ceilings per worker;
-- implementer, reviewer and tester roles activated by task/risk needs;
-- evidence and validation contracts per worker;
-- conflict-aware fan-in and merge gates;
-- token/time budgets per worker and per team.
+- Plan DAG → serial/parallel waves with file-disjoint leases;
+- scope ceilings, evidence and validation contracts per lease;
+- implementer as the claimable worker role; reviewer = human `code_review` gate; tester = governed validation on the same lease;
+- conflict-aware, wave-scoped fan-in;
+- token/time budgets attached to each lease;
+- Studio Work slots and `dynosai_schedule` fan-in without spawning extra providers.
+
+Still incomplete inside 0.16 (do not advertise as done):
+
+- host-launched N Codex/Cursor processes (a second worker exists only if the host opens another governed session);
+- specialist reviewer/tester as extra spawned agents;
+- a dedicated lease authority table (schema remains v6; leases are derived from `tasks.claimed_run` / runs).
 
 DynosAI will not treat an unconstrained agent swarm as a product feature. Multi-agent is a scheduling problem before it is a prompting problem.
 

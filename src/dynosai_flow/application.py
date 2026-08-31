@@ -247,7 +247,16 @@ class DynosAIApplication:
             rows = self.engine.db.query("SELECT * FROM work_items WHERE state=? ORDER BY updated_at DESC LIMIT ?", (state, limit))
         else:
             rows = self.engine.db.query("SELECT * FROM work_items ORDER BY updated_at DESC LIMIT ?", (limit,))
-        return [dict(row) for row in rows]
+        return [self._decorate_work(dict(row)) for row in rows]
+
+    def _decorate_work(self, item: dict[str, Any]) -> dict[str, Any]:
+        if item.get("id") == "PROJECT" or item.get("state") not in {"ready", "implementing"}:
+            return item
+        try:
+            item["team"] = self.engine.schedule(item["id"])
+        except Exception:
+            pass
+        return item
 
     def validation_discovery(self) -> dict[str, Any]:
         """Detect repository validation commands without implicitly approving them."""

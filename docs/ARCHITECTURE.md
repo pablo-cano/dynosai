@@ -31,6 +31,7 @@ Coding Agent / CLI / Local Studio
 | Runtime / provider adapters   |
 | ExecutionRuntime (local)      |
 | Context handles               |
+| Team scheduler (leases)       |
 | Audit / token telemetry       |
 +-------------------------------+
       |                  |
@@ -85,13 +86,19 @@ Human gates and scope requests are persisted interactions, not transient chat me
 
 An execution wave is a conservative bounded chain of dependent tasks that may be edited and validated in one model cycle. Dependency order remains authoritative. Independent ready tasks are not silently grouped.
 
+## Governed team scheduling
+
+`team_scheduler.py` turns the approved task DAG into serial or parallel **team waves**. A parallel wave is allowed only when planned file sets are disjoint. Each lease carries a scope ceiling, evidence/validation contracts, and token/time budgets. DynosAI does not spawn extra provider processes: a second worker exists only if the host opens another governed session against an open lease. Reviewer is the human code-review gate; tester is the validation contract on the same lease. Fan-in is wave-scoped so sequential reuse of a path is not treated as a silent merge conflict.
+
+Leases are derived from existing `tasks.claimed_run` / runs. Schema remains v6.
+
 ## State recovery
 
 `StateManager` creates portable authoritative snapshots and SQLite backups. Restore happens into a temporary database, applies migrations, verifies SQLite integrity/foreign keys, and only then atomically replaces the live database.
 
 ## Model-control boundary
 
-Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.15.0.
+Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.16.0.
 
 ## ExecutionRuntime
 

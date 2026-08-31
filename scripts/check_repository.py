@@ -84,6 +84,7 @@ def main() -> int:
         "context_handles.py": {"app_server", "cli", "mcp"},
         "harness_contracts.py": {"app_server", "cli", "mcp", "engine"},
         "eval_registry.py": {"app_server", "cli", "mcp"},
+        "team_scheduler.py": {"app_server", "cli", "mcp", "engine"},
     }
     for filename, denied in architecture_deny.items():
         path = SRC / filename

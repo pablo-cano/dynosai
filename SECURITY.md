@@ -2,7 +2,7 @@
 
 ## Supported version
 
-The latest `0.15.x` release is the supported public beta baseline while the project remains pre-1.0.
+The latest `0.16.x` release is the supported public beta baseline while the project remains pre-1.0.
 
 ## Reporting a vulnerability
 

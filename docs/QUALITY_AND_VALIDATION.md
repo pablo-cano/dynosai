@@ -74,7 +74,7 @@ The deterministic 0.14 scorer can raise risk for security/authentication surface
 
 Managed-agent guidance asks the coding agent to inspect the diff, trace behavior to requirements, look for regressions, and check maintainability/validation gaps. A human code-review gate remains explicit.
 
-0.15.0 does not automatically launch a second independent reviewer model for every change. The deterministic Core checks and human gate are independent; semantic model review is currently performed inside the managed workflow.
+0.16.0 still does not automatically launch a second independent reviewer model for every change. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. The deterministic Core checks and human gate remain independent.
 
 ## 7. Failure classification
 

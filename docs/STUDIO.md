@@ -1,6 +1,6 @@
 # DynosAI Local Studio
 
-DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.15 line keeps the 0.14.1 guided product and adds completion-review surfaces for diff, validation and integrity without turning Studio into a second orchestrator.
+DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.16 line keeps the 0.14.1 guided product and the 0.15 completion-review surfaces, and shows current-wave team slots on Work without turning Studio into a process launcher.
 
 ## What Studio is for
 
@@ -91,6 +91,8 @@ Work maps internal state onto a plain-language timeline:
 ```text
 Understand -> Specify -> Plan -> Implement -> Validate -> Finish
 ```
+
+When a change is ready or implementing, Work also shows **team slots** for the current scheduling wave: role, planned files and lease status. Parallel slots appear only when planned files do not overlap. DynosAI does not start extra coding agents from this panel; another slot needs another governed session.
 
 When a coding-agent turn is active, Work also shows a bounded **Agent activity** stream. Newest events stay at the top, each line starts with its date/time, and Studio keeps your scroll position while the page refreshes in the background. The stream contains provider progress and workflow events rather than the full raw provider transcript. Full diagnostics remain available only when an execution fails or technical details are enabled.
 

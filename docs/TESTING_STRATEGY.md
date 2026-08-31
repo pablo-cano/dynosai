@@ -83,3 +83,7 @@ The 0.13.0 real-provider matrix remains the baseline certification for the uncha
 
 `tests/test_160.py` and `tests/test_161.py` cover context handles, ExecutionRuntime policy (path escape, secrets, timeout, dependency install denial), network profiles, secret redaction, Validation Integrity gaps, Eval Registry v0, skill on/off size comparison, cost-per-successful-governed-change raw metrics, MCP retrieve-handle, and Studio completion-review surfaces.
 
+### 0.16.0 governed-team regression
+
+`tests/test_170.py` covers file-disjoint parallel waves, serialization of overlapping files, dependency-blocked claims, follow-on roles as contracts (not spawns), claim denial, fan-in conflicts, schema-v6 engine integration, and reviewer as a human gate. `tests/test_161.py` also requires Studio team-slot rendering and EN/ES copy that extra agents are not started.
+
