@@ -414,7 +414,7 @@ class StudioAPI:
                     "auto_approve": app.auto_approve_enabled(),
                 }
             if path == "/api/project-settings":
-                return 200, {"auto_approve": app.auto_approve_enabled()}
+                return 200, {"auto_approve": app.auto_approve_enabled(), "execution_policy": app.execution_policy()}
             if path == "/api/execution":
                 return 200, self.execution.status(self.root, work_id)
             if path == "/api/work":
@@ -614,6 +614,16 @@ class StudioAPI:
                     return 400, {"error": "validation", "message": "case_id is required"}
                 try:
                     return 200, app.propose_eval_improvement(case_id)
+                except ValueError as exc:
+                    return 400, {"error": "validation", "message": str(exc)}
+            if path == "/api/execution-profile":
+                profile = str(payload.get("profile") or "").strip()
+                if not profile:
+                    return 400, {"error": "validation", "message": "profile is required"}
+                if not app.detector.detect(self.root).get("has_dynosai"):
+                    return 409, {"error": "not_initialized", "message": "initialize the project before changing the execution profile"}
+                try:
+                    return 200, {"execution_policy": app.set_execution_profile(profile)}
                 except ValueError as exc:
                     return 400, {"error": "validation", "message": str(exc)}
             if path == "/api/interaction/resolve":

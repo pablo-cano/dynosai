@@ -1,6 +1,6 @@
 # DynosAI Local Studio
 
-DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.17 line keeps the 0.14.1 guided product, 0.15 reviews and 0.16 team slots, and shows mined eval cases on Overview without starting extra agents.
+DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.18 line keeps the 0.14.1 guided product, 0.15 reviews, 0.16 team slots and 0.17 eval cases, and adds host-owned execution profiles on Project settings.
 
 ## What Studio is for
 
@@ -116,7 +116,8 @@ The first section controls how every **new change** starts in this project:
 
 - **Codex or Cursor** as the coding agent;
 - **Interactive branch** to work in the current Git branch, or **Isolated worktree** to create a separate Git working directory for the change;
-- **Auto-approve workflow gates**, which records automatic specification/plan/code/finish approvals and ordinary product-file scope requests as `studio_auto`. Questions still wait for a person. Exported `spec.md`/`plan.md` overlays under `specs/` are owned by DynosAI and do not create a scope gate, including when Git lists those paths with C-quoted non-ASCII names.
+- **Auto-approve workflow gates**, which records automatic specification/plan/code/finish approvals and ordinary product-file scope requests as `studio_auto`. Questions still wait for a person. Exported `spec.md`/`plan.md` overlays under `specs/` are owned by DynosAI and do not create a scope gate, including when Git lists those paths with C-quoted non-ASCII names;
+- **Execution profile** (Strict, Balanced or Autonomous). This is host policy, not a model setting. Autonomous does not skip human gates. OS-level network enforcement is not shipped.
 
 The New change page consumes these settings directly and does not repeat them.
 

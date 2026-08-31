@@ -17,6 +17,8 @@ const capabilities = [
   ["Validation profiles", "Run governed unit, lint, type-check, build, integration, security, or project-specific commands and store real outcomes."],
   ["Brownfield support", "Index existing code, symbols, tests, and relationships to build an evidence-backed inferred baseline."],
   ["Governed teams", "Approved plans become serial or parallel leases only when files do not overlap. Extra coding agents are not spawned."],
+  ["Eval intelligence", "Local failures become bounded eval cases. Improvement work stays in inbox. Predictive routing stays in shadow mode."],
+  ["Execution profiles", "Strict, Balanced and Autonomous are host-owned. Human gates stay required. OS-level network interception is not shipped."],
   ["Model control", "Track phase budgets, complexity, failures, context pressure, route candidates, and historical recommendations without reckless escalation."],
 ];
 
@@ -116,9 +118,9 @@ export default function HomePage() {
       <section className="border-y border-border bg-muted/45">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <div>
-            <Badge>New in 0.17.0</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Eval Intelligence: failures become cases, not autonomous routing.</h2>
-            <p className="mt-5 leading-7 text-muted-foreground">0.17 keeps Studio, the 0.15 harness and 0.16 team leases. Local failures are attributed and mined into bounded eval cases. Improvement work stays in inbox. Predictive routing stays in shadow mode.</p>
+            <Badge>New in 0.18.0</Badge>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Secure runtime: host-owned profiles, not a skipped-gate mode.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">0.18 keeps Studio, the 0.15 harness, 0.16 team leases and 0.17 eval cases. Strict, Balanced and Autonomous set network, dependency and secret policy outside the model. Human gates stay required. Docker/VM runtimes and OS-level network interception are not shipped.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">

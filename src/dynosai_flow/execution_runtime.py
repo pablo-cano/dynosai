@@ -100,6 +100,7 @@ class LocalExecutionRuntime:
         self.network = network or NetworkPolicy()
         self.dependencies = dependencies or DependencyPolicy()
         self.secrets = secrets or SecretBroker()
+        self.profile_name = "compatibility"
 
     def allowed_roots(self) -> list[Path]:
         roots = [self.root, *self._extra_roots]

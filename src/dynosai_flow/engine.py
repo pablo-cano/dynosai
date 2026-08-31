@@ -26,7 +26,7 @@ from .util import decode_git_path, json_dumps, json_loads, slugify, utc_now
 from .validation import QualityEngine
 from .policy import PathPolicyEngine, PolicyError, ValidationProfilePolicy, is_managed_workflow_artifact, product_scope_paths
 from .runtime import RuntimeBroker
-from .execution_runtime import LocalExecutionRuntime
+from .execution_profiles import bind_local_runtime, normalize_profile, require_local_runtime
 from .team_scheduler import build_team_plan, claim_allowed, fan_in_conflicts
 from .eval_intelligence import build_report, case_by_id, improvement_description, load_cases, mark_proposed, mark_regressed
 from .eval_registry import EvalRegistry
@@ -63,7 +63,8 @@ class DynosAI:
         self.agents = AgentConfigurator(self.root, self.db, self.runtime)
         self.state = StateManager(self.root, self.db)
         self.git_guard = GitGuard(self.root)
-        self.execution = LocalExecutionRuntime(self.root)
+        self._execution_evidence: dict[str, Any] = {}
+        self._bind_execution()
         self._injected_semantic_provider = semantic_provider is not None
         # Reuse stable task-scoped context previews while authoritative task/file state is unchanged.
         # Byte-stable contracts let the managed MCP delta compressor return a compact reference
@@ -97,6 +98,9 @@ class DynosAI:
         now_profile=utc_now()
         self.db.execute("INSERT INTO validation_profiles(name,command_json,source,approved,created_at,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(name) DO UPDATE SET command_json=excluded.command_json,approved=1,updated_at=excluded.updated_at",("unit",json_dumps(parts),"project-baseline",1,now_profile,now_profile))
         self.db.set_meta("mode", mode)
+        if not str(self.db.get_meta("execution_profile") or "").strip():
+            self.db.set_meta("execution_profile", self._resolved_profile_name())
+        self._bind_execution()
         self.db.set_meta("embedding_model", self.semantic.model_name or DEFAULT_MODEL)
         self.db.set_meta("embedding_dimensions", str(self.semantic.dimensions or DEFAULT_DIMENSIONS))
         self.db.set_meta("embedding_cache", str(getattr(self.semantic.provider, "cache_dir", default_cache_dir())))
@@ -851,7 +855,8 @@ class DynosAI:
         scope_requests=int((self.db.one("SELECT COUNT(*) n FROM scope_requests") or {"n":0})["n"])
         validation_runs=int((self.db.one("SELECT COUNT(*) n FROM validations") or {"n":0})["n"])
         cases=load_cases(self.root)
-        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False}}
+        policy=self.execution_policy()
+        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"}}
 
     def agent_git_status(self, run_id: str | None = None) -> dict[str, Any]:
         """Policy-safe Git status metadata for coding agents."""
@@ -1335,6 +1340,7 @@ class DynosAI:
         payloads={
             "environment.json":self.environment_report(), "doctor.json":self.doctor(), "runtime.json":self.runtime.status(),
             "board.json":self.board(), "stats.json":self.stats(),
+            "execution_policy.json":self.execution_policy(),
             "recent_audit.json":self.db.query("SELECT id,event_type,entity_id,payload,created_at FROM audit ORDER BY id DESC LIMIT 100"),
             "recent_runs.json":self.db.query("SELECT id,work_id,agent,status,started_at,finished_at,verification_status,worktree FROM runs ORDER BY id DESC LIMIT 50"),
         }
@@ -1414,6 +1420,62 @@ class DynosAI:
             raise RuntimeError("DynosAI project not initialized. Initialize it from Cursor/Codex with DynosAI project onboarding, or headlessly with `dynosai project initialize .`.")
         self.db.initialize()
         self.runtime.register_project(self.root,self.db.get_meta("project_name",self.root.name))
+        self._bind_execution()
+
+    def _resolved_profile_name(self, name: str | None = None) -> str:
+        """Prefer an explicit name, then persisted meta, then env, then balanced."""
+        if name:
+            return normalize_profile(name)
+        meta = ""
+        try:
+            if self.db.path.exists():
+                meta = str(self.db.get_meta("execution_profile") or "").strip().lower()
+        except Exception:
+            meta = ""
+        if meta:
+            return normalize_profile(meta)
+        env = (os.environ.get("DYNOSAI_EXECUTION_PROFILE") or "").strip().lower()
+        if env:
+            return normalize_profile(env)
+        return "balanced"
+
+    def _bind_execution(self, name: str | None = None) -> dict[str, Any]:
+        chosen = self._resolved_profile_name(name)
+        runtime, evidence = bind_local_runtime(self.root, chosen)
+        self.execution = runtime
+        self._execution_evidence = evidence
+        return evidence
+
+    def execution_policy(self) -> dict[str, Any]:
+        """Host-visible policy evidence. Never includes secret values."""
+        if not self._execution_evidence:
+            self._bind_execution()
+        return dict(self._execution_evidence)
+
+    def set_execution_profile(self, name: str) -> dict[str, Any]:
+        """Persist a Strict/Balanced/Autonomous profile. Human gates stay required."""
+        chosen = normalize_profile(name)
+        self._ensure_ready()
+        self.db.set_meta("execution_profile", chosen)
+        evidence = self._bind_execution(chosen)
+        self.db.audit(
+            "ExecutionProfileSet",
+            chosen,
+            {
+                "profile": evidence.get("profile"),
+                "network": evidence.get("network"),
+                "dependencies": evidence.get("dependencies"),
+                "secret_materialization": evidence.get("secret_materialization"),
+                "vault_configured": evidence.get("vault_configured"),
+                "os_network_enforcement": False,
+                "human_gates": "required",
+            },
+        )
+        return dict(evidence)
+
+    def require_execution_runtime(self, kind: str = "local") -> str:
+        """Refuse Docker/VM/remote backends that 0.18 does not ship."""
+        return require_local_runtime(kind)
 
     def _set_state(self, work_id: str, state: str) -> None:
         self.db.execute("UPDATE work_items SET state=?,updated_at=? WHERE id=?", (state, utc_now(), work_id))
