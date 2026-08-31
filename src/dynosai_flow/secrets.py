@@ -1,16 +1,19 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Pablo Cano
-"""Secret redaction and a future secret-broker boundary.
+"""Secret redaction and a fail-closed secret-broker boundary.
 
 Raw secrets must not enter model prompts, evidence, logs, diagnostics, Studio
-summaries or exported bundles. The broker abstraction exists so a later runtime
-can resolve credentials for processes without handing them to the model.
+summaries or exported bundles. 0.18 may materialize a configured vault value
+to the local runtime process; the model still never receives the raw secret.
 """
 
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any
+
+from .util import json_loads
 
 _PEM = re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]+?-----END [A-Z0-9 ]*PRIVATE KEY-----")
 _PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
@@ -46,12 +49,22 @@ def redact_value(value: Any) -> Any:
     return value
 
 
+def vault_path_for(root: str | Path) -> Path:
+    """Project-local vault path. Path policy already treats `.dynosai/runtime/**` as sensitive."""
+    return Path(root).expanduser().resolve() / ".dynosai" / "runtime" / "secret-vault.json"
+
+
 class SecretBroker:
     """Reference-only secret access. Values are not returned for model context.
 
-    0.15 does not ship a configured vault. Callers must fail closed rather than
-    inlining credentials into prompts or evidence.
+    Without a configured vault, runtime materialization refuses closed (0.15 behavior).
+    With a vault and allow_runtime=True, values may be injected into the local process
+    environment only. Evidence, logs, MCP and Studio must keep names/refs, never values.
     """
+
+    def __init__(self, *, vault_path: str | Path | None = None, allow_runtime: bool = False):
+        self.vault_path = Path(vault_path).expanduser().resolve() if vault_path else None
+        self.allow_runtime = bool(allow_runtime)
 
     def reference(self, name: str) -> str:
         slug = str(name or "").strip()
@@ -64,8 +77,26 @@ class SecretBroker:
             f"{reference} must not be materialized into model context, evidence, logs or Studio"
         )
 
+    def _load_vault(self) -> dict[str, str]:
+        if self.vault_path is None or not self.vault_path.exists():
+            return {}
+        payload = json_loads(self.vault_path.read_text(encoding="utf-8"), {})
+        secrets = payload.get("secrets") if isinstance(payload, dict) else {}
+        if not isinstance(secrets, dict):
+            return {}
+        return {str(key): str(value) for key, value in secrets.items() if str(key).strip()}
+
     def materialize_for_runtime(self, reference: str, runtime_name: str) -> str:
-        del runtime_name
-        raise PermissionError(
-            f"{reference} has no configured runtime secret broker; refuse rather than embed the raw secret"
-        )
+        if str(runtime_name or "").strip().lower() != "local":
+            raise PermissionError(f"{reference} cannot be materialized to runtime {runtime_name!r} in 0.18")
+        if not self.allow_runtime:
+            raise PermissionError(
+                f"{reference} has no configured runtime secret broker; refuse rather than embed the raw secret"
+            )
+        key = str(reference or "").strip()
+        if key.startswith("secret:"):
+            key = key.split(":", 1)[1]
+        vault = self._load_vault()
+        if key not in vault:
+            raise PermissionError(f"{reference} is not present in the configured local vault")
+        return vault[key]

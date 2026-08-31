@@ -471,6 +471,10 @@ class DynosAIApplication:
             item.get("message") or item.get("code") for item in ((summary.get("findings") or [])[:8])
         ]
         extra["final_state"] = (summary.get("work") or {}).get("state")
+        try:
+            extra["execution_policy"] = self.engine.execution_policy()
+        except Exception:
+            extra["execution_policy"] = {}
         return extra
 
     def list_reviews(self, *, limit: int = 50) -> list[dict[str, Any]]:
@@ -568,6 +572,20 @@ class DynosAIApplication:
                 applied.extend(self.apply_auto_approvals(work_id))
         return {"auto_approve": enabled, "applied": applied}
 
+    def execution_policy(self) -> dict[str, Any]:
+        """Host-visible execution profile evidence. The model cannot change this."""
+        try:
+            return self.engine.execution_policy()
+        except Exception:
+            return {"profile": "balanced", "os_network_enforcement": False, "human_gates": "required", "enforcement": "decision_only"}
+
+    def set_execution_profile(self, name: str) -> dict[str, Any]:
+        """Persist Strict/Balanced/Autonomous. Does not skip human gates or spawn providers."""
+        self.engine._ensure_ready()
+        evidence = self.engine.set_execution_profile(name)
+        self.events.emit("ExecutionProfileSet", payload={"profile": evidence.get("profile"), "os_network_enforcement": False})
+        return evidence
+
     def apply_auto_approvals(self, work_id: str) -> list[dict[str, Any]]:
         """Approve pending specification/plan/code/merge gates and ordinary scope requests when auto-mode is on."""
         if not self.auto_approve_enabled():
@@ -631,6 +649,7 @@ class DynosAIApplication:
             overview["status"] = None
             overview["blockers"] = self.explain_blockers(work_id)
             overview["auto_approve"] = False
+            overview["execution_policy"] = {"profile": "balanced", "os_network_enforcement": False, "human_gates": "required", "enforcement": "decision_only"}
             return overview
         self.engine.db.initialize()
         overview["project"] = self.engine.db.get_meta("project_name", self.root.name)
@@ -639,6 +658,10 @@ class DynosAIApplication:
         overview["blockers"] = self.explain_blockers(work_id)
         overview["review_count"] = len(self.list_reviews(limit=100))
         overview["auto_approve"] = self.auto_approve_enabled()
+        try:
+            overview["execution_policy"] = self.engine.execution_policy()
+        except Exception:
+            overview["execution_policy"] = {"profile": "balanced", "os_network_enforcement": False, "human_gates": "required", "enforcement": "decision_only"}
         try:
             overview["eval_intelligence"] = self.engine.eval_intelligence()
         except Exception:

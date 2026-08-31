@@ -2,6 +2,29 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 0.18.0 - 2026-08-31
+
+### Added
+
+- Introduced Strict, Balanced and Autonomous execution profiles as host-owned policy outside the model. Balanced is the project default. Autonomous uses an allowlist, not unrestricted network.
+- Added `execution_profiles.py`. Docker, VM and remote runtimes raise a policy error rather than silently falling back.
+- Optional local secret vault materializes named secrets to the local runtime only. `materialize_for_model` still refuses.
+- Studio Project settings can select the profile. Code/merge reviews, overview, `dynosai_stats` and diagnostic bundles include policy evidence without secret values.
+
+### Changed
+
+- Engine-constructed `LocalExecutionRuntime` now follows the selected profile (governed dependencies, profile network). Direct `LocalExecutionRuntime()` construction remains compatibility/unrestricted so 0.15 tests stay valid.
+- Predictive routing remains shadow-only. Human gates remain required in every profile.
+
+### Security
+
+- OS-level child-process network interception is **not** shipped. Evidence records `enforcement: decision_only` and `os_network_enforcement: false`.
+- Schema remains v6. Vault files live under `.dynosai/runtime/`. Agents cannot change the execution profile through MCP.
+
+### Validation
+
+- Added `tests/test_190.py` for profiles, vault materialization, refused container runtimes, and secret-free evidence. Studio tests require execution-profile settings and EN/ES OS-enforcement copy.
+
 ## 0.17.0 - 2026-08-31
 
 ### Added

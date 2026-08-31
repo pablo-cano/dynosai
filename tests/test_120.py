@@ -22,7 +22,7 @@ class DynosAI120PredictiveEfficiencyTests(unittest.TestCase):
         self.tmp = Path(self.td.name)
 
     def test_version_is_0120(self):
-        self.assertEqual(__version__, "0.17.0")
+        self.assertEqual(__version__, "0.18.0")
 
     def test_calibration_learns_once_at_finalize_and_exceeds_old_50x_ceiling(self):
         cal_path = self.tmp / "calibration.json"

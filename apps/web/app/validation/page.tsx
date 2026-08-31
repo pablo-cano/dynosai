@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Validation",
-  description: "How the DynosAI 0.17.0 eval intelligence layer preserves the 0.13.0 certified governed core, Studio, the 0.15 harness and 0.16 team scheduling while adding attribution and mined-regression coverage.",
+  description: "How the DynosAI 0.18.0 execution-profile layer preserves the 0.13.0 certified governed core, Studio, the 0.15 harness, 0.16 team scheduling and 0.17 eval intelligence while adding host-owned runtime policy.",
 };
 
 const matrix = [
@@ -23,9 +23,9 @@ export default function ValidationPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8">
       <div className="max-w-3xl">
-        <Badge>β Public beta · 0.17.0</Badge>
+        <Badge>β Public beta · 0.18.0</Badge>
         <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">The beta baseline is backed by evidence, not by a version number.</h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI 0.17.0 preserves the accepted 0.13.0 governed-core behavior, Studio, the 0.15 harness and 0.16 team scheduling while adding eval intelligence. The real-provider Green/Brown matrix shown below remains the core provider baseline; 0.17 adds attribution, mined cases and inbox-only improvement work without live-provider leaderboards or autonomous routing.</p>
+        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI 0.18.0 preserves the accepted 0.13.0 governed-core behavior, Studio, the 0.15 harness, 0.16 team scheduling and 0.17 eval intelligence while adding execution profiles. The real-provider Green/Brown matrix shown below remains the core provider baseline; 0.18 adds host-owned Strict/Balanced/Autonomous policy and runtime-only secret materialization without claiming OS-level network interception or container runtimes.</p>
       </div>
 
       <div className="mt-12 overflow-x-auto rounded-2xl border border-border">

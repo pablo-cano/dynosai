@@ -2,7 +2,7 @@
 
 DynosAI prefers explicit CLI/project configuration. Environment variables are primarily runtime, provider, diagnostic, or advanced controls.
 
-Common variables present in the 0.17.0 codebase include:
+Common variables present in the 0.18.0 codebase include:
 
 ```text
 DYNOSAI_PROJECT
@@ -22,6 +22,9 @@ DYNOSAI_MCP_RESULT_TEXT_MODE
 DYNOSAI_MCP_TOOL_PROFILE
 DYNOSAI_PHASE_TOOL_DISCLOSURE
 DYNOSAI_STRICT_MANAGED_RUNTIME
+DYNOSAI_EXECUTION_PROFILE
+DYNOSAI_NETWORK_PROFILE
+DYNOSAI_DEPENDENCY_PROFILE
 DYNOSAI_TOKEN_TELEMETRY
 DYNOSAI_TOKEN_USAGE_FILE
 DYNOSAI_TOKEN_CALIBRATION_PATH

@@ -589,7 +589,12 @@ function reviewDetail(review) {
     const score = detail.quality ? `${t("common.quality")} ${esc(detail.quality.score)}/100 · ${esc(detail.quality.blocking)} ${esc(t("common.blocking"))}` : "";
     const spec = detail.spec ? `${reviewItems("approvals.requirementsTitle", detail.spec.requirements)}${reviewItems("approvals.acceptanceTitle", detail.spec.acceptance_criteria)}` : "";
     const diffText = detail.diff?.text ? `<details class="review-diff"><summary>${esc(t("approvals.diffTitle"))}</summary><pre>${esc(detail.diff.text)}</pre></details>` : "";
-    return `<div class="review-detail">${spec}<section class="review-section"><h4>${esc(t("approvals.evidenceSummary"))}</h4><p>${score || "—"}</p></section>${reviewItems("approvals.tasksTitle", tasks)}${reviewItems("approvals.filesTitle", files)}${reviewItems("approvals.validationsTitle", validations)}${reviewItems("approvals.integrityTitle", integrity)}${reviewItems("approvals.findingsTitle", findings)}${diffText}</div>`;
+    const policy = detail.execution_policy || {};
+    const policyText = policy.profile
+      ? `${esc(policy.profile)} · ${esc(policy.network || "")} · ${esc(policy.enforcement || "decision_only")}. ${esc(t("approvals.policyOsNote"))}`
+      : "";
+    const policyBlock = policyText ? `<section class="review-section review-policy"><h4>${esc(t("approvals.policyTitle"))}</h4><p>${policyText}</p></section>` : "";
+    return `<div class="review-detail">${spec}<section class="review-section"><h4>${esc(t("approvals.evidenceSummary"))}</h4><p>${score || "—"}</p></section>${reviewItems("approvals.tasksTitle", tasks)}${reviewItems("approvals.filesTitle", files)}${reviewItems("approvals.validationsTitle", validations)}${reviewItems("approvals.integrityTitle", integrity)}${reviewItems("approvals.findingsTitle", findings)}${policyBlock}${diffText}</div>`;
   }
   return "";
 }
@@ -688,6 +693,9 @@ function renderProjectSettings() {
     auto.disabled = !overview?.initialized;
     auto.checked = !!overview?.auto_approve;
   }
+  setComboValue("execution-profile", overview?.execution_policy?.profile || "balanced");
+  const profileInput = $("execution-profile");
+  if (profileInput) profileInput.disabled = !overview?.initialized;
   renderModelRouting();
 }
 function recommendedModel(provider, model) {
@@ -1225,6 +1233,19 @@ function wireEvents() {
       });
     } catch (error) {
       event.target.checked = !enabled;
+      showAlert(error.message);
+    }
+  });
+  $("execution-profile")?.addEventListener("change", async (event) => {
+    const profile = event.target.value;
+    try {
+      await withOperation("operation.saveSettings", async () => {
+        await api("/api/execution-profile", {method:"POST", body:JSON.stringify({profile})});
+        await refresh({preserveView:true});
+        showAlert(t("projectSettings.executionProfileSaved"), "success");
+      });
+    } catch (error) {
+      setComboValue("execution-profile", overview?.execution_policy?.profile || "balanced");
       showAlert(error.message);
     }
   });

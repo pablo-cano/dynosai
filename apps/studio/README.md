@@ -39,3 +39,7 @@ Work cards show current-wave leases (role, files, status). DynosAI does not star
 ## 0.17.0 eval cases
 
 Overview can list mined eval cases. Creating an improvement task from a case stays in inbox and does not launch Codex or Cursor.
+
+## 0.18.0 execution profiles
+
+Project settings choose Strict, Balanced or Autonomous. Code/merge reviews show policy evidence. OS-level network enforcement is not shipped.

@@ -103,11 +103,15 @@ Leases are derived from existing `tasks.claimed_run` / runs. Schema remains v6.
 
 ## Model-control boundary
 
-Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.17.0.
+Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.18.0.
 
 ## ExecutionRuntime
 
 `execution_runtime.py` is the hands boundary: filesystem, processes, network **decisions**, and dependency classification. The local runtime is the default. Provider transports (Cursor ACP, Codex app-server) stay in CLI/MCP adapters. Durable session/workflow state stays in knowledge.db.
+
+## Execution profiles
+
+`execution_profiles.py` binds Strict, Balanced or Autonomous policy onto the local runtime. Human gates stay required. Docker/VM/remote backends are refused. OS-level child-process network interception is not shipped; evidence records `enforcement: decision_only`. An optional vault may materialize secrets to the local process only.
 
 ## Context handles
 

@@ -20,9 +20,10 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `context_handles.py` | Persistent pass-by-reference handles for large artifacts |
 | `eval_registry.py` | Versioned eval scenarios and offline harness comparisons |
 | `eval_intelligence.py` | Failure attribution, local-trace mining and inbox-only improvement loop |
+| `execution_profiles.py` | Strict/Balanced/Autonomous host policy, local runtime bind and unsupported-runtime refusal |
 | `execution_runtime.py` | Provider-neutral ExecutionRuntime and local hands implementation |
 | `harness_contracts.py` | Typed execution/recovery/handle contracts and component flags |
-| `secrets.py` | Credential redaction and refuse-closed secret broker |
+| `secrets.py` | Credential redaction and secret broker (model refuse-closed; optional local runtime vault) |
 | `validation_integrity.py` | Requirement → evidence → validation integrity reports |
 | `db.py` | SQLite schema, migrations, persistence and audit storage |
 | `debug.py` | Diagnostic and end-to-end debug orchestration |

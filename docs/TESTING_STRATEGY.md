@@ -91,3 +91,7 @@ The 0.13.0 real-provider matrix remains the baseline certification for the uncha
 
 `tests/test_180.py` covers failure attribution (non-model layers are ineligible for predictive learning), mining a failed validation into a case, inbox-only propose without provider spawn, regression evidence that does not complete work, and the offline `team_overlap` fixture. Studio tests require eval-case rendering and shadow-mode copy.
 
+### 0.18.0 execution-profile regression
+
+`tests/test_190.py` covers Strict install denial, Balanced vault materialization to local runtime only, refused Docker/VM backends, secret-free review/bundle evidence, and schema v6. Studio tests require the execution-profile combobox and EN/ES copy that OS-level network enforcement is not shipped.
+

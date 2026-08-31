@@ -43,10 +43,11 @@ Delivered in 0.15.0:
 
 Still incomplete inside 0.15 (do not advertise as done):
 
-- OS-level network interception for child processes (policy API exists; sandbox enforcement is 0.18);
-- configured secret vault materialization for runtimes;
+- OS-level network interception for child processes (policy API exists; 0.18 still records decision-only);
 - live-provider eval quality claims (v0 is offline/fixture measurement);
 - a fully autonomous long-running loop with all budgets always enforced at the workflow layer (checkpoints, token budgets and stagnation signals already exist from 0.12–0.14; bounded replanning is not silent scope expansion).
+
+0.18 ships named execution profiles and runtime-only vault materialization on top of this harness. It does not complete OS-level sandboxing or container runtimes.
 
 No general multi-agent execution in 0.15.
 
@@ -97,13 +98,16 @@ Predictive routing remains shadow-only until this evidence shows autonomous deci
 
 **Goal:** allow longer autonomous work while placing authoritative security policy outside the model/harness.
 
-0.15 introduced the `ExecutionRuntime` interface, local default, filesystem/process policy, network **decision** profiles, dependency classification and a refuse-closed secret broker. Remaining:
+Delivered in 0.18.0:
 
-- container/VM/remote runtime implementations;
-- OS-level network enforcement for child processes;
-- credential brokering that can materialize secrets to a runtime without model context;
-- `Strict`, `Balanced` and `Autonomous` execution profiles;
-- policy evidence in review and certification bundles.
+- `Strict`, `Balanced` and `Autonomous` execution profiles (host-owned; human gates still required);
+- runtime-only credential materialization from a project vault to the local process;
+- policy evidence on Studio reviews, overview, stats and diagnostic bundles.
+
+Still incomplete inside 0.18 (do not advertise as done):
+
+- container/VM/remote runtime implementations (requesting them raises a policy error);
+- OS-level network enforcement for child processes (local network policy remains decision-only).
 
 ## 0.19 — Ecosystem & Interoperability
 

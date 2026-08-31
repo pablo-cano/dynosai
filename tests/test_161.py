@@ -30,6 +30,17 @@ class DynosAI015StudioReviewabilityTests(unittest.TestCase):
         self.assertIn("Predictive routing stays in shadow mode", i18n)
         self.assertIn("routing predictivo sigue en sombra", i18n)
 
+    def test_settings_and_reviews_expose_execution_policy(self):
+        html = resources.files("dynosai_flow.studio_assets").joinpath("index.html").read_text(encoding="utf-8")
+        app = resources.files("dynosai_flow.studio_assets").joinpath("app.js").read_text(encoding="utf-8")
+        i18n = resources.files("dynosai_flow.studio_assets").joinpath("i18n.js").read_text(encoding="utf-8")
+        self.assertIn("execution-profile", html)
+        self.assertIn("review-policy", app)
+        self.assertIn("approvals.policyTitle", i18n)
+        self.assertIn("OS-level network enforcement is not shipped", i18n)
+        self.assertIn("aplicación de red a nivel de sistema operativo no está incluida", i18n)
+        self.assertIn("projectSettings.executionProfile", i18n)
+
     def test_studio_assets_remain_in_sync(self):
         root = Path(__file__).resolve().parents[1]
         for name in ("index.html", "styles.css", "app.js", "i18n.js", "theme-init.js", "icon.svg"):

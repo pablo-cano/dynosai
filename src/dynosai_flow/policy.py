@@ -234,8 +234,8 @@ class NetworkPolicy:
     """Authoritative network decision for DynosAI-mediated operations.
 
     LocalExecutionRuntime does not intercept child-process sockets; OS-level
-    enforcement belongs to a future sandboxed runtime. The model still cannot
-    grant itself network access: callers must consult this policy.
+    enforcement is not shipped in 0.18. Evidence records enforcement as
+    decision_only. The model still cannot grant itself network access.
     """
 
     def __init__(self, profile: str | None = None, allowlist: Iterable[str] | None = None):
