@@ -1,6 +1,6 @@
 # DynosAI Local Studio
 
-DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.14.1 line is deliberately designed for users who want to manage small local projects without learning internal workflow-state names, SQLite, MCP, provider event streams, or the full CLI first.
+DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.15 line keeps the 0.14.1 guided product and adds completion-review surfaces for diff, validation and integrity without turning Studio into a second orchestrator.
 
 ## What Studio is for
 

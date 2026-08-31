@@ -28,7 +28,7 @@ class DynosAI100Tests(unittest.TestCase):
         self.tmp = Path(self.td.name)
 
     def test_version_is_0100(self):
-        self.assertEqual(__version__, "0.14.1")
+        self.assertEqual(__version__, "0.15.0")
 
     def test_cursor_exact_usage_is_normalized_without_double_counting_cache(self):
         raw = {"inputTokens": 179451, "outputTokens": 8018, "cacheReadTokens": 1008512, "cacheWriteTokens": 3}
@@ -125,8 +125,11 @@ class DynosAI100Tests(unittest.TestCase):
 
     def test_acceptance_surface_is_lean_and_removes_redundant_transition_tools(self):
         tools = MCP_TOOL_PROFILES["acceptance"]
-        self.assertEqual(len(tools), 14)
+        # 0.15 adds dynosai_retrieve_handle so compacted diffs/search remain retrievable.
+        # Continue/overlay/find_symbol stay out: the surface must remain lean.
+        self.assertEqual(len(tools), 15)
         self.assertIn("dynosai_get_next_action", tools)
+        self.assertIn("dynosai_retrieve_handle", tools)
         self.assertNotIn("dynosai_continue", tools)
         self.assertNotIn("dynosai_refresh_overlay", tools)
         self.assertNotIn("dynosai_find_symbol", tools)

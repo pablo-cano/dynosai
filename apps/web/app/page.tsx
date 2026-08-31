@@ -115,9 +115,9 @@ export default function HomePage() {
       <section className="border-y border-border bg-muted/45">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <div>
-            <Badge>New in 0.14.1</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Guided Studio: start with a project, not with DynosAI internals.</h2>
-            <p className="mt-5 leading-7 text-muted-foreground">Open <code>dynosai studio</code> to a neutral project hub. Create or open a project, then follow a project-scoped workflow for setup, changes, work, approvals and checks while technical details stay optional.</p>
+            <Badge>New in 0.15.0</Badge>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Verified Agent Harness: longer work, same authority boundaries.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">0.15 keeps Studio as the local control plane and adds context handles, an ExecutionRuntime boundary, Validation Integrity on completion reviews, and an offline eval registry. Coding agents stay workers. DynosAI still owns scope, evidence and completion.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">

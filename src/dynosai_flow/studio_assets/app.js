@@ -548,10 +548,16 @@ function reviewDetail(review) {
     const risks = (detail.plan.risks || []).map((risk) => ({text:typeof risk === "string" ? risk : (risk.text || risk.description || JSON.stringify(risk))}));
     return `<div class="review-detail"><section class="review-section"><h4>${esc(t("approvals.planSummary"))}</h4><p>${esc(detail.plan.approach || "—")}</p></section>${reviewItems("approvals.tasksTitle", tasks)}${reviewItems("approvals.filesTitle", files)}${reviewItems("approvals.risksTitle", risks)}</div>`;
   }
-  if (["code","merge"].includes(review.gate) && detail.quality) {
-    const findings = (detail.quality.findings || []).map((finding) => ({id:finding.code || finding.severity || "", text:finding.message || finding.text || ""}));
+  if (["code","merge"].includes(review.gate) && (detail.quality || detail.diff || detail.integrity)) {
+    const findings = (detail.quality?.findings || []).map((finding) => ({id:finding.code || finding.severity || "", text:finding.message || finding.text || ""}));
     const tasks = (detail.tasks || []).map((task) => ({id:task.id || "", text:[task.title, task.state].filter(Boolean).join(" — ")}));
-    return `<div class="review-detail"><section class="review-section"><h4>${esc(t("approvals.evidenceSummary"))}</h4><p>${esc(t("common.quality"))} ${esc(detail.quality.score)}/100 · ${esc(detail.quality.blocking)} ${esc(t("common.blocking"))}</p></section>${reviewItems("approvals.tasksTitle", tasks)}${reviewItems("approvals.findingsTitle", findings)}</div>`;
+    const files = (detail.diff?.files || []).map((file) => ({text:file}));
+    const validations = (detail.validations || []).map((item) => ({id:String(item.exit_code ?? ""), text:[item.command, item.status].filter(Boolean).join(" — ")}));
+    const integrity = (detail.integrity?.weak_evidence || []).map((item) => ({id:item.requirement_id || "", text:(item.reasons || []).join(", ")}));
+    const score = detail.quality ? `${t("common.quality")} ${esc(detail.quality.score)}/100 · ${esc(detail.quality.blocking)} ${esc(t("common.blocking"))}` : "";
+    const spec = detail.spec ? `${reviewItems("approvals.requirementsTitle", detail.spec.requirements)}${reviewItems("approvals.acceptanceTitle", detail.spec.acceptance_criteria)}` : "";
+    const diffText = detail.diff?.text ? `<details class="review-diff"><summary>${esc(t("approvals.diffTitle"))}</summary><pre>${esc(detail.diff.text)}</pre></details>` : "";
+    return `<div class="review-detail">${spec}<section class="review-section"><h4>${esc(t("approvals.evidenceSummary"))}</h4><p>${score || "—"}</p></section>${reviewItems("approvals.tasksTitle", tasks)}${reviewItems("approvals.filesTitle", files)}${reviewItems("approvals.validationsTitle", validations)}${reviewItems("approvals.integrityTitle", integrity)}${reviewItems("approvals.findingsTitle", findings)}${diffText}</div>`;
   }
   return "";
 }

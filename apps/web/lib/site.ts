@@ -4,7 +4,7 @@
 export const siteConfig = {
   name: "DynosAI",
   shortName: "DynosAI",
-  version: "0.14.1",
+  version: "0.15.0",
   url: "https://www.dynosai.com",
   description:
     "A local-first orchestration and governance layer for AI coding agents, with durable workflow state, scope control, Git evidence, validation, human gates, and auditability.",

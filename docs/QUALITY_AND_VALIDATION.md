@@ -27,7 +27,7 @@ DynosAI executes approved commands as subprocesses with captured output, timeout
 - `integration` — integration or system tests;
 - project-specific validation commands.
 
-A validation capability existing in DynosAI does not mean every project enables it automatically. The current default initialization creates a unit-test profile from the configured `test_command`. In 0.14.1, DynosAI also discovers common repository-native candidates (pytest/Ruff/mypy, npm scripts/TypeScript, Cargo, .NET, Maven/Gradle). **Discovery is read-only**: candidates require explicit user approval before they become governed validation profiles.
+Passing tests are not automatically the completion standard. Validation Integrity connects requirements, acceptance criteria, evidence and validation results. Self-authored tests created in the same implementation must not be the only proof for high-risk changes. The current default initialization creates a unit-test profile from the configured `test_command`. In 0.15.0, DynosAI also discovers common repository-native candidates (pytest/Ruff/mypy, npm scripts/TypeScript, Cargo, .NET, Maven/Gradle). **Discovery is read-only**: candidates require explicit user approval before they become governed validation profiles.
 
 ## 3. Does DynosAI check compilation?
 
@@ -74,7 +74,7 @@ The deterministic 0.14 scorer can raise risk for security/authentication surface
 
 Managed-agent guidance asks the coding agent to inspect the diff, trace behavior to requirements, look for regressions, and check maintainability/validation gaps. A human code-review gate remains explicit.
 
-0.14.1 does not automatically launch a second independent reviewer model for every change. The deterministic Core checks and human gate are independent; semantic model review is currently performed inside the managed workflow.
+0.15.0 does not automatically launch a second independent reviewer model for every change. The deterministic Core checks and human gate are independent; semantic model review is currently performed inside the managed workflow.
 
 ## 7. Failure classification
 

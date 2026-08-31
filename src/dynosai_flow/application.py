@@ -22,6 +22,9 @@ from .context_control import ContextCheckpointStore
 from .agent_config import AgentConfiguration
 from .validation_discovery import ValidationDiscovery
 from .risk import RiskAssessment
+from .validation_integrity import evaluate_integrity
+from .cost_telemetry import governed_change_cost
+from .secrets import redact_text
 
 
 class ProjectDetector:
@@ -416,6 +419,51 @@ class DynosAIApplication:
             "primary_action": primary,
         }
 
+    def _completion_review_detail(self, work_id: str, summary: dict[str, Any]) -> dict[str, Any]:
+        """Bounded Requirement → Evidence → Diff → Validation view for code/merge gates."""
+        extra: dict[str, Any] = {}
+        try:
+            risk = self.risk_assessment(work_id)
+            extra["integrity"] = evaluate_integrity(self.engine, work_id, risk_level=str((risk or {}).get("level") or ""))
+            extra["cost"] = governed_change_cost(self.engine.db, work_id)
+            extra["cost"]["requirements_satisfied"] = extra["integrity"].get("requirements_satisfied")
+        except Exception:
+            extra.setdefault("integrity", {})
+        validations = self.engine.db.query(
+            "SELECT command,status,exit_code,created_at FROM validations WHERE work_id=? ORDER BY id DESC LIMIT 8",
+            (work_id,),
+        )
+        extra["validations"] = [
+            {"command": row.get("command"), "status": row.get("status"), "exit_code": row.get("exit_code"), "created_at": row.get("created_at")}
+            for row in validations
+        ]
+        evidence = self.engine.db.query(
+            "SELECT id,task_id,kind,source,status,created_at FROM evidence WHERE work_id=? ORDER BY created_at DESC LIMIT 8",
+            (work_id,),
+        )
+        extra["evidence"] = [
+            {"id": row.get("id"), "task_id": row.get("task_id"), "kind": row.get("kind"), "status": row.get("status")}
+            for row in evidence
+        ]
+        try:
+            run = self.engine.db.one("SELECT worktree,base_commit FROM runs WHERE work_id=? ORDER BY id DESC LIMIT 1", (work_id,))
+            cwd = Path(run["worktree"]) if run and run.get("worktree") else self.engine.root
+            base = run.get("base_commit") if run else None
+            diff = self.engine.git.policy_filtered_diff(cwd, base, max_chars=8000)
+            extra["diff"] = {
+                "files": diff.get("files") or [],
+                "denied": diff.get("denied") or [],
+                "truncated": bool(diff.get("truncated")),
+                "text": redact_text(str(diff.get("diff") or ""))[:8000],
+            }
+        except Exception:
+            extra["diff"] = {"files": [], "denied": [], "truncated": False, "text": ""}
+        extra["unresolved_risks"] = [
+            item.get("message") or item.get("code") for item in ((summary.get("findings") or [])[:8])
+        ]
+        extra["final_state"] = (summary.get("work") or {}).get("state")
+        return extra
+
     def list_reviews(self, *, limit: int = 50) -> list[dict[str, Any]]:
         """Return pending human decisions with bounded, user-facing review context."""
         info = self.detector.detect(self.root)
@@ -473,6 +521,8 @@ class DynosAIApplication:
                             "blocking": sum(1 for finding in findings if str(finding.get("severity") or "") == "blocking"),
                         },
                     }
+                    if row.get("gate") in {"code", "merge"}:
+                        item["detail"].update(self._completion_review_detail(work_id, summary))
                 except Exception:
                     item["detail"] = {}
             reviews.append(item)

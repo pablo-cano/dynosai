@@ -8,7 +8,7 @@ DynosAI is a local-first orchestration and governance layer for AI coding agents
 
 > The agent writes code. DynosAI governs what may change, what must be proven, and when the work is actually done.
 
-**Current release:** `0.14.1` · **Public beta · Guided Studio**
+**Current release:** `0.15.0` · **Public beta · Verified Agent Harness**
 **License:** MIT
 **Author and maintainer:** [Pablo Cano](https://www.linkedin.com/in/pablo-cano-galan/)
 **Website:** [https://www.dynosai.com/](https://www.dynosai.com/)
@@ -45,13 +45,14 @@ The authoritative state lives in `.dynosai/knowledge.db` and Git, not in the pro
 - **Independent result verification** — an agent cannot simply declare its own work verified; DynosAI checks repository state and recorded evidence.
 - **Validation profiles** — unit, lint, type-check, build, integration, or project-specific commands can be executed as governed checks.
 - **Validation auto-discovery** — common Python, Node.js/TypeScript, Rust, .NET and Java checks are proposed from repository configuration and require explicit approval before becoming governed profiles.
-- **Guided Studio** — `dynosai studio` opens a project hub with no project selected by default, in-app create/open/recent project management with a contextual folder browser that can create directories, project-scoped workflow/model settings, a contextual Fibonacci walkthrough, themes, English/Spanish UI, and opt-in technical diagnostics.
+- **Guided Studio** — `dynosai studio` opens a project hub with no project selected by default, in-app create/open/recent project management with a contextual folder browser that can create directories, project-scoped workflow/model settings, a contextual Fibonacci walkthrough, themes, English/Spanish UI, and opt-in technical diagnostics. Code/merge approvals can expand requirements, diff, validation and integrity without making internals the default view.
+- **Verified harness** — large artifacts can be stored as context handles and retrieved on demand; `ExecutionRuntime` is the local hands boundary; completion reviews include Validation Integrity.
 - **Brownfield support** — existing repositories are indexed to infer an evidence-backed AS-IS baseline without pretending inferred behavior is business truth.
 - **Execution waves** — short dependent task chains can be implemented and validated atomically to reduce orchestration overhead.
 - **Local semantic memory** — local embeddings, symbols, tests, decisions, features, and evidence can be retrieved in bounded context.
 - **Session recovery** — active work can be resumed from durable state after a provider restart.
 - **Model control** — phase-aware budgets, complexity, failures, and routing evidence are tracked while expensive escalation remains conservative.
-- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but version 0.14.1 still does not let the predictor autonomously change model tiers.
+- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but version 0.15.0 still does not let the predictor autonomously change model tiers.
 - **Observability** — MCP calls, token usage, context strategies, validation results, route decisions, retries, and acceptance evidence are persisted.
 - **Real-provider acceptance harness** — greenfield and brownfield scenarios can be executed against Codex and Cursor and packaged into one auditable bundle.
 
@@ -76,7 +77,7 @@ It verifies deterministic facts such as:
 
 DynosAI runs the validation profiles configured for the project. A profile can execute `pytest`, `ruff`, `mypy`, `npm run build`, `tsc`, `dotnet build`, `cargo test`, integration tests, or any other approved command.
 
-A fresh project still gets a baseline unit profile, and 0.14.1 can additionally **discover** common repository-native unit/lint/type-check/build commands. Discovery is read-only: proposed commands must be explicitly approved before they become governed validation profiles. If a `build` profile is approved and selected by the plan, DynosAI executes it and records the real exit status.
+A fresh project still gets a baseline unit profile, and DynosAI can additionally **discover** common repository-native unit/lint/type-check/build commands. Discovery is read-only: proposed commands must be explicitly approved before they become governed validation profiles. If a `build` profile is approved and selected by the plan, DynosAI executes it and records the real exit status.
 
 ## Does DynosAI review the generated code?
 
@@ -85,7 +86,7 @@ There are two layers:
 1. **Deterministic Core verification:** Git diff, scope, planned actions, requirements, evidence, validations, and state transitions are checked independently of the agent's claim.
 2. **Semantic review:** the managed agent is instructed to inspect the diff against requirements and regressions, followed by a human code-review gate.
 
-Version 0.14.1 does **not** yet require a second independent LLM reviewer for every change. That distinction is intentional and documented.
+Version 0.15.0 does **not** yet require a second independent LLM reviewer for every change. That distinction is intentional and documented.
 
 ## Quick start
 
@@ -138,6 +139,7 @@ dynosai studio
 | [Configuration](docs/reference/CONFIGURATION.md) | Runtime/environment configuration |
 | [Evolution](docs/EVOLUTION.md) | What changed across the major development iterations |
 | [Release process](docs/RELEASE_PROCESS.md) | Versioning, changelog, tests, acceptance, and promotion policy |
+| [0.15.0 release notes](docs/RELEASE_0.15.0.md) | Verified Agent Harness: handles, ExecutionRuntime, integrity, eval registry v0 |
 | [0.14.1 release notes](docs/RELEASE_0.14.1.md) | Guided Studio UX refresh, compatibility, validation and known limitations |
 | [0.14.0 release notes](docs/RELEASE_0.14.0.md) | First Control Plane & Studio Alpha release |
 | [Code quality review](docs/CODE_QUALITY.md) | Maintainability review and known technical hotspots |
@@ -158,7 +160,7 @@ Across that matrix: 63 MCP calls, 0 MCP failures, 0 MCP rejections, 0 scope requ
 
 ## Public beta status
 
-DynosAI `0.14.1` keeps the 0.14.0 Control Plane/App Server architecture and turns the first Studio alpha into a guided product experience for non-expert users. The 0.13.0 core acceptance evidence remains the baseline for Codex/Cursor greenfield and brownfield behavior; 0.14.1 adds guided setup, task, review, check, theme and help surfaces without expanding autonomous authority. The project is still pre-1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
+DynosAI `0.15.0` keeps the 0.14.x Control Plane/Studio authority model (schema v6) and adds a verified agent harness: context handles, ExecutionRuntime, Validation Integrity, Eval Registry v0 and execution policy outside the model. The 0.13.0 core acceptance evidence remains the baseline for Codex/Cursor greenfield and brownfield behavior. The project is still pre-1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
 
 External pull requests are **not currently accepted** while the public API, packaging, and contribution model settle. Bug reports and practical feedback are welcome through [GitHub Issues](https://github.com/pablo-cano/dynosai/issues). Opening contributions is planned for a later beta phase and is not ruled out in the near term.
 

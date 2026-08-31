@@ -14,13 +14,13 @@ export default function StudioPage() {
     ["Natural-language changes", "New change contains only the request. Agent, workspace and model routing are configured once in Project settings and reused automatically."],
     ["Visible agent execution", "Creating a change starts Codex through app-server or Cursor through ACP without blocking Studio. Work now includes a bounded live activity trace so users can see provider progress without opening raw diagnostics."],
     ["Project configuration", "Project settings choose Codex or Cursor, explain Interactive branch versus Isolated worktree, and show only the model routes for the selected agent."],
-    ["Approvals you can actually review", "Specification gates show requirements and acceptance criteria; plan gates show tasks, files and risks. Request-change drafts stay open while Studio refreshes."],
+    ["Approvals you can actually review", "Specification gates show requirements and acceptance criteria; plan gates show tasks, files and risks; code/merge reviews can expand the resulting diff, validation results and integrity risks."],
     ["English and Spanish", "English remains the default. Spanish is included and the translation dictionary is designed so more languages can be added without duplicating the UI."],
     ["Contextual Fibonacci walkthrough", "The tutorial no longer creates or performs the workflow for you. It highlights the exact screen, field and button while you create the greenfield project and complete each step yourself."],
   ];
   return (
     <div className="mx-auto max-w-6xl px-5 py-16 lg:px-8">
-      <Badge>0.14.1 · Guided Studio</Badge>
+      <Badge>0.15.0 · Guided Studio + Harness</Badge>
       <h1 className="mt-5 max-w-4xl text-4xl font-bold tracking-tight sm:text-5xl">A project-first Studio that teaches the workflow while you use it.</h1>
       <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">DynosAI Studio is designed for people managing small local software projects who should not need to understand SQLite, MCP events or internal workflow-state names before they can safely use coding agents.</p>
       <div className="mt-8 rounded-2xl border border-border bg-[#0d1117] p-6 font-mono text-sm leading-7 text-[#e6edf3]">

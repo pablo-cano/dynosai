@@ -18,6 +18,10 @@ The accepted Cursor CLI behavior did not reliably expose MCP `structuredContent`
 
 Provider compatibility is treated as an observed capability, not an assumption. DynosAI does not force a byte-saving optimization on a provider when doing so hides authoritative workflow information.
 
+## Studio / Cursor ACP
+
+Studio 0.14.1 already uses Cursor ACP (`agent acp`) for custom-client turns, including DynosAI MCP injection and process-tree shutdown. Codex uses app-server. 0.19 remaining work is additional clients/providers, not inventing ACP from scratch.
+
 ## Configuration
 
 One-time setup:

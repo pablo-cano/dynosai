@@ -78,3 +78,8 @@ The 0.13.0 real-provider matrix remains the baseline certification for the uncha
 - source/package synchronization for all Studio assets.
 
 `tests/test_151.py` through `tests/test_158.py` extend that coverage to Cursor ACP, approval-contract rendering, Windows UTF-8 provider transport, the Windows ACP process-tree/`acp-sessions` lifecycle, Studio auto-approve history, activity timestamps, locale-safe subprocess decoding, managed spec/plan overlays, Git C-quoted Spanish overlay paths, leftover verified `tests/` files at merge, Continue-to-finish on Final review, auto-continue into plan authoring after a mid-turn spec approval, auto-continue after scope approval, and Studio scroll preservation.
+
+### 0.15.0 verified-harness regression
+
+`tests/test_160.py` and `tests/test_161.py` cover context handles, ExecutionRuntime policy (path escape, secrets, timeout, dependency install denial), network profiles, secret redaction, Validation Integrity gaps, Eval Registry v0, skill on/off size comparison, cost-per-successful-governed-change raw metrics, MCP retrieve-handle, and Studio completion-review surfaces.
+

@@ -29,6 +29,8 @@ Coding Agent / CLI / Local Studio
 | Model control                 |
 | Human interactions            |
 | Runtime / provider adapters   |
+| ExecutionRuntime (local)      |
+| Context handles               |
 | Audit / token telemetry       |
 +-------------------------------+
       |                  |
@@ -89,7 +91,19 @@ An execution wave is a conservative bounded chain of dependent tasks that may be
 
 ## Model-control boundary
 
-Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.14.1.
+Model control evaluates phase, complexity, live phase token pressure, validated failures, scope risk, tool-loop signals, and historical outcomes. Context pressure triggers context-management actions before any model-capability transition. Predictive routing remains advisory in 0.15.0.
+
+## ExecutionRuntime
+
+`execution_runtime.py` is the hands boundary: filesystem, processes, network **decisions**, and dependency classification. The local runtime is the default. Provider transports (Cursor ACP, Codex app-server) stay in CLI/MCP adapters. Durable session/workflow state stays in knowledge.db.
+
+## Context handles
+
+Large diffs, search results and validation output can be stored as typed handles under `.dynosai/runtime/context-handles/` and retrieved with `dynosai_retrieve_handle`. This does not replace knowledge.db.
+
+## Validation Integrity
+
+`validation_integrity.py` connects requirements, acceptance criteria, tasks, evidence and validations. Passing tests are not automatically sufficient proof, especially when the only tests were authored in the same implementation. Reports are shown on Studio code/merge review; they do not silently rewrite `register_result` in 0.15.
 
 For code ownership by module, see [Module reference](reference/MODULES.md).
 

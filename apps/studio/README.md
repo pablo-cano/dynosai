@@ -27,3 +27,7 @@ Primary navigation is intentionally non-technical:
 Risk internals, diagnostics and the provider-neutral event stream are hidden until the user enables **Show technical details** in Settings.
 
 The public website and Studio share the same DynosAI brand SVG. Theme preference supports System, Light and Dark and is stored only in browser local storage.
+
+## 0.15.0 completion reviews
+
+Code and merge approvals can expand the resulting diff, validation results and Validation Integrity risks. Studio remains a loopback client of `DynosAIApplication`; it does not open `knowledge.db`.

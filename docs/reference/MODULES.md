@@ -16,7 +16,13 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `benchmark.py` | Offline acceptance comparison helpers |
 | `cli.py` | `dynosai` command-line interface |
 | `context_control.py` | Context pressure and context-strategy selection |
-| `cost_telemetry.py` | Usage/cost telemetry aggregation |
+| `cost_telemetry.py` | Usage/cost telemetry and cost-per-successful-governed-change aggregation |
+| `context_handles.py` | Persistent pass-by-reference handles for large artifacts |
+| `eval_registry.py` | Versioned eval scenarios and offline harness comparisons |
+| `execution_runtime.py` | Provider-neutral ExecutionRuntime and local hands implementation |
+| `harness_contracts.py` | Typed execution/recovery/handle contracts and component flags |
+| `secrets.py` | Credential redaction and refuse-closed secret broker |
+| `validation_integrity.py` | Requirement → evidence → validation integrity reports |
 | `db.py` | SQLite schema, migrations, persistence and audit storage |
 | `debug.py` | Diagnostic and end-to-end debug orchestration |
 | `debug_fixtures.py` | Deterministic greenfield/brownfield test fixtures |
@@ -32,7 +38,7 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `model_benchmark.py` | Offline provider/model benchmark ranking |
 | `model_control.py` | Phase budgets, adaptive control decisions and transition evidence |
 | `model_routing.py` | Provider/activity routing profiles |
-| `policy.py` | Path/scope and validation-profile policies |
+| `policy.py` | Path/scope, validation-profile, network and dependency policies |
 | `predictive_routing.py` | Historical predictive routing memory (shadow use) |
 | `predictive_validation.py` | Offline replay and authority-gate analysis |
 | `provider_debug.py` | Provider-native debug/certification adapters |
