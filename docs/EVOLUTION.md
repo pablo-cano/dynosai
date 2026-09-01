@@ -29,6 +29,7 @@ DynosAI has been developed through repeated local and real-provider acceptance l
 | 0.18.0 | Secure Autonomous Runtime | Strict/Balanced/Autonomous profiles, runtime-only vault, policy evidence; no Docker/VM or OS network interception |
 | 0.19.0 | Ecosystem & Interoperability | Capability manifests for Cursor ACP and Codex app-server; uncertified clients and packs refused |
 | 1.0.0rc1 | Contract freeze | Frozen MCP names, optional harness switches, shared release-gate policy; not production-ready 1.0 |
+| 1.0.0rc2 | Certification evidence | MATRIX_1.0 not_run cells; two-session file-disjoint leases; 0.13 evidence kept historical |
 
 ## How changes are recorded now
 

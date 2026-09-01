@@ -2,6 +2,26 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 1.0.0-rc.2 - 2026-09-01
+
+### Added
+
+- Introduced the versioned `MATRIX_1.0` live-certification schema (`docs/validation/matrix-1.0.json`) with Codex/Cursor × greenfield/brownfield cells.
+- Studio Overview shows those four cells. `dynosai_stats`, project overview and diagnostic bundles expose the same provider-aware placeholder. No MCP tool was added.
+- `engine.claim_lease` records an optional host session identity so two governed sessions can claim file-disjoint leases without spawning providers.
+
+### Changed
+
+- Package version is `1.0.0rc2`. Display surfaces may show `1.0.0-rc.2`. Public status is **Public RC · Certification evidence**, not stable 1.0.
+
+### Security
+
+- Schema remains v6. Historical 0.13 Quality 100 evidence is not copied into 1.0 live cells. `all_passed` stays false until every cell is a real provider pass.
+
+### Validation
+
+- Added `tests/test_220.py` for MATRIX_1.0 placeholders, two-session disjoint claims, overlap serialization, fan-in conflicts and scheduler-off serial fallback.
+
 ## 1.0.0-rc.1 - 2026-09-01
 
 ### Added

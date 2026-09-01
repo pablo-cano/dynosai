@@ -63,7 +63,7 @@ Studio keeps the 0.14.1 guided product, the 0.15 harness reviews, 0.16 team slot
 Home -> choose a project -> Overview -> New change -> Work / Approvals
 ```
 
-Project settings also expose optional harness features (context optimization, governed team scheduling, eval intelligence). Execution profiles, human gates and path security are not optional kill-switches.
+Project settings also expose optional harness features (context optimization, governed team scheduling, eval intelligence). Overview shows MATRIX_1.0 live cells as not run until real provider evidence exists. Execution profiles, human gates and path security are not optional kill-switches.
 
 Studio detects the repository stack and validation candidates before initialization. Discovered validation commands are only proposals until you explicitly approve them. If an uninitialized Git repository is dirty, Studio explains that the changes must be committed or stashed before adoption; it never discards user work automatically.
 

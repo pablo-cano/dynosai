@@ -27,7 +27,7 @@ class DynosAI110Tests(unittest.TestCase):
         self.tmp = Path(self.td.name)
 
     def test_version_is_0110(self):
-        self.assertEqual(__version__, "1.0.0rc1")
+        self.assertEqual(__version__, "1.0.0rc2")
 
     def test_phase_aware_model_control_starts_cheap_and_escalates_complex_work(self):
         control = ModelControlPlane(self.tmp)

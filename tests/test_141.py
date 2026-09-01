@@ -29,7 +29,7 @@ class DynosAI141Tests(unittest.TestCase):
             (self.tmp / "README.md").write_text("# changed\n", encoding="utf-8")
 
     def test_version_is_0141(self):
-        self.assertEqual(__version__, "1.0.0rc1")
+        self.assertEqual(__version__, "1.0.0rc2")
 
     def test_setup_status_guides_clean_uninitialized_git_project(self):
         self._git_repo()

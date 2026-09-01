@@ -74,7 +74,7 @@ The deterministic 0.14 scorer can raise risk for security/authentication surface
 
 Managed-agent guidance asks the coding agent to inspect the diff, trace behavior to requirements, look for regressions, and check maintainability/validation gaps. A human code-review gate remains explicit.
 
-0.19.0 still does not automatically launch a second independent reviewer model for every change. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. Eval intelligence can open an inbox improvement task from a mined failure; it does not auto-start a provider. Execution profile Autonomous does not skip those gates. `1.0.0-rc.1` keeps those boundaries and does not treat the historical 0.13 matrix as a new 1.0 live certification.
+0.19.0 still does not automatically launch a second independent reviewer model for every change. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. Eval intelligence can open an inbox improvement task from a mined failure; it does not auto-start a provider. Execution profile Autonomous does not skip those gates. `1.0.0-rc.2` keeps those boundaries. `MATRIX_1.0` live cells stay `not_run` and do not copy the historical 0.13 matrix.
 
 ## 7. Failure classification
 

@@ -17,7 +17,7 @@ export function SiteFooter() {
           </div>
           <p className="mt-3 max-w-lg leading-6">Open-source, local-first governance for AI-assisted software development.</p>
           <p className="mt-3">Created and maintained by <a className="underline underline-offset-4" href={siteConfig.linkedin} target="_blank" rel="noreferrer">{siteConfig.author}</a>. Released under the {siteConfig.license} License.</p>
-          <p className="mt-3 max-w-xl leading-6">Public RC · Contract freeze. External pull requests are not currently accepted while the public API and contribution model stabilize. Feedback and bug reports are welcome.</p>
+          <p className="mt-3 max-w-xl leading-6">Public RC · Certification evidence. External pull requests are not currently accepted while the public API and contribution model stabilize. Feedback and bug reports are welcome.</p>
         </div>
         <div className="flex flex-wrap content-start gap-x-6 gap-y-3 sm:justify-end">
           <Link href="/docs/">Documentation</Link>
