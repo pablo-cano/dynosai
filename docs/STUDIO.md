@@ -1,6 +1,6 @@
 # DynosAI Local Studio
 
-DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.18 line keeps the 0.14.1 guided product, 0.15 reviews, 0.16 team slots and 0.17 eval cases, and adds host-owned execution profiles on Project settings.
+DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.19 line keeps the 0.14.1 guided product, 0.15 reviews, 0.16 team slots, 0.17 eval cases and 0.18 execution profiles, and shows certified Cursor ACP / Codex app-server manifests on Overview.
 
 ## What Studio is for
 
@@ -81,6 +81,8 @@ Use **Browse…** beside Location to choose the parent folder in Studio. The dia
 Overview is the only project page available before DynosAI initialization. It shows the setup state and the single action required to continue. New change, Work and Approvals remain disabled until initialization succeeds. Project checks stay visible for inspection, and Project settings remains available so the coding agent/workspace can be chosen before initialization; model-route editing becomes available after initialization. If initialization discovers checks that still need approval, Studio opens Project checks automatically; otherwise it stays on Overview.
 
 When local traces contain failures, Overview also shows **eval cases**. Creating an improvement task from a case puts work in the inbox only; Studio does not start a coding agent from that button. Predictive routing stays in shadow mode.
+
+Overview lists **certified providers**: Cursor ACP and Codex app-server. Additional clients are not shipped.
 
 ### Project → New change
 

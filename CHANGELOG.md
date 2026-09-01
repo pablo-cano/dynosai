@@ -2,6 +2,27 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 0.19.0 - 2026-08-31
+
+### Added
+
+- Introduced host-owned provider capability manifests for the already-shipped Cursor ACP and Codex app-server transports.
+- Added `capability_manifests.py`. Unknown clients and project extension packs raise instead of silently inheriting Codex/Cursor behavior.
+- Studio Overview shows the certified provider inventory. `dynosai_stats` and diagnostic bundles include a capability summary. `GET /api/provider-capabilities` is host-owned; no MCP tool was added.
+
+### Changed
+
+- Provider setup refuses uncertified names through the same manifest contract.
+- Predictive routing remains shadow-only. Human gates remain required.
+
+### Security
+
+- Additional adapters cannot self-certify. Schema remains v6.
+
+### Validation
+
+- Added `tests/test_200.py` for shipped manifests, refused clients/packs, and secret-free inventory evidence. Studio tests require certified-provider copy in EN/ES.
+
 ## 0.18.0 - 2026-08-31
 
 ### Added

@@ -36,7 +36,7 @@ The production output is written to `apps/web/out/`.
 
 ## Content
 
-Product documentation routes are registered in `lib/docs.ts` and rendered during the static build. The 0.18.0 site includes dedicated `/studio/` and `/roadmap/` product pages and describes Studio, the verified harness, governed team scheduling, eval intelligence and execution profiles.
+Product documentation routes are registered in `lib/docs.ts` and rendered during the static build. The 0.19.0 site includes dedicated `/studio/` and `/roadmap/` product pages and describes Studio, the verified harness, governed team scheduling, eval intelligence, execution profiles and certified provider manifests.
 
 ## Deployment
 

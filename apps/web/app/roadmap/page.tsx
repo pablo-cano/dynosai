@@ -10,7 +10,7 @@ const releases = [
   ["0.16", "Governed Agent Teams", "Plan-DAG serial/parallel waves, file-disjoint leases, claim/fan-in and reviewer/tester as contracts. DynosAI does not spawn extra provider processes."],
   ["0.17", "Eval Intelligence", "Failure attribution, local-trace mining, inbox-only improvement tasks and offline regression evidence. Predictive routing stays in shadow mode. No live-provider leaderboard."],
   ["0.18", "Secure Autonomous Runtime", "Strict/Balanced/Autonomous host-owned profiles, runtime-only secret vault and policy evidence. Human gates stay required. Docker/VM and OS-level network interception are not shipped."],
-  ["0.19", "Ecosystem", "Broader ACP/client adapters on top of the existing Cursor ACP baseline, provider capability manifests, additional certified providers, skills and validation packs."],
+  ["0.19", "Ecosystem", "Capability manifests for the existing Cursor ACP and Codex app-server transports. Additional clients and extension packs are refused, not silently certified."],
   ["1.0", "Stable Agentic Development Control Plane", "Stable APIs, installers, compatibility contracts, certification matrix and upgrade guarantees."],
 ];
 

@@ -27,6 +27,7 @@ from .validation import QualityEngine
 from .policy import PathPolicyEngine, PolicyError, ValidationProfilePolicy, is_managed_workflow_artifact, product_scope_paths
 from .runtime import RuntimeBroker
 from .execution_profiles import bind_local_runtime, normalize_profile, require_local_runtime
+from .capability_manifests import capability_report
 from .team_scheduler import build_team_plan, claim_allowed, fan_in_conflicts
 from .eval_intelligence import build_report, case_by_id, improvement_description, load_cases, mark_proposed, mark_regressed
 from .eval_registry import EvalRegistry
@@ -856,7 +857,8 @@ class DynosAI:
         validation_runs=int((self.db.one("SELECT COUNT(*) n FROM validations") or {"n":0})["n"])
         cases=load_cases(self.root)
         policy=self.execution_policy()
-        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"}}
+        caps=capability_report()
+        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"},"capability_manifests":{"shipped_providers":caps["shipped_providers"],"shipped_adapters":caps["shipped_adapters"],"extension_packs":False,"human_gates":"required"}}
 
     def agent_git_status(self, run_id: str | None = None) -> dict[str, Any]:
         """Policy-safe Git status metadata for coding agents."""
@@ -1341,6 +1343,7 @@ class DynosAI:
             "environment.json":self.environment_report(), "doctor.json":self.doctor(), "runtime.json":self.runtime.status(),
             "board.json":self.board(), "stats.json":self.stats(),
             "execution_policy.json":self.execution_policy(),
+            "capability_manifests.json":capability_report(),
             "recent_audit.json":self.db.query("SELECT id,event_type,entity_id,payload,created_at FROM audit ORDER BY id DESC LIMIT 100"),
             "recent_runs.json":self.db.query("SELECT id,work_id,agent,status,started_at,finished_at,verification_status,worktree FROM runs ORDER BY id DESC LIMIT 50"),
         }
@@ -1476,6 +1479,10 @@ class DynosAI:
     def require_execution_runtime(self, kind: str = "local") -> str:
         """Refuse Docker/VM/remote backends that 0.18 does not ship."""
         return require_local_runtime(kind)
+
+    def capability_manifests(self) -> dict[str, Any]:
+        """Host-visible Cursor ACP / Codex app-server inventory. Not an MCP mutation."""
+        return capability_report()
 
     def _set_state(self, work_id: str, state: str) -> None:
         self.db.execute("UPDATE work_items SET state=?,updated_at=? WHERE id=?", (state, utc_now(), work_id))

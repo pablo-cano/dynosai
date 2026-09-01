@@ -27,7 +27,7 @@ class CLITests(unittest.TestCase):
         with self.assertRaises(SystemExit) as ctx, redirect_stdout(out):
             parser().parse_args(["--version"])
         self.assertEqual(ctx.exception.code,0)
-        self.assertIn("DynosAI 0.18.0",out.getvalue())
+        self.assertIn("DynosAI 0.19.0",out.getvalue())
 
     def test_managed_agent_cannot_use_mutating_cli_as_privileged_controller(self):
         self.assertEqual(main(["--json", "init", str(self.temp), "--name", "CLI Guard Test"]), 0)

@@ -43,3 +43,7 @@ Overview can list mined eval cases. Creating an improvement task from a case sta
 ## 0.18.0 execution profiles
 
 Project settings choose Strict, Balanced or Autonomous. Code/merge reviews show policy evidence. OS-level network enforcement is not shipped.
+
+## 0.19.0 certified providers
+
+Overview lists Cursor ACP and Codex app-server. Additional clients are not shipped.

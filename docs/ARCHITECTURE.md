@@ -113,6 +113,10 @@ Model control evaluates phase, complexity, live phase token pressure, validated 
 
 `execution_profiles.py` binds Strict, Balanced or Autonomous policy onto the local runtime. Human gates stay required. Docker/VM/remote backends are refused. OS-level child-process network interception is not shipped; evidence records `enforcement: decision_only`. An optional vault may materialize secrets to the local process only.
 
+## Provider capability manifests
+
+`capability_manifests.py` publishes the shipped Cursor ACP and Codex app-server contracts. Unknown clients and project extension packs are refused. Additional IDE adapters are not assumed to exist.
+
 ## Context handles
 
 Large diffs, search results and validation output can be stored as typed handles under `.dynosai/runtime/context-handles/` and retrieved with `dynosai_retrieve_handle`. This does not replace knowledge.db.

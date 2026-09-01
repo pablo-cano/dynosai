@@ -8,7 +8,7 @@ DynosAI is a local-first orchestration and governance layer for AI coding agents
 
 > The agent writes code. DynosAI governs what may change, what must be proven, and when the work is actually done.
 
-**Current release:** `0.18.0` · **Public beta · Secure Autonomous Runtime**
+**Current release:** `0.19.0` · **Public beta · Ecosystem & Interoperability**
 **License:** MIT
 **Author and maintainer:** [Pablo Cano](https://www.linkedin.com/in/pablo-cano-galan/)
 **Website:** [https://www.dynosai.com/](https://www.dynosai.com/)
@@ -51,10 +51,11 @@ The authoritative state lives in `.dynosai/knowledge.db` and Git, not in the pro
 - **Governed teams** — approved task DAGs become serial or parallel waves with file-disjoint leases. DynosAI does not spawn extra agents; a second worker exists only if the host opens another governed session.
 - **Eval intelligence** — local failures are attributed and mined into bounded eval cases. Improvement work stays in inbox until a human starts it. Live-provider leaderboards are not claimed.
 - **Execution profiles** — Strict, Balanced and Autonomous set host-owned network, dependency and secret policy. Human gates stay required. Docker/VM runtimes and OS-level network interception are not shipped.
+- **Certified providers** — Cursor ACP and Codex app-server are the shipped Studio transports. Additional clients are not assumed certified.
 - **Local semantic memory** — local embeddings, symbols, tests, decisions, features, and evidence can be retrieved in bounded context.
 - **Session recovery** — active work can be resumed from durable state after a provider restart.
 - **Model control** — phase-aware budgets, complexity, failures, and routing evidence are tracked while expensive escalation remains conservative.
-- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but version 0.18.0 still does not let the predictor autonomously change model tiers.
+- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but version 0.19.0 still does not let the predictor autonomously change model tiers.
 - **Observability** — MCP calls, token usage, context strategies, validation results, route decisions, retries, and acceptance evidence are persisted.
 - **Real-provider acceptance harness** — greenfield and brownfield scenarios can be executed against Codex and Cursor and packaged into one auditable bundle.
 
@@ -88,7 +89,7 @@ There are two layers:
 1. **Deterministic Core verification:** Git diff, scope, planned actions, requirements, evidence, validations, and state transitions are checked independently of the agent's claim.
 2. **Semantic review:** the managed agent is instructed to inspect the diff against requirements and regressions, followed by a human code-review gate.
 
-Version 0.18.0 still does **not** spawn a second independent LLM reviewer. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. Eval intelligence does not auto-start a provider. Autonomous is an execution profile, not a skipped-gate mode.
+Version 0.19.0 still does **not** spawn a second independent LLM reviewer. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. Eval intelligence does not auto-start a provider. Autonomous is an execution profile, not a skipped-gate mode. Additional IDE clients are not certified.
 
 ## Quick start
 
@@ -141,6 +142,7 @@ dynosai studio
 | [Configuration](docs/reference/CONFIGURATION.md) | Runtime/environment configuration |
 | [Evolution](docs/EVOLUTION.md) | What changed across the major development iterations |
 | [Release process](docs/RELEASE_PROCESS.md) | Versioning, changelog, tests, acceptance, and promotion policy |
+| [0.19.0 release notes](docs/RELEASE_0.19.0.md) | Ecosystem: capability manifests for Cursor ACP and Codex app-server |
 | [0.18.0 release notes](docs/RELEASE_0.18.0.md) | Secure Autonomous Runtime: execution profiles, runtime-only vault, policy evidence |
 | [0.17.0 release notes](docs/RELEASE_0.17.0.md) | Eval Intelligence: attribution, local-trace mining, inbox-only improvement loop |
 | [0.16.0 release notes](docs/RELEASE_0.16.0.md) | Governed Agent Teams: DAG waves, leases, fan-in, no extra provider spawn |
@@ -165,7 +167,7 @@ Across that matrix: 63 MCP calls, 0 MCP failures, 0 MCP rejections, 0 scope requ
 
 ## Public beta status
 
-DynosAI `0.18.0` keeps the 0.14.x Studio, 0.15 harness, 0.16 team-scheduling and 0.17 eval-intelligence authority model (schema v6) and adds host-owned execution profiles plus runtime-only secret materialization. Predictive routing stays shadow-only. OS-level network sandboxing and container runtimes are not claimed. The 0.13.0 core acceptance evidence remains the baseline for Codex/Cursor greenfield and brownfield behavior. The project is still pre-1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
+DynosAI `0.19.0` keeps the 0.14.x Studio, 0.15 harness, 0.16 team-scheduling, 0.17 eval-intelligence and 0.18 execution-profile authority model (schema v6) and publishes capability manifests for the already-shipped Cursor ACP and Codex app-server transports. Additional clients are refused, not silently certified. Predictive routing stays shadow-only. The 0.13.0 core acceptance evidence remains the baseline for Codex/Cursor greenfield and brownfield behavior. The project is still pre-1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
 
 External pull requests are **not currently accepted** while the public API, packaging, and contribution model settle. Bug reports and practical feedback are welcome through [GitHub Issues](https://github.com/pablo-cano/dynosai/issues). Opening contributions is planned for a later beta phase and is not ruled out in the near term.
 

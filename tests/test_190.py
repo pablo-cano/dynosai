@@ -89,7 +89,7 @@ class DynosAI018ExecutionProfileTests(unittest.TestCase):
         self.assertEqual(stats["execution_policy"]["enforcement"], "decision_only")
 
     def test_schema_and_version_remain_governed(self):
-        self.assertEqual(__version__, "0.18.0")
+        self.assertEqual(__version__, "0.19.0")
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
 
 

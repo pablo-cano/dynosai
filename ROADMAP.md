@@ -115,13 +115,19 @@ Still incomplete inside 0.18 (do not advertise as done):
 
 **Baseline already shipped:** Cursor ACP is implemented in 0.14.1 Studio (`agent acp`, MCP injection, permission handling, process-tree shutdown). Codex uses app-server. Do not treat ACP as a greenfield invention.
 
-Remaining:
+Delivered in 0.19.0:
+
+- host-owned capability manifests for Cursor ACP and Codex app-server;
+- refusal of uncertified clients and project extension packs;
+- Studio Overview inventory plus stats/diagnostic evidence;
+- no new MCP tools.
+
+Still incomplete inside 0.19 (do not advertise as done):
 
 - broader ACP/application adapters for additional clients;
-- provider capability manifests;
 - certification for additional coding-agent runtimes after they meet the Codex/Cursor bar;
 - Skills/validation pack ecosystem;
-- extension APIs for project-specific quality and policy integrations.
+- loadable extension APIs for project-specific quality and policy integrations.
 
 ## 1.0 — Stable Agentic Development Control Plane
 

@@ -95,3 +95,7 @@ The 0.13.0 real-provider matrix remains the baseline certification for the uncha
 
 `tests/test_190.py` covers Strict install denial, Balanced vault materialization to local runtime only, refused Docker/VM backends, secret-free review/bundle evidence, and schema v6. Studio tests require the execution-profile combobox and EN/ES copy that OS-level network enforcement is not shipped.
 
+### 0.19.0 capability-manifest regression
+
+`tests/test_200.py` covers Cursor ACP / Codex app-server manifests, refusal of uncertified clients and extension packs, and inventory evidence on overview/stats/diagnostics. Studio tests require certified-provider copy stating additional clients are not shipped.
+

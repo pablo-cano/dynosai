@@ -86,6 +86,7 @@ def main() -> int:
         "eval_registry.py": {"app_server", "cli", "mcp"},
         "eval_intelligence.py": {"app_server", "cli", "mcp", "engine"},
         "execution_profiles.py": {"app_server", "cli", "mcp", "engine"},
+        "capability_manifests.py": {"app_server", "cli", "mcp", "engine"},
         "team_scheduler.py": {"app_server", "cli", "mcp", "engine"},
     }
     for filename, denied in architecture_deny.items():
