@@ -31,8 +31,10 @@ from .capability_manifests import capability_report
 from .certification_matrix import summarize_live_matrix
 from .harness_contracts import FeatureDisabledError, OPTIONAL_HARNESS_FEATURES, harness_report_from_project
 from .team_scheduler import build_team_plan, claim_allowed, fan_in_conflicts
-from .eval_intelligence import build_report, case_by_id, improvement_description, load_cases, mark_proposed, mark_regressed
+from .eval_intelligence import build_report, case_by_id, import_acceptance_bundle as import_acceptance_zip, improvement_description, load_cases, mark_proposed, mark_regressed
 from .eval_registry import EvalRegistry
+from .cost_telemetry import aggregate_governed_change_cost
+from .prompt_prefix import summarize_prefix
 from .version import __version__
 
 
@@ -863,7 +865,10 @@ class DynosAI:
         from .mcp import LEGACY_TOOLS, TOOLS
         mcp_names={str(item.get("name") or "") for item in [*TOOLS,*LEGACY_TOOLS] if item.get("name")}
         harness=self.harness_report()
-        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"mcp_surface_frozen":True,"mcp_tool_count":len(mcp_names),"harness":{"features":{item["name"]:item["enabled"] for item in harness.get("features") or []},"precedence":harness.get("precedence")},"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False,"enabled":self.harness_feature("eval_intelligence")},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"},"capability_manifests":{"shipped_providers":caps["shipped_providers"],"shipped_adapters":caps["shipped_adapters"],"extension_packs":False,"human_gates":"required"},"live_matrix":summarize_live_matrix()}
+        payload={"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"mcp_surface_frozen":True,"mcp_tool_count":len(mcp_names),"harness":{"features":{item["name"]:item["enabled"] for item in harness.get("features") or []},"precedence":harness.get("precedence")},"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False,"enabled":self.harness_feature("eval_intelligence")},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"},"capability_manifests":{"shipped_providers":caps["shipped_providers"],"shipped_adapters":caps["shipped_adapters"],"extension_packs":False,"human_gates":"required"},"live_matrix":summarize_live_matrix()}
+        payload["governed_change"]=aggregate_governed_change_cost(self.db)
+        payload["prompt_prefix"]=summarize_prefix(self.root)
+        return payload
 
     def agent_git_status(self, run_id: str | None = None) -> dict[str, Any]:
         """Policy-safe Git status metadata for coding agents."""
@@ -1028,6 +1033,18 @@ class DynosAI:
         updated = mark_regressed(self.root, case_id, evidence)
         self.db.audit("EvalRegressionRecorded", case_id, evidence)
         return {"case": updated, "eval": record, "status": "regressed", "work_completed": False, "auto_approved": False}
+
+    def import_acceptance_bundle(self, path: str) -> dict[str, Any]:
+        """Import a real-provider acceptance ZIP into bounded eval cases. Never spawns a provider."""
+        if not self.harness_feature("eval_intelligence"):
+            raise FeatureDisabledError(
+                "eval_intelligence",
+                "Eval intelligence is disabled. Historical eval records remain readable.",
+            )
+        self._ensure_ready()
+        result = import_acceptance_zip(self.root, path, self.db)
+        self.db.audit("AcceptanceBundleImported", Path(path).name, {"imported": result.get("imported"), "spawn_provider": False, "auto_start": False})
+        return result
 
     def _context_query(self, work: dict[str, Any], spec: dict[str, Any] | None = None) -> str:
         """Build phase-aware retrieval text from authoritative structured knowledge.
@@ -1420,6 +1437,8 @@ class DynosAI:
             "execution_policy.json":self.execution_policy(),
             "capability_manifests.json":capability_report(),
             "live_matrix.json":summarize_live_matrix(),
+            "governed_change.json":aggregate_governed_change_cost(self.db),
+            "prompt_prefix.json":summarize_prefix(self.root),
             "recent_audit.json":self.db.query("SELECT id,event_type,entity_id,payload,created_at FROM audit ORDER BY id DESC LIMIT 100"),
             "recent_runs.json":self.db.query("SELECT id,work_id,agent,status,started_at,finished_at,verification_status,worktree FROM runs ORDER BY id DESC LIMIT 50"),
         }
@@ -1480,7 +1499,7 @@ class DynosAI:
                 "task_claim":"claimed_run" in cols.get("tasks",set()),"run_task_binding":"task_ids" in cols.get("runs",set()),"isolated_worktree":"worktree" in cols.get("runs",set()),"session_binding":{"run_id","work_id"}<=cols.get("agent_sessions",set()),"dependency_graph":"depends_on" in cols.get("tasks",set())}),
         }
         minimum=min(item["score"] for item in categories.values())
-        return {"version":__version__,"method":"10 × passed controls / total controls per category","minimum_score":minimum,"categories":categories,"goal_met":minimum>=9.0,"external_verification":{"live_provider_e2e":{name:("executable-detected" if val else "not-installed-in-this-environment") for name,val in d["agents"].items()},"real_neural_inference":"probe with `dynosai model status --probe` on a machine where the model is installed"},"note":"Internal control scores are evidence-based. External provider authentication/live execution and model download are explicit gates, never fabricated."}
+        return {"version":__version__,"method":"10 × passed controls / total controls per category","minimum_score":minimum,"categories":categories,"goal_met":minimum>=9.0,"external_verification":{"live_provider_e2e":{name:("executable-detected" if val else "not-installed-in-this-environment") for name,val in d["agents"].items()},"real_neural_inference":"probe with `dynosai model status --probe` on a machine where the model is installed"},"note":"Internal control scores are evidence-based. External provider authentication/live execution and model download are explicit gates, never fabricated.","governed_change":aggregate_governed_change_cost(self.db),"prompt_prefix":summarize_prefix(self.root)}
 
     def get_work(self, work_id: str | None = None) -> dict[str, Any]:
         """Return one persisted work item by identifier, including normalized workflow metadata."""

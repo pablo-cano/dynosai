@@ -2,6 +2,26 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 1.0.0-rc.3 - 2026-09-01
+
+### Added
+
+- Host-owned acceptance ZIP importer writes failed children into bounded Eval Registry cases. Studio can import a local ZIP. Improvement stays in inbox and does not spawn a provider.
+- Completed-work aggregates of `governed_change_cost()` on stats, scorecard, overview, Studio and diagnostic bundles. MCP duration and result bytes are recorded when measured.
+- Deterministic `PROMPT_PREFIX_1.0` authority prefix with a stable hash stored in runtime/audit. Phase context remains a suffix. The hash is not a cache-hit claim.
+
+### Changed
+
+- Package version is `1.0.0rc3`. Display surfaces may show `1.0.0-rc.3`. Public status is **Public RC · Eval maturity**, not stable 1.0.
+
+### Security
+
+- Schema remains v6. Unique MCP names remain 31. Unused advertised MCP tools are not scored as waste.
+
+### Validation
+
+- Added `tests/test_230.py` for ZIP import bounds, inbox-only improvement, governed-change scorecard surfaces, prefix hashing and the no-waste rule.
+
 ## 1.0.0-rc.2 - 2026-09-01
 
 ### Added

@@ -13,6 +13,7 @@ const releases = [
   ["0.19", "Ecosystem", "Capability manifests for the existing Cursor ACP and Codex app-server transports. Additional clients and extension packs are refused, not silently certified."],
   ["1.0 RC1", "Contract freeze", "MCP names, public CLI, schema v6 and Studio compatibility are documented and tested. Optional harness switches degrade safely. This is not production-ready 1.0: no installer, no live 1.0 matrix, no OS sandbox."],
   ["1.0 RC2", "Certification evidence", "MATRIX_1.0 cells exist and stay not_run. Two host-opened sessions can claim file-disjoint leases. Historical 0.13 Quality 100 is not copied forward."],
+  ["1.0 RC3", "Eval maturity", "Acceptance ZIP importer, governed-change cost aggregates and a stable authority prefix. Unused MCP tools are not waste. Still not production-ready 1.0."],
 ];
 
 export default function RoadmapPage() {

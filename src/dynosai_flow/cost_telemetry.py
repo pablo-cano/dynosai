@@ -114,22 +114,44 @@ def estimate_list_price(provider: str, model: str | None, usage: dict[str, Any] 
     ).to_dict()
 
 
-def _audit_for_work(db: Any, work_id: str, event_type: str) -> int:
+def _payload_dict(row: dict[str, Any]) -> dict[str, Any]:
+    payload = row.get("payload")
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except json.JSONDecodeError:
+            payload = {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _audit_rows_for_work(db: Any, work_id: str, event_type: str) -> list[dict[str, Any]]:
     rows = db.query("SELECT entity_id,payload FROM audit WHERE event_type=?", (event_type,))
-    total = 0
+    matched: list[dict[str, Any]] = []
     for row in rows:
-        if str(row.get("entity_id") or "") == work_id:
-            total += 1
+        payload = _payload_dict(row)
+        if str(row.get("entity_id") or "") == work_id or str(payload.get("work_id") or "") == work_id:
+            matched.append(payload)
+    return matched
+
+
+def _audit_for_work(db: Any, work_id: str, event_type: str) -> int:
+    return len(_audit_rows_for_work(db, work_id, event_type))
+
+
+def _measured_sum(rows: list[dict[str, Any]], key: str) -> int | None:
+    values = []
+    for row in rows:
+        if key not in row or row.get(key) is None:
             continue
-        payload = row.get("payload")
-        if isinstance(payload, str):
-            try:
-                payload = json.loads(payload)
-            except json.JSONDecodeError:
-                payload = {}
-        if isinstance(payload, dict) and str(payload.get("work_id") or "") == work_id:
-            total += 1
-    return total
+        values.append(_n(row.get(key)))
+    if not values:
+        return None
+    return sum(values)
+
+
+def _mcp_surface_size() -> int:
+    from .mcp import LEGACY_TOOLS, TOOLS
+    return len({str(item.get("name") or "") for item in [*TOOLS, *LEGACY_TOOLS] if item.get("name")})
 
 
 def governed_change_cost(db: Any, work_id: str, *, usage: dict[str, Any] | None = None, provider: str | None = None, model: str | None = None, elapsed_seconds: float | None = None) -> dict[str, Any]:
@@ -143,7 +165,15 @@ def governed_change_cost(db: Any, work_id: str, *, usage: dict[str, Any] | None 
         raise ValueError(f"unknown work: {work_id}")
     usage = usage or {}
     validations = db.query("SELECT status,exit_code FROM validations WHERE work_id=?", (work_id,))
-    validation_status = "passed" if validations and all(int(row.get("exit_code") or 1) == 0 for row in validations) else ("failed" if validations else "not_run")
+    def _row_passed(row: dict[str, Any]) -> bool:
+        exit_code = row.get("exit_code")
+        if exit_code is not None and str(exit_code) != "":
+            try:
+                return int(exit_code) == 0
+            except (TypeError, ValueError):
+                return False
+        return str(row.get("status") or "").lower() in {"passed", "ok", "success"}
+    validation_status = "passed" if validations and all(_row_passed(row) for row in validations) else ("failed" if validations else "not_run")
     human = db.query("SELECT kind,status,gate,response_json FROM human_interactions WHERE work_id=?", (work_id,))
     gates = [row for row in human if str(row.get("kind")) == "gate_approval"]
     corrections = [row for row in human if str(row.get("status")) in {"declined", "cancelled"}]
@@ -154,9 +184,14 @@ def governed_change_cost(db: Any, work_id: str, *, usage: dict[str, Any] | None 
     input_tokens = _n(usage.get("input_tokens"))
     output_tokens = _n(usage.get("output_tokens"))
     cached = _n(usage.get("cached_input_tokens"))
+    reasoning = _n(usage.get("reasoning_output_tokens"))
+    provider_key = str(provider or "").lower()
+    fresh_input = input_tokens if provider_key == "cursor" else max(0, input_tokens - cached)
     context_tokens = sum(_n(row.get("context_tokens")) for row in metrics) or _n(usage.get("context_tokens"))
     estimate = estimate_list_price(provider or "", model, usage) if provider and model and usage else None
     success = str(work.get("state") or "") == "done"
+    called = _audit_rows_for_work(db, work_id, "MCPToolCalled")
+    mcp_calls = len(called)
     return {
         "metric": "cost_per_successful_governed_change",
         "work_id": work_id,
@@ -165,11 +200,19 @@ def governed_change_cost(db: Any, work_id: str, *, usage: dict[str, Any] | None 
         "requirements_satisfied": None,
         "validation_status": validation_status,
         "input_tokens": input_tokens,
+        "fresh_input_tokens": fresh_input,
         "output_tokens": output_tokens,
+        "reasoning_output_tokens": reasoning,
         "context_tokens": context_tokens,
         "cached_input_tokens": cached,
         "model_calls": _n(usage.get("model_calls")),
-        "tool_calls": _audit_for_work(db, work_id, "MCPToolCalled"),
+        "tool_calls": mcp_calls,
+        "mcp_calls": mcp_calls,
+        "mcp_failures": _audit_for_work(db, work_id, "MCPToolFailed"),
+        "mcp_rejections": _audit_for_work(db, work_id, "MCPToolRejected"),
+        "mcp_normalizations": _audit_for_work(db, work_id, "MCPToolNormalized"),
+        "mcp_duration_ms": _measured_sum(called, "duration_ms"),
+        "mcp_result_bytes": _measured_sum(called, "result_bytes"),
         "retries": sum(_n(row.get("retries")) for row in metrics),
         "provider_failures": _audit_for_work(db, work_id, "MCPToolFailed"),
         "elapsed_seconds": elapsed_seconds,
@@ -178,7 +221,49 @@ def governed_change_cost(db: Any, work_id: str, *, usage: dict[str, Any] | None 
         "replans": _audit_for_work(db, work_id, "ReplanRequested") + _audit_for_work(db, work_id, "BoundedReplan"),
         "estimated_list_price_usd": None if not estimate else estimate.get("estimated_list_price_usd"),
         "cost_estimate": estimate,
-        "note": "Raw usage. Monetary cost is catalog-derived observability, not an invoice.",
+        "note": "Raw usage. Monetary cost is catalog-derived observability, not an invoice. Unused advertised MCP tools are availability, not waste.",
+    }
+
+
+def empty_governed_change_aggregate() -> dict[str, Any]:
+    return {
+        "metric": "aggregate_governed_change_cost",
+        "completed_work": 0,
+        "successful": 0,
+        "mcp_tool_surface_size": _mcp_surface_size(),
+        "mcp_tool_surface_note": "experimental_context_overhead",
+        "note": "Unused advertised MCP tools are availability, not waste.",
+    }
+
+
+def aggregate_governed_change_cost(db: Any) -> dict[str, Any]:
+    """Completed-work rollup of governed_change_cost(). Does not invent waste metrics."""
+    rows = db.query("SELECT id,state FROM work_items WHERE id!='PROJECT'")
+    completed = [row for row in rows if str(row.get("state") or "") == "done"]
+    costs = [governed_change_cost(db, str(row["id"])) for row in completed]
+    prices = [float(item.get("estimated_list_price_usd")) for item in costs if item.get("estimated_list_price_usd") is not None]
+    return {
+        "metric": "aggregate_governed_change_cost",
+        "completed_work": len(completed),
+        "successful": sum(1 for item in costs if item.get("success")),
+        "input_tokens": sum(int(item.get("input_tokens") or 0) for item in costs),
+        "fresh_input_tokens": sum(int(item.get("fresh_input_tokens") or 0) for item in costs),
+        "cached_input_tokens": sum(int(item.get("cached_input_tokens") or 0) for item in costs),
+        "output_tokens": sum(int(item.get("output_tokens") or 0) for item in costs),
+        "reasoning_output_tokens": sum(int(item.get("reasoning_output_tokens") or 0) for item in costs),
+        "retries": sum(int(item.get("retries") or 0) for item in costs),
+        "human_gates": sum(int(item.get("human_gates") or 0) for item in costs),
+        "human_corrections": sum(int(item.get("human_corrections") or 0) for item in costs),
+        "elapsed_seconds": sum(float(item.get("elapsed_seconds") or 0) for item in costs),
+        "mcp_calls": sum(int(item.get("mcp_calls") or 0) for item in costs),
+        "mcp_failures": sum(int(item.get("mcp_failures") or 0) for item in costs),
+        "mcp_rejections": sum(int(item.get("mcp_rejections") or 0) for item in costs),
+        "mcp_normalizations": sum(int(item.get("mcp_normalizations") or 0) for item in costs),
+        "estimated_list_price_usd": None if not prices else round(sum(prices), 8),
+        "items": costs,
+        "mcp_tool_surface_size": _mcp_surface_size(),
+        "mcp_tool_surface_note": "experimental_context_overhead",
+        "note": "Unused advertised MCP tools are availability, not waste.",
     }
 
 

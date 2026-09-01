@@ -56,6 +56,10 @@ Overview lists Cursor ACP and Codex app-server. Additional clients are not shipp
 
 Overview shows Codex/Cursor × greenfield/brownfield cells. They stay **Not run** until a real provider run writes evidence. Historical 0.13 scores are not shown as 1.0 passes.
 
+## 1.0.0-rc.3 eval maturity
+
+Overview can import a local acceptance ZIP into bounded eval cases and shows governed-change cost totals. Unused advertised MCP tools are not treated as waste.
+
 ## 1.0.0-rc.1 optional harness
 
 Overview shows compact On/Off chips for context optimization, governed team scheduling and eval intelligence. Project settings can change those host-owned switches. Execution profiles, human gates and certified-provider refusal stay required and are not presented as optional optimizations.

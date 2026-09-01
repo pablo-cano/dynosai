@@ -105,6 +105,10 @@ class EvalRegistry:
         self.base.mkdir(parents=True, exist_ok=True)
         stamp = str(row["recorded_at"]).replace(":", "").replace("-", "")
         path = self.base / f"{row['scenario']}-{stamp}.json"
+        extra = 1
+        while path.exists():
+            path = self.base / f"{row['scenario']}-{stamp}-{extra}.json"
+            extra += 1
         path.write_text(json.dumps(row, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
         return {**row, "path": str(path)}
 
