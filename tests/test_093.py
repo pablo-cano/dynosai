@@ -23,7 +23,7 @@ class ManagedAgentRuntime093Tests(unittest.TestCase):
         AgentConfiguration(self.project).init()
 
     def test_version_is_093(self):
-        self.assertEqual(__version__, "1.0.0rc1")
+        self.assertEqual(__version__, "1.0.0rc2")
 
     def test_tool_profiles_are_progressive_and_smaller_than_legacy_surface(self):
         names = {x["name"] for x in TOOLS}

@@ -37,7 +37,7 @@ class DynosAI122EfficiencyTests(unittest.TestCase):
         return e,root
 
     def test_version_is_0122(self):
-        self.assertEqual(__version__,"1.0.0rc1")
+        self.assertEqual(__version__,"1.0.0rc2")
 
     def test_context_preview_manifest_is_reused_until_task_file_changes(self):
         e,root=self._engine_with_task()

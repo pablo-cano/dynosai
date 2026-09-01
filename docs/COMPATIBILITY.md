@@ -221,7 +221,7 @@ Compatible 1.0.x releases will not:
 
 - Predictive model routing (shadow only; no autonomous spend).
 - Live 1.0 certification matrix cells until they are filled by real provider
-  runs (`not_run` is the honest placeholder).
+  runs (`MATRIX_1.0` exists; every cell is currently `not_run`).
 - Eval intelligence mining (optional harness feature; not a live-provider
   leaderboard).
 - Team parallelism beyond host-opened governed sessions.
@@ -232,4 +232,5 @@ Compatible 1.0.x releases will not:
 - App Server payloads consumed only by bundled Studio.
 
 RC1 does not prove a production-ready 1.0. It freezes the contract so later
-RCs can add evidence without moving the public surface.
+RCs can add evidence without moving the public surface. RC2 adds MATRIX_1.0
+placeholders and two-session lease proof; it still does not fill live cells.

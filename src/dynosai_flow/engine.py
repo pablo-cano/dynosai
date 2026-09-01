@@ -28,6 +28,7 @@ from .policy import PathPolicyEngine, PolicyError, ValidationProfilePolicy, is_m
 from .runtime import RuntimeBroker
 from .execution_profiles import bind_local_runtime, normalize_profile, require_local_runtime
 from .capability_manifests import capability_report
+from .certification_matrix import summarize_live_matrix
 from .harness_contracts import FeatureDisabledError, OPTIONAL_HARNESS_FEATURES, harness_report_from_project
 from .team_scheduler import build_team_plan, claim_allowed, fan_in_conflicts
 from .eval_intelligence import build_report, case_by_id, improvement_description, load_cases, mark_proposed, mark_regressed
@@ -862,7 +863,7 @@ class DynosAI:
         from .mcp import LEGACY_TOOLS, TOOLS
         mcp_names={str(item.get("name") or "") for item in [*TOOLS,*LEGACY_TOOLS] if item.get("name")}
         harness=self.harness_report()
-        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"mcp_surface_frozen":True,"mcp_tool_count":len(mcp_names),"harness":{"features":{item["name"]:item["enabled"] for item in harness.get("features") or []},"precedence":harness.get("precedence")},"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False,"enabled":self.harness_feature("eval_intelligence")},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"},"capability_manifests":{"shipped_providers":caps["shipped_providers"],"shipped_adapters":caps["shipped_adapters"],"extension_packs":False,"human_gates":"required"}}
+        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"mcp_surface_frozen":True,"mcp_tool_count":len(mcp_names),"harness":{"features":{item["name"]:item["enabled"] for item in harness.get("features") or []},"precedence":harness.get("precedence")},"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False,"enabled":self.harness_feature("eval_intelligence")},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"},"capability_manifests":{"shipped_providers":caps["shipped_providers"],"shipped_adapters":caps["shipped_adapters"],"extension_packs":False,"human_gates":"required"},"live_matrix":summarize_live_matrix()}
 
     def agent_git_status(self, run_id: str | None = None) -> dict[str, Any]:
         """Policy-safe Git status metadata for coding agents."""
@@ -898,15 +899,18 @@ class DynosAI:
         plan["feature_enabled"]=parallel
         return plan
 
-    def claim_lease(self, work_id: str, task_id: str, agent: str, role: str = "implementer") -> dict[str, Any]:
+    def claim_lease(self, work_id: str, task_id: str, agent: str, role: str = "implementer", session_id: str | None = None) -> dict[str, Any]:
         """Claim a current-wave lease for a governed session. Never starts a second provider."""
         decision=claim_allowed(self.schedule(work_id), task_id)
         if not decision.get("allowed"):
             raise ValueError(decision.get("reason") or "lease cannot be claimed")
         if role == "reviewer":
-            return {**decision, "status": "human_gate", "role": role, "message": "Reviewer role is the human code-review gate, not a spawned agent."}
+            return {**decision, "status": "human_gate", "role": role, "session_id": session_id, "message": "Reviewer role is the human code-review gate, not a spawned agent."}
         claimed=self.prepare_task_run(work_id, task_id, agent)
-        self.db.audit("WorkerLeaseClaimed", task_id, {"work_id": work_id, "role": role, "run_id": claimed.get("run_id"), "spawn_provider": False})
+        if session_id:
+            self.db.execute("UPDATE runs SET session_id=? WHERE id=?", (session_id, claimed["run_id"]))
+        claimed["session_id"]=session_id
+        self.db.audit("WorkerLeaseClaimed", task_id, {"work_id": work_id, "role": role, "run_id": claimed.get("run_id"), "session_id": session_id, "spawn_provider": False})
         return {**claimed, "lease": decision.get("lease"), "spawn_provider": False, "role": role}
 
     def fan_in_report(self, work_id: str) -> dict[str, Any]:
@@ -1415,6 +1419,7 @@ class DynosAI:
             "board.json":self.board(), "stats.json":self.stats(),
             "execution_policy.json":self.execution_policy(),
             "capability_manifests.json":capability_report(),
+            "live_matrix.json":summarize_live_matrix(),
             "recent_audit.json":self.db.query("SELECT id,event_type,entity_id,payload,created_at FROM audit ORDER BY id DESC LIMIT 100"),
             "recent_runs.json":self.db.query("SELECT id,work_id,agent,status,started_at,finished_at,verification_status,worktree FROM runs ORDER BY id DESC LIMIT 50"),
         }

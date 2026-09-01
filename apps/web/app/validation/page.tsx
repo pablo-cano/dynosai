@@ -9,10 +9,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Validation",
-  description: "How DynosAI 1.0.0-rc.1 freezes contracts on the 0.13.0 certified governed core, Studio, harness, team scheduling, eval intelligence and execution profiles. The historical Green/Brown matrix remains historical; it is not a 1.0 live certification.",
+  description: "MATRIX_1.0 live certification cells are not_run. Historical 0.13 Codex/Cursor Green/Brown evidence remains historical and is not copied into 1.0.",
 };
 
-const matrix = [
+const liveMatrix = [
+  ["Codex", "Greenfield", "not_run"],
+  ["Codex", "Brownfield", "not_run"],
+  ["Cursor", "Greenfield", "not_run"],
+  ["Cursor", "Brownfield", "not_run"],
+];
+
+const historical = [
   ["Codex", "Greenfield · Fibonacci", "PASS", "100", "8/8"],
   ["Cursor", "Greenfield · Fibonacci", "PASS", "100", "8/8"],
   ["Codex", "Brownfield · Contract discounts", "PASS", "100", "10/10"],
@@ -23,15 +30,24 @@ export default function ValidationPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8">
       <div className="max-w-3xl">
-        <Badge>Public RC · Contract freeze</Badge>
-        <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">The 0.13 core matrix is historical evidence, not a 1.0 certification.</h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI 1.0.0-rc.1 freezes MCP, CLI and schema v6 contracts on the accepted 0.13.0 governed-core behavior plus Studio, harness, team scheduling, eval intelligence, execution profiles and certified Cursor ACP / Codex app-server transports. The Green/Brown table below is the historical 0.13.0 provider baseline. RC1 does not copy it forward as 1.0 live proof; those four cells stay unproven for 1.0 until real provider runs exist.</p>
+        <Badge>Public RC · Certification evidence</Badge>
+        <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">1.0 live cells stay not_run until real provider runs exist.</h1>
+        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI 1.0.0-rc.2 publishes MATRIX_1.0 with four provider-aware cells. None of them copy 0.13 Quality 100 scores. The historical table further down is the 0.13.0 core baseline, not 1.0 live proof.</p>
       </div>
 
-      <div className="mt-12 overflow-x-auto rounded-2xl border border-border">
+      <h2 className="mt-12 text-2xl font-bold tracking-tight">MATRIX_1.0 live certification</h2>
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
+        <table className="w-full min-w-[520px] text-sm">
+          <thead className="bg-muted text-left"><tr><th className="p-4">Provider</th><th className="p-4">Mode</th><th className="p-4">Status</th></tr></thead>
+          <tbody>{liveMatrix.map((row) => <tr key={`${row[0]}-${row[1]}`} className="border-t border-border">{row.map((value) => <td key={value} className="p-4">{value}</td>)}</tr>)}</tbody>
+        </table>
+      </div>
+
+      <h2 className="mt-16 text-2xl font-bold tracking-tight">Historical 0.13.0 core matrix</h2>
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
         <table className="w-full min-w-[680px] text-sm">
           <thead className="bg-muted text-left"><tr><th className="p-4">Provider</th><th className="p-4">Scenario</th><th className="p-4">Result</th><th className="p-4">Quality</th><th className="p-4">Oracle</th></tr></thead>
-          <tbody>{matrix.map((row) => <tr key={`${row[0]}-${row[1]}`} className="border-t border-border">{row.map((value) => <td key={value} className="p-4">{value}</td>)}</tr>)}</tbody>
+          <tbody>{historical.map((row) => <tr key={`${row[0]}-${row[1]}`} className="border-t border-border">{row.map((value) => <td key={value} className="p-4">{value}</td>)}</tr>)}</tbody>
         </table>
       </div>
 
@@ -54,7 +70,7 @@ export default function ValidationPage() {
           <CardHeader><CardTitle>What it does not prove</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
             <p>It is not a universal guarantee across every language, repository size, CI system, security policy, or provider version.</p>
-            <p>DynosAI 1.0.0-rc.1 freezes contracts and still benefits from real-world feedback. It is not a production-ready 1.0 claim.</p>
+            <p>DynosAI 1.0.0-rc.2 publishes MATRIX_1.0 placeholders and still benefits from real-world feedback. It is not a production-ready 1.0 claim.</p>
             <p>The Predictive Router remains in shadow mode even though the historical sample size now crosses its quantitative authority gates.</p>
           </CardContent>
         </Card>

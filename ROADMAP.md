@@ -133,7 +133,7 @@ Still incomplete inside 0.19 (do not advertise as done):
 
 **Goal:** publish stable contracts suitable for broader production adoption.
 
-### RC1 — Contract freeze (this release)
+### RC1 — Contract freeze
 
 Delivered in `1.0.0-rc.1`:
 
@@ -144,6 +144,17 @@ Delivered in `1.0.0-rc.1`:
 - public status **Public RC · Contract freeze**. Schema remains v6.
 
 This RC does **not** ship a production-ready 1.0, installer, live 1.0 certification matrix, OS-level sandbox, additional certified clients, or autonomous predictive routing.
+
+### RC2 — Certification evidence (this release)
+
+Delivered in `1.0.0-rc.2`:
+
+- versioned `MATRIX_1.0` with Codex/Cursor × greenfield/brownfield cells, all `not_run`;
+- historical 0.13 evidence preserved and not copied into 1.0 live cells;
+- two host-opened governed session identities claiming file-disjoint leases without provider spawn;
+- overlap serialization, fan-in conflict blocking, and scheduler-off serial fallback.
+
+This RC still does **not** contain a real 1.0 live provider matrix, installer, OS sandbox, extra certified clients, or autonomous predictive routing.
 
 ### Remaining 1.0 exit criteria
 

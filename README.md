@@ -8,7 +8,7 @@ DynosAI is a local-first orchestration and governance layer for AI coding agents
 
 > The agent writes code. DynosAI governs what may change, what must be proven, and when the work is actually done.
 
-**Current release:** `1.0.0-rc.1` (`1.0.0rc1`) · **Public RC · Contract freeze**
+**Current release:** `1.0.0-rc.2` (`1.0.0rc2`) · **Public RC · Certification evidence**
 **License:** MIT
 **Author and maintainer:** [Pablo Cano](https://www.linkedin.com/in/pablo-cano-galan/)
 **Website:** [https://www.dynosai.com/](https://www.dynosai.com/)
@@ -55,7 +55,7 @@ The authoritative state lives in `.dynosai/knowledge.db` and Git, not in the pro
 - **Local semantic memory** — local embeddings, symbols, tests, decisions, features, and evidence can be retrieved in bounded context.
 - **Session recovery** — active work can be resumed from durable state after a provider restart.
 - **Model control** — phase-aware budgets, complexity, failures, and routing evidence are tracked while expensive escalation remains conservative.
-- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but `1.0.0-rc.1` still does not let the predictor autonomously change model tiers.
+- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but `1.0.0-rc.2` still does not let the predictor autonomously change model tiers.
 - **Observability** — MCP calls, token usage, context strategies, validation results, route decisions, retries, and acceptance evidence are persisted.
 - **Real-provider acceptance harness** — greenfield and brownfield scenarios can be executed against Codex and Cursor and packaged into one auditable bundle.
 
@@ -89,7 +89,7 @@ There are two layers:
 1. **Deterministic Core verification:** Git diff, scope, planned actions, requirements, evidence, validations, and state transitions are checked independently of the agent's claim.
 2. **Semantic review:** the managed agent is instructed to inspect the diff against requirements and regressions, followed by a human code-review gate.
 
-Version `1.0.0-rc.1` still does **not** spawn a second independent LLM reviewer. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. Eval intelligence does not auto-start a provider. Autonomous is an execution profile, not a skipped-gate mode. Additional IDE clients are not certified.
+Version `1.0.0-rc.2` still does **not** spawn a second independent LLM reviewer. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. Eval intelligence does not auto-start a provider. Autonomous is an execution profile, not a skipped-gate mode. Additional IDE clients are not certified.
 
 ## Quick start
 
@@ -143,6 +143,7 @@ dynosai studio
 | [Evolution](docs/EVOLUTION.md) | What changed across the major development iterations |
 | [Release process](docs/RELEASE_PROCESS.md) | Versioning, changelog, tests, acceptance, and promotion policy |
 | [Compatibility](docs/COMPATIBILITY.md) | Frozen 1.0 MCP, CLI, schema, App Server and human-gate contracts |
+| [1.0.0-rc.2 release notes](docs/RELEASE_1.0.0-rc.2.md) | Certification evidence: MATRIX_1.0 placeholders and two-session lease proof |
 | [1.0.0-rc.1 release notes](docs/RELEASE_1.0.0-rc.1.md) | Contract freeze: optional harness switches, release-gate policy, no production 1.0 claim |
 | [0.19.0 release notes](docs/RELEASE_0.19.0.md) | Ecosystem: capability manifests for Cursor ACP and Codex app-server |
 | [0.18.0 release notes](docs/RELEASE_0.18.0.md) | Secure Autonomous Runtime: execution profiles, runtime-only vault, policy evidence |
@@ -169,7 +170,7 @@ Across that matrix: 63 MCP calls, 0 MCP failures, 0 MCP rejections, 0 scope requ
 
 ## Public RC status
 
-DynosAI `1.0.0-rc.1` freezes the 1.0 compatibility contract on the 0.19.0 ecosystem baseline (schema v6). Cursor ACP and Codex app-server remain the certified Studio transports. Additional clients are refused, not silently certified. Predictive routing stays shadow-only. Optional harness features (context handles, team scheduling, eval intelligence) can be turned off without weakening human gates or execution-profile enforcement. The 0.13.0 core acceptance evidence remains historical baseline for Codex/Cursor greenfield and brownfield behavior; it is **not** a 1.0 live certification matrix. This RC is not production-ready 1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
+DynosAI `1.0.0-rc.2` keeps the frozen 1.0 compatibility contract (schema v6, 31 MCP names) and publishes a provider-aware `MATRIX_1.0` with all four live cells `not_run`. Cursor ACP and Codex app-server remain the certified Studio transports. The 0.13.0 core acceptance evidence remains historical and is **not** copied forward as 1.0 live proof. Two host-opened governed sessions can claim file-disjoint leases; DynosAI does not spawn extra providers. This RC is not production-ready 1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
 
 External pull requests are **not currently accepted** while the public API, packaging, and contribution model settle. Bug reports and practical feedback are welcome through [GitHub Issues](https://github.com/pablo-cano/dynosai/issues). Opening contributions is planned for a later beta phase and is not ruled out in the near term.
 

@@ -5,7 +5,7 @@ from dynosai_flow.db import Database
 
 class StableReleaseCompatibilityTests(unittest.TestCase):
     def test_release_version(self):
-        self.assertEqual(__version__, "1.0.0rc1")
+        self.assertEqual(__version__, "1.0.0rc2")
 
     def test_schema_remains_v6(self):
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)

@@ -508,6 +508,19 @@ function harnessStatusHtml(data) {
   const rows = features.map((item) => `<div class="harness-chip"><span>${esc(t(labels[item.name] || item.name))}</span><strong>${esc(item.enabled ? t("harness.on") : t("harness.off"))}</strong></div>`).join("");
   return `<div class="harness-status"><div class="harness-status-head"><strong>${esc(t("harness.title"))}</strong></div><div class="harness-chip-row">${rows}</div></div>`;
 }
+function liveMatrixHtml(data) {
+  const report = data.live_matrix || {};
+  const cells = report.cells || {};
+  const keys = ["codex.greenfield", "codex.brownfield", "cursor.greenfield", "cursor.brownfield"];
+  if (!keys.some((key) => cells[key])) return "";
+  const statusKey = {not_run: "matrix.notRun", run: "matrix.run", pass: "matrix.pass", fail: "matrix.fail"};
+  const rows = keys.map((key) => {
+    const [provider, mode] = key.split(".");
+    const status = cells[key] || "not_run";
+    return `<div class="harness-chip"><span>${esc(provider)} · ${esc(mode)}</span><strong>${esc(t(statusKey[status] || "matrix.notRun"))}</strong></div>`;
+  }).join("");
+  return `<div class="harness-status"><div class="harness-status-head"><strong>${esc(t("matrix.title"))}</strong></div><div class="harness-chip-row">${rows}</div><p class="provider-caps-note">${esc(t("matrix.note"))}</p></div>`;
+}
 function providerCapsHtml(data) {
   const report = data.provider_capabilities || {};
   const manifests = report.manifests || [];
@@ -797,6 +810,8 @@ function renderProject(data) {
   if (harnessRoot) harnessRoot.innerHTML = harnessStatusHtml(data);
   const capsRoot = $("provider-capabilities");
   if (capsRoot) capsRoot.innerHTML = providerCapsHtml(data);
+  const matrixRoot = $("live-matrix");
+  if (matrixRoot) matrixRoot.innerHTML = liveMatrixHtml(data);
   renderChecks(data);
   renderWork(data);
   renderReviews();

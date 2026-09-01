@@ -26,6 +26,7 @@ from .validation_integrity import evaluate_integrity
 from .cost_telemetry import governed_change_cost
 from .secrets import redact_text
 from .capability_manifests import capability_report, provider_manifest
+from .certification_matrix import summarize_live_matrix
 from .harness_contracts import harness_report_from_project
 
 
@@ -677,6 +678,7 @@ class DynosAIApplication:
             overview["execution_policy"] = {"profile": "balanced", "os_network_enforcement": False, "human_gates": "required", "enforcement": "decision_only"}
             overview["provider_capabilities"] = capability_report()
             overview["harness"] = harness_report_from_project()
+            overview["live_matrix"] = summarize_live_matrix()
             return overview
         self.engine.db.initialize()
         overview["project"] = self.engine.db.get_meta("project_name", self.root.name)
@@ -695,6 +697,7 @@ class DynosAIApplication:
             overview["eval_intelligence"] = {"cases": [], "predictive_routing": "shadow", "live_provider_evals": False}
         overview["provider_capabilities"] = capability_report()
         overview["harness"] = self.harness_report()
+        overview["live_matrix"] = summarize_live_matrix()
         return overview
 
     def resume(self, provider: str, work_id: str | None = None, *, at_provider_boundary: bool = True) -> dict[str, Any]:

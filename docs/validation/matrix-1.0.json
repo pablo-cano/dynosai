@@ -1,0 +1,46 @@
+{
+  "schema": "MATRIX_1.0",
+  "schema_version": 1,
+  "release_line": "1.0",
+  "copied_from_historical": false,
+  "all_passed": false,
+  "historical_baseline": {
+    "release": "0.13.0",
+    "path": "docs/validation/final-matrix-0.13.0.json",
+    "note": "Historical core evidence. Not 1.0 live certification."
+  },
+  "cells": [
+    {
+      "provider": "codex",
+      "mode": "greenfield",
+      "status": "not_run",
+      "quality_score": null,
+      "oracle_passed": null,
+      "evidence": null
+    },
+    {
+      "provider": "codex",
+      "mode": "brownfield",
+      "status": "not_run",
+      "quality_score": null,
+      "oracle_passed": null,
+      "evidence": null
+    },
+    {
+      "provider": "cursor",
+      "mode": "greenfield",
+      "status": "not_run",
+      "quality_score": null,
+      "oracle_passed": null,
+      "evidence": null
+    },
+    {
+      "provider": "cursor",
+      "mode": "brownfield",
+      "status": "not_run",
+      "quality_score": null,
+      "oracle_passed": null,
+      "evidence": null
+    }
+  ]
+}

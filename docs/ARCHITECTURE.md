@@ -40,7 +40,7 @@ Coding Agent / CLI / Local Studio
  SQLite knowledge.db     Git repository
 ```
 
-Public 1.0 compatibility (MCP names, public CLI, schema v6, Git vs knowledge.db) is documented in `docs/COMPATIBILITY.md`. The loopback App Server is Studio transport, not a general third-party API.
+Public 1.0 compatibility (MCP names, public CLI, schema v6, Git vs knowledge.db) is documented in `docs/COMPATIBILITY.md`. The loopback App Server is Studio transport, not a general third-party API. `MATRIX_1.0` live cells are provider-aware and stay `not_run` until real provider evidence exists.
 ```
 
 ## Authority boundaries

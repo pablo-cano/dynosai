@@ -24,6 +24,7 @@ REQUIRED = [
     "docs/ARCHITECTURE.md",
     "docs/COMPATIBILITY.md",
     "docs/QUALITY_AND_VALIDATION.md",
+    "docs/validation/matrix-1.0.json",
     "docs/STUDIO.md",
     "apps/studio/index.html",
     "apps/studio/app.js",

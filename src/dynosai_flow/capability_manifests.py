@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from .certification_matrix import summarize_live_matrix
+
 SHIPPED_PROVIDERS = ("cursor", "codex")
 PROVIDER_ALIASES = {"openai": "codex"}
 SHIPPED_ADAPTERS = ("cursor-acp", "codex-app-server")
@@ -115,6 +117,7 @@ def capability_report() -> dict[str, Any]:
         "human_gates": "required",
         "spawn_extra_providers": False,
         "certification": CERTIFICATION,
+        "live_matrix": summarize_live_matrix(),
         "policy": POLICY,
         "manifests": list_manifests(),
     }

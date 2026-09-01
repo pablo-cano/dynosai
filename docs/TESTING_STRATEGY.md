@@ -30,6 +30,10 @@ Re-enable them explicitly with `DYNOSAI_HISTORICAL_TESTS=1`. Do not claim “all
 
 When website files change, also run `npm run check`, `npm run typecheck`, `npm run lint` and `npm run build` from `apps/web`.
 
+## 1.0 RC2 live matrix and two-session leases
+
+`tests/test_220.py` freezes `MATRIX_1.0`: four provider-aware cells stay `not_run`, historical 0.13 evidence remains separate, and two governed session identities can claim file-disjoint leases without spawning providers. Overlap serializes; scheduler-off stays serial. This is not a live-provider 1.0 certification.
+
 ## 2. Migration and recovery tests
 
 Release-candidate hardening covers database migration, duplicate/pending gates, restart/resume, missing or corrupted checkpoints, corrupted telemetry/model-control state, portable snapshot integrity, and atomic restore behavior.
