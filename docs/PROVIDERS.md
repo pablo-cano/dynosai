@@ -20,7 +20,7 @@ Provider compatibility is treated as an observed capability, not an assumption. 
 
 ## Studio / Cursor ACP
 
-Studio 0.14.1 already uses Cursor ACP (`agent acp`) for custom-client turns, including DynosAI MCP injection and process-tree shutdown. Codex uses app-server. 0.19 remaining work is additional clients/providers, not inventing ACP from scratch.
+Studio 0.14.1 already uses Cursor ACP (`agent acp`) for custom-client turns, including DynosAI MCP injection and process-tree shutdown. Codex uses app-server. 0.19 publishes those transports as capability manifests and refuses uncertified clients instead of inventing ACP from scratch.
 
 ## Configuration
 

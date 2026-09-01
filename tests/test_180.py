@@ -62,7 +62,7 @@ class DynosAI017EvalIntelligenceTests(unittest.TestCase):
         self.assertIn("offline fixture", str(record["metrics"].get("note") or "").lower())
 
     def test_schema_and_version_remain_governed(self):
-        self.assertEqual(__version__, "0.18.0")
+        self.assertEqual(__version__, "0.19.0")
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
 
 

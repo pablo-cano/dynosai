@@ -500,6 +500,16 @@ function evalCasesHtml(data) {
   }).join("");
   return `<div class="eval-cases"><div class="eval-cases-head"><strong>${esc(t("eval.title"))}</strong><small>${esc(String(cases.length))}</small></div>${rows}<p class="eval-cases-note">${esc(t("eval.shadow"))}</p></div>`;
 }
+function providerCapsHtml(data) {
+  const report = data.provider_capabilities || {};
+  const manifests = report.manifests || [];
+  if (!manifests.length) return "";
+  const rows = manifests.map((item) => {
+    const detail = [item.adapter, item.transport, item.elicitation].filter(Boolean).join(" · ");
+    return `<div class="provider-cap"><strong>${esc(item.provider || "")}</strong><small>${esc(detail)}</small></div>`;
+  }).join("");
+  return `<div class="provider-caps"><div class="provider-caps-head"><strong>${esc(t("caps.title"))}</strong><small>${esc(t("caps.certified"))}</small></div>${rows}<p class="provider-caps-note">${esc(t("caps.note"))}</p></div>`;
+}
 async function proposeEvalImprovement(caseId) {
   try {
     await withOperation("operation.saveSettings", async () => {
@@ -767,6 +777,8 @@ function renderProject(data) {
   $("home-reviews").textContent = String(reviews.length);
   const evalRoot = $("eval-intelligence");
   if (evalRoot) evalRoot.innerHTML = evalCasesHtml(data);
+  const capsRoot = $("provider-capabilities");
+  if (capsRoot) capsRoot.innerHTML = providerCapsHtml(data);
   renderChecks(data);
   renderWork(data);
   renderReviews();

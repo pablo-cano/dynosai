@@ -24,9 +24,10 @@ from .application import DynosAIApplication
 from .git_manager import GitError
 from .studio_projects import StudioProjectRegistry, browse_directory, create_directory
 from .version import __version__
+from .capability_manifests import SHIPPED_PROVIDERS, capability_report, provider_manifest
 
 
-SUPPORTED_STUDIO_PROVIDERS = {"cursor", "codex"}
+SUPPORTED_STUDIO_PROVIDERS = set(SHIPPED_PROVIDERS)
 
 
 class StudioExecutionManager:
@@ -398,6 +399,12 @@ class StudioAPI:
                 return 200, {"ok": True, "version": __version__, "root": str(self.root) if self.root else None, "project_selected": self.has_project}
             if path == "/api/projects":
                 return 200, {"current": str(self.root) if self.root else None, "items": self.registry.list(current=self.root)}
+            if path == "/api/provider-capabilities":
+                name = (query.get("provider") or [None])[0]
+                try:
+                    return 200, provider_manifest(name) if name else capability_report()
+                except ValueError as exc:
+                    return 400, {"error": "validation", "message": str(exc)}
             if not self.has_project:
                 return self._no_project()
             app = self._require_app()
@@ -414,7 +421,7 @@ class StudioAPI:
                     "auto_approve": app.auto_approve_enabled(),
                 }
             if path == "/api/project-settings":
-                return 200, {"auto_approve": app.auto_approve_enabled(), "execution_policy": app.execution_policy()}
+                return 200, {"auto_approve": app.auto_approve_enabled(), "execution_policy": app.execution_policy(), "provider_capabilities": app.provider_capabilities()}
             if path == "/api/execution":
                 return 200, self.execution.status(self.root, work_id)
             if path == "/api/work":

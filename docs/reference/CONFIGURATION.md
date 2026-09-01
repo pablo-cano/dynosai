@@ -2,7 +2,7 @@
 
 DynosAI prefers explicit CLI/project configuration. Environment variables are primarily runtime, provider, diagnostic, or advanced controls.
 
-Common variables present in the 0.18.0 codebase include:
+Common variables present in the 0.19.0 codebase include:
 
 ```text
 DYNOSAI_PROJECT

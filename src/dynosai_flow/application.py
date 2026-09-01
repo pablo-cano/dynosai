@@ -25,6 +25,7 @@ from .risk import RiskAssessment
 from .validation_integrity import evaluate_integrity
 from .cost_telemetry import governed_change_cost
 from .secrets import redact_text
+from .capability_manifests import capability_report, provider_manifest
 
 
 class ProjectDetector:
@@ -586,6 +587,12 @@ class DynosAIApplication:
         self.events.emit("ExecutionProfileSet", payload={"profile": evidence.get("profile"), "os_network_enforcement": False})
         return evidence
 
+    def provider_capabilities(self, name: str | None = None) -> dict[str, Any]:
+        """Host-owned adapter inventory. Additional clients are not assumed certified."""
+        if name:
+            return provider_manifest(name)
+        return capability_report()
+
     def apply_auto_approvals(self, work_id: str) -> list[dict[str, Any]]:
         """Approve pending specification/plan/code/merge gates and ordinary scope requests when auto-mode is on."""
         if not self.auto_approve_enabled():
@@ -650,6 +657,7 @@ class DynosAIApplication:
             overview["blockers"] = self.explain_blockers(work_id)
             overview["auto_approve"] = False
             overview["execution_policy"] = {"profile": "balanced", "os_network_enforcement": False, "human_gates": "required", "enforcement": "decision_only"}
+            overview["provider_capabilities"] = capability_report()
             return overview
         self.engine.db.initialize()
         overview["project"] = self.engine.db.get_meta("project_name", self.root.name)
@@ -666,6 +674,7 @@ class DynosAIApplication:
             overview["eval_intelligence"] = self.engine.eval_intelligence()
         except Exception:
             overview["eval_intelligence"] = {"cases": [], "predictive_routing": "shadow", "live_provider_evals": False}
+        overview["provider_capabilities"] = capability_report()
         return overview
 
     def resume(self, provider: str, work_id: str | None = None, *, at_provider_boundary: bool = True) -> dict[str, Any]:

@@ -41,6 +41,16 @@ class DynosAI015StudioReviewabilityTests(unittest.TestCase):
         self.assertIn("aplicación de red a nivel de sistema operativo no está incluida", i18n)
         self.assertIn("projectSettings.executionProfile", i18n)
 
+    def test_overview_exposes_certified_provider_manifests(self):
+        app = resources.files("dynosai_flow.studio_assets").joinpath("app.js").read_text(encoding="utf-8")
+        i18n = resources.files("dynosai_flow.studio_assets").joinpath("i18n.js").read_text(encoding="utf-8")
+        html = resources.files("dynosai_flow.studio_assets").joinpath("index.html").read_text(encoding="utf-8")
+        self.assertIn("providerCapsHtml", app)
+        self.assertIn("provider-capabilities", html)
+        self.assertIn("caps.title", i18n)
+        self.assertIn("Additional clients are not shipped", i18n)
+        self.assertIn("clientes adicionales no están incluidos", i18n)
+
     def test_studio_assets_remain_in_sync(self):
         root = Path(__file__).resolve().parents[1]
         for name in ("index.html", "styles.css", "app.js", "i18n.js", "theme-init.js", "icon.svg"):

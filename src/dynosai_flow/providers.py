@@ -222,10 +222,11 @@ class MachineProviderSetup:
         }
 
     def setup(self, providers: list[str], *, install_model: bool = True) -> dict[str, Any]:
+        from .capability_manifests import provider_manifest
         results=[]
         for provider in providers:
-            if provider == "cursor": results.append(self.configure_cursor())
-            elif provider == "codex": results.append(self.configure_codex())
-            else: raise ValueError(f"Unsupported provider: {provider}")
+            manifest = provider_manifest(provider)
+            if manifest["provider"] == "cursor": results.append(self.configure_cursor())
+            elif manifest["provider"] == "codex": results.append(self.configure_codex())
         model = self.install_model() if install_model else {"installed":False,"skipped":True}
         return {"providers": results, "model": model, "ready": all(x.get("configured") for x in results) and (bool(model.get("installed")) or bool(model.get("skipped")))}
