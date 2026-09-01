@@ -23,8 +23,9 @@ from urllib.parse import parse_qs, urlparse
 from .application import DynosAIApplication
 from .git_manager import GitError
 from .studio_projects import StudioProjectRegistry, browse_directory, create_directory
-from .version import __version__
+from .version import DISPLAY_VERSION, __version__
 from .capability_manifests import SHIPPED_PROVIDERS, capability_report, provider_manifest
+from .harness_contracts import FeatureDisabledError
 
 
 SUPPORTED_STUDIO_PROVIDERS = set(SHIPPED_PROVIDERS)
@@ -396,7 +397,13 @@ class StudioAPI:
         work_id = (query.get("work_id") or [None])[0]
         with self._lock:
             if path == "/api/health":
-                return 200, {"ok": True, "version": __version__, "root": str(self.root) if self.root else None, "project_selected": self.has_project}
+                return 200, {
+                    "ok": True,
+                    "version": __version__,
+                    "display_version": DISPLAY_VERSION,
+                    "root": str(self.root) if self.root else None,
+                    "project_selected": self.has_project,
+                }
             if path == "/api/projects":
                 return 200, {"current": str(self.root) if self.root else None, "items": self.registry.list(current=self.root)}
             if path == "/api/provider-capabilities":
@@ -421,7 +428,7 @@ class StudioAPI:
                     "auto_approve": app.auto_approve_enabled(),
                 }
             if path == "/api/project-settings":
-                return 200, {"auto_approve": app.auto_approve_enabled(), "execution_policy": app.execution_policy(), "provider_capabilities": app.provider_capabilities()}
+                return 200, {"auto_approve": app.auto_approve_enabled(), "execution_policy": app.execution_policy(), "provider_capabilities": app.provider_capabilities(), "harness": app.harness_report()}
             if path == "/api/execution":
                 return 200, self.execution.status(self.root, work_id)
             if path == "/api/work":
@@ -513,25 +520,37 @@ class StudioAPI:
                 self.registry.touch(self.root, display_name=str(result.get("project") or self.root.name))
                 return 200, result
             if path == "/api/project-settings":
-                if "auto_approve" not in payload:
-                    return 400, {"error": "validation", "message": "auto_approve is required"}
+                if "auto_approve" not in payload and "harness" not in payload:
+                    return 400, {"error": "validation", "message": "auto_approve or harness is required"}
                 if not app.detector.detect(self.root).get("has_dynosai"):
-                    return 409, {"error": "not_initialized", "message": "initialize the project before changing auto-approve"}
-                snapshots = [
-                    (str(work.get("id") or ""), str(work.get("state") or ""))
-                    for work in app.list_work(limit=50)
-                ]
-                result = app.set_auto_approve(bool(payload.get("auto_approve")))
-                if result.get("auto_approve"):
-                    continued = []
-                    for work_id, before in snapshots:
-                        if not work_id or work_id == "PROJECT" or before == "done":
-                            continue
-                        provider = self._provider_for_work(app, work_id)
-                        outcome = self._settle_work(self.root, provider, work_id)
-                        outcome = self._maybe_auto_continue(self.root, provider, work_id, 0, outcome, before_state=before)
-                        continued.append({"work_id": work_id, "status": outcome.get("status"), "work_state": outcome.get("work_state")})
-                    result["continued"] = continued
+                    return 409, {"error": "not_initialized", "message": "initialize the project before changing project settings"}
+                result: dict[str, Any] = {}
+                if "auto_approve" in payload:
+                    snapshots = [
+                        (str(work.get("id") or ""), str(work.get("state") or ""))
+                        for work in app.list_work(limit=50)
+                    ]
+                    result = app.set_auto_approve(bool(payload.get("auto_approve")))
+                    if result.get("auto_approve"):
+                        continued = []
+                        for work_id, before in snapshots:
+                            if not work_id or work_id == "PROJECT" or before == "done":
+                                continue
+                            provider = self._provider_for_work(app, work_id)
+                            outcome = self._settle_work(self.root, provider, work_id)
+                            outcome = self._maybe_auto_continue(self.root, provider, work_id, 0, outcome, before_state=before)
+                            continued.append({"work_id": work_id, "status": outcome.get("status"), "work_state": outcome.get("work_state")})
+                        result["continued"] = continued
+                if "harness" in payload:
+                    harness_payload = payload.get("harness")
+                    if not isinstance(harness_payload, dict):
+                        return 400, {"error": "validation", "message": "harness must be an object of feature flags"}
+                    try:
+                        result["harness"] = app.set_harness_features(harness_payload)
+                    except ValueError as exc:
+                        return 400, {"error": "validation", "message": str(exc)}
+                else:
+                    result["harness"] = app.harness_report()
                 return 200, result
             if path == "/api/work/start":
                 description = str(payload.get("description") or "").strip()
@@ -621,6 +640,8 @@ class StudioAPI:
                     return 400, {"error": "validation", "message": "case_id is required"}
                 try:
                     return 200, app.propose_eval_improvement(case_id)
+                except FeatureDisabledError as exc:
+                    return 409, exc.payload()
                 except ValueError as exc:
                     return 400, {"error": "validation", "message": str(exc)}
             if path == "/api/execution-profile":

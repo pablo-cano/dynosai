@@ -6,6 +6,30 @@ DynosAI uses several test layers because a coding-agent governance system can ap
 
 These tests exercise workflow state, schemas, scope rules, Git evidence, MCP contracts, validation classification, token accounting, routing decisions, and provider adapters without paying for model calls.
 
+## 1.0 RC1 contract freeze and release gate
+
+`tests/test_210.py` freezes the unique MCP tool-name set, optional harness switches, schema v6, Studio EN/ES harness copy and App Server disabled-feature responses. Compatibility scope is documented in `docs/COMPATIBILITY.md`.
+
+The supported **release gate** is the same command in CI, `scripts/build_release.py` and a local checkout:
+
+```bash
+python -m compileall -q src/dynosai_flow
+python scripts/check_repository.py
+python scripts/check_studio_sync.py
+python -m pytest
+```
+
+`python -m pytest` is the stable Python regression suite. It does **not** mean every file under `tests/` is collected. Four historical aggregate suites remain in the repository for manual diagnostics and are excluded by `tests/conftest.py`:
+
+- `tests/test_07.py`
+- `tests/test_brownfield06.py`
+- `tests/test_hardening.py`
+- `tests/test_runtime05.py`
+
+Re-enable them explicitly with `DYNOSAI_HISTORICAL_TESTS=1`. Do not claim “all repository tests pass” when those suites are intentionally excluded.
+
+When website files change, also run `npm run check`, `npm run typecheck`, `npm run lint` and `npm run build` from `apps/web`.
+
 ## 2. Migration and recovery tests
 
 Release-candidate hardening covers database migration, duplicate/pending gates, restart/resume, missing or corrupted checkpoints, corrupted telemetry/model-control state, portable snapshot integrity, and atomic restore behavior.

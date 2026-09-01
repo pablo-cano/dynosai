@@ -15,7 +15,7 @@ export function SiteHeader() {
         <Link href="/" className="flex items-center gap-2.5" aria-label="DynosAI home">
           <DynosAILogo className="h-9 w-9" />
           <span className="font-extrabold leading-none text-foreground">{siteConfig.shortName}</span>
-          <Badge className="hidden sm:inline-flex">β Beta</Badge>
+          <Badge className="hidden sm:inline-flex">{siteConfig.status}</Badge>
         </Link>
         <nav className="hidden items-center gap-1 md:flex" aria-label="Primary navigation">
           <Button variant="ghost" size="sm" asChild><Link href="/why/">Why DynosAI</Link></Button>

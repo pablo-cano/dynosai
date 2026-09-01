@@ -84,3 +84,5 @@ debug acceptance-logs
 ```
 
 Some low-level commands exist for managed MCP/provider operation and are intentionally suppressed from the normal top-level help because end users should not manually bypass the workflow.
+
+The 1.0 compatibility commitment covers only the public stable commands documented in `docs/COMPATIBILITY.md`. Advanced/experimental commands and `debug` / acceptance internals are not a long-term third-party API.

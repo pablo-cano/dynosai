@@ -39,7 +39,7 @@ export default function HomePage() {
           <div className="max-w-4xl">
             <div className="mb-6 flex flex-wrap items-center gap-2">
               <Badge>Open source · MIT</Badge>
-              <Badge>β Public beta</Badge>
+              <Badge>Public RC · Contract freeze</Badge>
               <Badge>Runs locally</Badge>
             </div>
             <h1 className="max-w-5xl text-5xl font-bold tracking-[-0.055em] sm:text-6xl lg:text-7xl">
@@ -72,7 +72,7 @@ export default function HomePage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">Quick start</p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight">From source to a governed agent workflow.</h2>
-              <p className="mt-4 leading-7 text-muted-foreground">Clone the beta, install it locally, configure Codex or Cursor once, then work with the provider normally.</p>
+              <p className="mt-4 leading-7 text-muted-foreground">Clone the RC, install it locally, configure Codex or Cursor once, then work with the provider normally.</p>
             </div>
             <div className="overflow-x-auto rounded-2xl border border-border bg-[#0d1117] p-6 font-mono text-sm leading-7 text-[#e6edf3] shadow-sm">
               <div><span className="text-[#8b949e]">$</span> git clone https://github.com/pablo-cano/dynosai.git</div>
@@ -119,9 +119,9 @@ export default function HomePage() {
       <section className="border-y border-border bg-muted/45">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <div>
-            <Badge>New in 0.19.0</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Certified transports, not silent extra clients.</h2>
-            <p className="mt-5 leading-7 text-muted-foreground">0.19 keeps Studio, the harness, team leases, eval cases and execution profiles. Cursor ACP and Codex app-server are published as capability manifests. Additional IDEs and extension packs are refused instead of being treated as certified.</p>
+            <Badge>New in 1.0.0-rc.1</Badge>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Contracts frozen. Production 1.0 is not claimed.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">RC1 freezes MCP names, the public CLI, schema v6 and Studio compatibility. Optional harness features can be turned off without weakening human gates or execution profiles. There is no installer, no 1.0 live certification matrix, and no autonomous predictive routing yet.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
@@ -167,10 +167,10 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
         <div className="grid gap-10 lg:grid-cols-[1fr_1fr] lg:items-start">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">Beta evidence</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight">Tested with both providers and both project modes.</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">Historical 0.13 evidence</p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight">The core matrix remains historical, not a 1.0 live certification.</h2>
             <p className="mt-5 leading-7 text-muted-foreground">
-              The current beta baseline is backed by a real-provider matrix covering Codex and Cursor across greenfield and brownfield scenarios. The matrix passed without infrastructure retries.
+              Codex and Cursor passed greenfield and brownfield in the 0.13.0 promotion. RC1 freezes contracts on that core; it does not copy those Quality 100 results forward as 1.0 proof. The four 1.0 cells stay unproven until real provider runs exist.
             </p>
             <Button variant="outline" className="mt-6" asChild><Link href="/validation/">See validation evidence</Link></Button>
           </div>
@@ -191,9 +191,9 @@ export default function HomePage() {
         <div className="rounded-3xl border border-border bg-foreground px-6 py-12 text-background sm:px-10 lg:px-14">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <div className="mb-4 inline-flex rounded-full border border-background/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">Public beta</div>
+              <div className="mb-4 inline-flex rounded-full border border-background/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">Public RC · Contract freeze</div>
               <h2 className="text-3xl font-bold tracking-tight">Try it on one real feature.</h2>
-              <p className="mt-4 max-w-2xl leading-7 opacity-75">DynosAI is open source under MIT, but still pre-1.0. Use normal engineering review and project-specific validation while the beta hardens through real repositories.</p>
+              <p className="mt-4 max-w-2xl leading-7 opacity-75">DynosAI is open source under MIT. 1.0.0-rc.1 freezes contracts; it is not production-ready 1.0. Use normal engineering review and project-specific validation.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button size="lg" variant="outline" className="border-background/25 bg-background text-foreground hover:bg-background/90" asChild>

@@ -347,7 +347,7 @@ function renderShell() {
   } else {
     $("project-identity").title = "";
   }
-  $("version").textContent = health?.version ? `v${health.version}` : "—";
+  $("version").textContent = health?.display_version || health?.version ? `v${health.display_version || health.version}` : "—";
   document.querySelectorAll(".requires-initialized").forEach((item) => {
     const disabled = selected && !overview?.initialized;
     item.disabled = disabled;
@@ -492,13 +492,21 @@ function evalCasesHtml(data) {
   const intel = data.eval_intelligence;
   const cases = (intel && intel.cases) || [];
   if (!cases.length) return "";
+  const proposeAllowed = intel && intel.enabled !== false;
   const rows = cases.slice(0, 6).map((item) => {
     const layer = (item.attribution && item.attribution.layer) || "harness";
     const proposed = item.status === "proposed" || item.status === "regressed";
-    const action = proposed ? "" : `<button class="compact" data-eval-propose="${esc(item.case_id)}">${esc(t("eval.propose"))}</button>`;
+    const action = (!proposeAllowed || proposed) ? "" : `<button class="compact" data-eval-propose="${esc(item.case_id)}">${esc(t("eval.propose"))}</button>`;
     return `<div class="eval-case"><div><strong>${esc(item.case_id)}</strong><small>${esc(layer)} · ${esc(item.summary || "")}</small></div><span class="state-chip">${esc(item.status || "open")}</span>${action}</div>`;
   }).join("");
   return `<div class="eval-cases"><div class="eval-cases-head"><strong>${esc(t("eval.title"))}</strong><small>${esc(String(cases.length))}</small></div>${rows}<p class="eval-cases-note">${esc(t("eval.shadow"))}</p></div>`;
+}
+function harnessStatusHtml(data) {
+  const features = (data.harness && data.harness.features) || [];
+  if (!features.length) return "";
+  const labels = {context_handles: "harness.contextHandles", team_scheduler: "harness.teamScheduler", eval_intelligence: "harness.evalIntelligence"};
+  const rows = features.map((item) => `<div class="harness-chip"><span>${esc(t(labels[item.name] || item.name))}</span><strong>${esc(item.enabled ? t("harness.on") : t("harness.off"))}</strong></div>`).join("");
+  return `<div class="harness-status"><div class="harness-status-head"><strong>${esc(t("harness.title"))}</strong></div><div class="harness-chip-row">${rows}</div></div>`;
 }
 function providerCapsHtml(data) {
   const report = data.provider_capabilities || {};
@@ -661,7 +669,7 @@ function renderEvents() {
   $("events-raw").textContent = JSON.stringify(events.slice(-100), null, 2);
 }
 function renderDiagnostics(data) {
-  $("diag-version").textContent = health?.version ? `v${health.version}` : "—";
+  $("diag-version").textContent = health?.display_version || health?.version ? `v${health.display_version || health.version}` : "—";
   $("diag-project").textContent = data.project || "—";
   $("diag-initialized").textContent = data.initialized ? t("common.yes") : t("common.no");
   const summary = {dynosai_version:health?.version, project:data.project, root:health?.root, initialized:!!data.initialized, classification:data.detection?.classification, git:!!data.detection?.has_git, dirty_entries:data.detection?.dirty?.length || 0, stacks:data.detection?.stacks || [], detected_checks:data.validations?.candidates?.length || 0, approved_checks:Object.values(data.validations?.approved || {}).filter((item) => item.approved).length, pending_reviews:reviews.length};
@@ -706,6 +714,14 @@ function renderProjectSettings() {
   setComboValue("execution-profile", overview?.execution_policy?.profile || "balanced");
   const profileInput = $("execution-profile");
   if (profileInput) profileInput.disabled = !overview?.initialized;
+  const byName = overview?.harness?.by_name || {};
+  document.querySelectorAll("[data-harness]").forEach((input) => {
+    const name = input.dataset.harness;
+    const item = byName[name] || (overview?.harness?.features || []).find((row) => row.name === name);
+    input.disabled = !overview?.initialized || !!(item && item.env_locked);
+    input.checked = item ? !!item.enabled : true;
+    input.title = item && item.env_locked ? t("harness.envLocked") : "";
+  });
   renderModelRouting();
 }
 function recommendedModel(provider, model) {
@@ -777,6 +793,8 @@ function renderProject(data) {
   $("home-reviews").textContent = String(reviews.length);
   const evalRoot = $("eval-intelligence");
   if (evalRoot) evalRoot.innerHTML = evalCasesHtml(data);
+  const harnessRoot = $("harness-features");
+  if (harnessRoot) harnessRoot.innerHTML = harnessStatusHtml(data);
   const capsRoot = $("provider-capabilities");
   if (capsRoot) capsRoot.innerHTML = providerCapsHtml(data);
   renderChecks(data);
@@ -1247,6 +1265,22 @@ function wireEvents() {
       event.target.checked = !enabled;
       showAlert(error.message);
     }
+  });
+  document.querySelectorAll("[data-harness]").forEach((input) => {
+    input.addEventListener("change", async (event) => {
+      const name = event.target.dataset.harness;
+      const enabled = !!event.target.checked;
+      try {
+        await withOperation("operation.saveSettings", async () => {
+          await api("/api/project-settings", {method:"POST", body:JSON.stringify({harness: {[name]: enabled}})});
+          await refresh({preserveView:true});
+          showAlert(t("harness.saved"), "success");
+        });
+      } catch (error) {
+        event.target.checked = !enabled;
+        showAlert(error.message);
+      }
+    });
   });
   $("execution-profile")?.addEventListener("change", async (event) => {
     const profile = event.target.value;

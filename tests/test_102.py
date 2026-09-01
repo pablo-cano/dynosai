@@ -13,7 +13,7 @@ class DynosAI102Tests(unittest.TestCase):
         self.tmp = Path(self.td.name)
 
     def test_version_is_0102(self):
-        self.assertEqual(__version__, "0.19.0")
+        self.assertEqual(__version__, "1.0.0rc1")
 
     def test_cursor_live_estimate_compares_against_context_read_not_fresh_input(self):
         # Real 0.10.1 Cursor/Luna acceptance shape: almost all input came from cache.

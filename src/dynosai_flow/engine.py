@@ -28,6 +28,7 @@ from .policy import PathPolicyEngine, PolicyError, ValidationProfilePolicy, is_m
 from .runtime import RuntimeBroker
 from .execution_profiles import bind_local_runtime, normalize_profile, require_local_runtime
 from .capability_manifests import capability_report
+from .harness_contracts import FeatureDisabledError, OPTIONAL_HARNESS_FEATURES, harness_report_from_project
 from .team_scheduler import build_team_plan, claim_allowed, fan_in_conflicts
 from .eval_intelligence import build_report, case_by_id, improvement_description, load_cases, mark_proposed, mark_regressed
 from .eval_registry import EvalRegistry
@@ -858,7 +859,10 @@ class DynosAI:
         cases=load_cases(self.root)
         policy=self.execution_policy()
         caps=capability_report()
-        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"},"capability_manifests":{"shipped_providers":caps["shipped_providers"],"shipped_adapters":caps["shipped_adapters"],"extension_packs":False,"human_gates":"required"}}
+        from .mcp import LEGACY_TOOLS, TOOLS
+        mcp_names={str(item.get("name") or "") for item in [*TOOLS,*LEGACY_TOOLS] if item.get("name")}
+        harness=self.harness_report()
+        return {"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"mcp_surface_frozen":True,"mcp_tool_count":len(mcp_names),"harness":{"features":{item["name"]:item["enabled"] for item in harness.get("features") or []},"precedence":harness.get("precedence")},"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False,"enabled":self.harness_feature("eval_intelligence")},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"},"capability_manifests":{"shipped_providers":caps["shipped_providers"],"shipped_adapters":caps["shipped_adapters"],"extension_packs":False,"human_gates":"required"}}
 
     def agent_git_status(self, run_id: str | None = None) -> dict[str, Any]:
         """Policy-safe Git status metadata for coding agents."""
@@ -888,8 +892,10 @@ class DynosAI:
         """
         work=self.get_work(work_id)
         tasks=[Database.decode(t,"files","depends_on","requirements","acceptance","validation_commands","evidence_required") for t in self.db.query("SELECT * FROM tasks WHERE work_id=? ORDER BY id",(work["id"],))]
-        plan=build_team_plan(tasks)
+        parallel=self.harness_feature("team_scheduler")
+        plan=build_team_plan(tasks, parallel=parallel)
         plan["work_id"]=work["id"]
+        plan["feature_enabled"]=parallel
         return plan
 
     def claim_lease(self, work_id: str, task_id: str, agent: str, role: str = "implementer") -> dict[str, Any]:
@@ -920,13 +926,78 @@ class DynosAI:
             "policy":"Fan-in is wave-scoped. Overlapping verified scopes require a human merge resolution.",
         }
 
+    def harness_report(self) -> dict[str, Any]:
+        """Host-visible optional harness settings. Environment overrides project meta."""
+        stored: dict[str, Any] = {}
+        try:
+            self._ensure_ready()
+            raw = json_loads(self.db.get_meta("harness_features", "{}"), {})
+            if isinstance(raw, dict):
+                stored = raw
+        except Exception:
+            stored = {}
+        return harness_report_from_project(stored)
+
+    def harness_feature(self, name: str, default: bool = True) -> bool:
+        """Resolve one optional harness feature with env → project → default precedence."""
+        report = self.harness_report()
+        item = (report.get("by_name") or {}).get(name)
+        if item is not None:
+            return bool(item.get("enabled"))
+        from .harness_contracts import harness_enabled
+        return harness_enabled(name, default)
+
+    def set_harness_features(self, updates: dict[str, Any]) -> dict[str, Any]:
+        """Persist host-owned optional harness settings. Agents must not call this."""
+        if not isinstance(updates, dict) or not updates:
+            raise ValueError("harness updates are required")
+        unknown = sorted(str(key) for key in updates if str(key) not in OPTIONAL_HARNESS_FEATURES)
+        if unknown:
+            raise ValueError("unknown or non-optional harness feature: " + ", ".join(unknown))
+        if "execution_profiles" in updates:
+            raise ValueError("execution_profiles is security authority and cannot be switched as a harness feature")
+        self._ensure_ready()
+        stored = json_loads(self.db.get_meta("harness_features", "{}"), {})
+        if not isinstance(stored, dict):
+            stored = {}
+        for name, value in updates.items():
+            stored[str(name)] = bool(value)
+        self.db.set_meta("harness_features", json_dumps(stored))
+        self.db.audit("HarnessFeaturesSet", "project", {"features": stored, "source": "host"})
+        return self.harness_report()
+
     def eval_intelligence(self) -> dict[str, Any]:
         """Mine local traces into bounded eval cases. Does not start providers or enable predictive routing."""
         self._ensure_ready()
-        return build_report(self.db, self.root)
+        if not self.harness_feature("eval_intelligence"):
+            cases = load_cases(self.root)
+            return {
+                "enabled": False,
+                "mining": False,
+                "propose": False,
+                "policy": "Eval intelligence is disabled. Historical cases remain readable.",
+                "predictive_routing": "shadow",
+                "live_provider_evals": False,
+                "auto_start_provider": False,
+                "cases": cases,
+                "open_cases": [case.get("case_id") for case in cases if case.get("status") == "open"],
+                "proposed_cases": [case.get("case_id") for case in cases if case.get("status") == "proposed"],
+                "regressed_cases": [case.get("case_id") for case in cases if case.get("status") == "regressed"],
+                "schema": "runtime-files",
+            }
+        report = build_report(self.db, self.root)
+        report["enabled"] = True
+        report["mining"] = True
+        report["propose"] = True
+        return report
 
     def propose_eval_improvement(self, case_id: str) -> dict[str, Any]:
         """Create inbox work for a mined eval case. Never auto-starts a provider session."""
+        if not self.harness_feature("eval_intelligence"):
+            raise FeatureDisabledError(
+                "eval_intelligence",
+                "Eval intelligence is disabled. Historical eval records remain readable.",
+            )
         self.eval_intelligence()
         case = case_by_id(self.root, case_id)
         if not case:

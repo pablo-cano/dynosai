@@ -11,7 +11,7 @@ const releases = [
   ["0.17", "Eval Intelligence", "Failure attribution, local-trace mining, inbox-only improvement tasks and offline regression evidence. Predictive routing stays in shadow mode. No live-provider leaderboard."],
   ["0.18", "Secure Autonomous Runtime", "Strict/Balanced/Autonomous host-owned profiles, runtime-only secret vault and policy evidence. Human gates stay required. Docker/VM and OS-level network interception are not shipped."],
   ["0.19", "Ecosystem", "Capability manifests for the existing Cursor ACP and Codex app-server transports. Additional clients and extension packs are refused, not silently certified."],
-  ["1.0", "Stable Agentic Development Control Plane", "Stable APIs, installers, compatibility contracts, certification matrix and upgrade guarantees."],
+  ["1.0 RC1", "Contract freeze", "MCP names, public CLI, schema v6 and Studio compatibility are documented and tested. Optional harness switches degrade safely. This is not production-ready 1.0: no installer, no live 1.0 matrix, no OS sandbox."],
 ];
 
 export default function RoadmapPage() {

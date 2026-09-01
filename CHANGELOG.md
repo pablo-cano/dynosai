@@ -2,6 +2,30 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 1.0.0-rc.1 - 2026-09-01
+
+### Added
+
+- Documented the 1.0 compatibility contract in `docs/COMPATIBILITY.md`: frozen MCP names, public CLI, schema v6, Studio ↔ App Server scope, human gates, and additive-field policy.
+- Exposed optional harness features as host-owned project settings: context handles, governed team scheduling, and eval intelligence. Precedence is environment override → project setting → default. Studio Overview and Project settings show EN/ES status chips.
+- Added `tests/test_210.py` to freeze the unique MCP tool-name set (31) and the optional-harness degraded paths.
+
+### Changed
+
+- Package version is `1.0.0rc1` (PEP 440). Display surfaces may show `1.0.0-rc.1`. Public status is **Public RC · Contract freeze**, not stable 1.0.
+- Release gate, CI and `scripts/build_release.py` now share one policy: `python -m pytest` is the stable suite. Historical aggregate tests remain in the repository and stay excluded unless `DYNOSAI_HISTORICAL_TESTS=1`.
+- `dynosai_stats` reports `mcp_surface_frozen` and `mcp_tool_count`. No MCP tool was added, removed or renamed.
+
+### Security
+
+- Human gates, capability certification, path security and execution-profile enforcement are not kill-switches. There is no `DYNOSAI_DISABLE_*` family. Schema remains v6. Agents cannot mutate harness settings through MCP.
+- Turning context-handle creation off keeps historical `dynosai_retrieve_handle` reads. Scheduler off uses serial fallback and a structured `feature_disabled` refusal. Eval intelligence off hides propose/mining while keeping historical cases readable.
+
+### Validation
+
+- `tests/conftest.py` labels and excludes the four historical aggregate suites from the default collection.
+- RC1 does not prove a 1.0 live provider matrix, installer, OS sandbox, additional certified clients, or autonomous predictive routing.
+
 ## 0.19.0 - 2026-08-31
 
 ### Added

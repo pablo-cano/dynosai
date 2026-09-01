@@ -32,6 +32,23 @@ HARNESS_COMPONENTS = (
     "replanning",
     "reviewer",
     "planner",
+    "team_scheduler",
+    "eval_intelligence",
+)
+
+# Product-switchable optimizations with a safe degraded path. Security and
+# human-gate authority is never listed here.
+OPTIONAL_HARNESS_FEATURES = (
+    "context_handles",
+    "team_scheduler",
+    "eval_intelligence",
+)
+
+AUTHORITY_NOT_SWITCHABLE = (
+    "execution_profiles",
+    "human_gates",
+    "capability_certification",
+    "path_security",
 )
 
 WORK_TERMINAL_STATES = frozenset({"done"})
@@ -103,19 +120,71 @@ class RecoveryState(TypedDict, total=False):
     retry_budget: int
 
 
-def harness_enabled(component: str, default: bool = True) -> bool:
-    """Return whether a removable harness component is enabled.
+class FeatureDisabledError(RuntimeError):
+    """Typed refusal when an optional harness optimization is switched off."""
 
-    Components are hypotheses: they must be independently switchable so evals
-    can compare WITH versus WITHOUT. Unknown names default to ``default``.
-    """
+    def __init__(self, feature: str, message: str):
+        super().__init__(message)
+        self.feature = str(feature)
+        self.code = "feature_disabled"
+
+    def payload(self) -> dict[str, Any]:
+        return {"error": self.code, "feature": self.feature, "message": str(self)}
+
+
+def env_harness_raw(component: str) -> str | None:
+    """Return the raw environment override for a harness component, if any."""
     key = f"DYNOSAI_HARNESS_{str(component or '').strip().upper()}"
     raw = os.environ.get(key)
     if raw is None and component == "context_handles":
         raw = os.environ.get("DYNOSAI_CONTEXT_HANDLES")
-    if raw is None:
-        return default
-    return raw.strip().lower() not in {"0", "false", "off", "no"}
+    return raw
+
+
+def harness_enabled(component: str, default: bool = True, *, project_enabled: bool | None = None) -> bool:
+    """Return whether a removable harness component is enabled.
+
+    Precedence is environment override, then host-owned project setting, then
+    ``default``. Components are hypotheses: they must be independently
+    switchable so evals can compare WITH versus WITHOUT. Unknown names default
+    to ``default``. Security authority is not a harness kill-switch.
+    """
+    raw = env_harness_raw(component)
+    if raw is not None:
+        return raw.strip().lower() not in {"0", "false", "off", "no"}
+    if project_enabled is not None:
+        return bool(project_enabled)
+    return default
+
+
+def harness_report_from_project(stored: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Build the host-visible optional-harness report from project meta and env."""
+    stored = stored if isinstance(stored, dict) else {}
+    features: list[dict[str, Any]] = []
+    for name in OPTIONAL_HARNESS_FEATURES:
+        raw = env_harness_raw(name)
+        project_raw = stored.get(name)
+        project_enabled = None if project_raw is None else bool(project_raw)
+        enabled = harness_enabled(name, True, project_enabled=project_enabled)
+        if raw is not None:
+            source = "environment"
+        elif project_enabled is not None:
+            source = "project"
+        else:
+            source = "default"
+        features.append({
+            "name": name,
+            "enabled": enabled,
+            "source": source,
+            "env_locked": raw is not None,
+            "optional": True,
+        })
+    return {
+        "features": features,
+        "by_name": {item["name"]: item for item in features},
+        "authority_not_switchable": list(AUTHORITY_NOT_SWITCHABLE),
+        "precedence": ["environment", "project", "default"],
+    }
 
 
 def classify_execution_state(

@@ -49,6 +49,6 @@ The predictive router stores historical provider/activity/tier outcomes and can 
 
 The final 0.13.0 offline evidence includes 31 observations, 29 eligible samples, two providers, two scenarios, and six model-failure observations. Quantitative authority gates are satisfied, but the replay still contains six missed escalation signals.
 
-For that reason the **beta runtime baseline keeps predictive routing in shadow mode**. The evidence is useful for research and future releases, and 0.19.0 still does not delegate autonomous model spending to it.
+For that reason the **RC1 runtime keeps predictive routing in shadow mode**. The evidence is useful for research and future releases, and `1.0.0-rc.1` still does not delegate autonomous model spending to it.
 
 Machine-readable evidence: [`validation/predictive-router-0.13.0.json`](validation/predictive-router-0.13.0.json).

@@ -57,11 +57,13 @@ dynosai studio --port 9876 --no-browser
 dynosai app-server --port 9876
 ```
 
-Studio 0.17 keeps the 0.14.1 guided product, the 0.15 harness reviews and 0.16 team slots. Start on **Home** and follow the primary action shown there. The normal Studio path is:
+Studio keeps the 0.14.1 guided product, the 0.15 harness reviews, 0.16 team slots, 0.17 eval cases, 0.18 execution profiles and 0.19 certified-provider inventory. Start on **Home** and follow the primary action shown there. The normal Studio path is:
 
 ```text
-Projects -> Home -> New change -> Work -> Approvals
+Home -> choose a project -> Overview -> New change -> Work / Approvals
 ```
+
+Project settings also expose optional harness features (context optimization, governed team scheduling, eval intelligence). Execution profiles, human gates and path security are not optional kill-switches.
 
 Studio detects the repository stack and validation candidates before initialization. Discovered validation commands are only proposals until you explicitly approve them. If an uninitialized Git repository is dirty, Studio explains that the changes must be committed or stashed before adoption; it never discards user work automatically.
 

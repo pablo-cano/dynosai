@@ -40,6 +40,9 @@ Coding Agent / CLI / Local Studio
  SQLite knowledge.db     Git repository
 ```
 
+Public 1.0 compatibility (MCP names, public CLI, schema v6, Git vs knowledge.db) is documented in `docs/COMPATIBILITY.md`. The loopback App Server is Studio transport, not a general third-party API.
+```
+
 ## Authority boundaries
 
 ### SQLite
