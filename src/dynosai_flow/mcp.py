@@ -493,7 +493,13 @@ class MCPServer:
                 result=self.call_tool(name,args)
                 if name in {"dynosai_git_diff","dynosai_ask","dynosai_run_validation"}:
                     try:
-                        result=self.handles.wrap_tool_result(name,result,work_id=self._session_work_id(),session_id=(self.session or {}).get("id"))
+                        enabled=True
+                        try:
+                            enabled=bool(self.engine.harness_feature("context_handles"))
+                        except Exception:
+                            from .harness_contracts import harness_enabled
+                            enabled=harness_enabled("context_handles", True)
+                        result=self.handles.wrap_tool_result(name,result,work_id=self._session_work_id(),session_id=(self.session or {}).get("id"),enabled=enabled)
                     except Exception:
                         pass
                 result=self._compact_managed_result(name,result)
@@ -792,7 +798,17 @@ class MCPServer:
             work=e.get_work(); actual=e.git.diff_files(self._session_root(),(e.db.one("SELECT base_commit FROM runs WHERE id=?",(self._run_id(),)) or {}).get("base_commit")); return e.indexer.refresh_overlay(self._run_id(),self._session_root(),actual)
         if name=="dynosai_analyze_impact":return e.retrieval.impact(args["query"],int(args.get("limit",12)))
         if name=="dynosai_schedule":
-            wid=self._scoped_work(args); plan=e.schedule(wid); plan["fan_in"]=e.fan_in_report(wid); return plan
+            wid=self._scoped_work(args)
+            if not e.harness_feature("team_scheduler"):
+                return {
+                    "error":"feature_disabled",
+                    "feature":"team_scheduler",
+                    "message":"Governed team scheduling is disabled. Continue with ordinary single-session serial work.",
+                    "serial_fallback":True,
+                    "claimed_leases_remain_finishable":True,
+                    "work_id":wid,
+                }
+            plan=e.schedule(wid); plan["fan_in"]=e.fan_in_report(wid); return plan
         if name=="dynosai_semantic_status":return e.model_status(bool(args.get("probe",False)))
         if name=="dynosai_sync":return e.sync()
         if name=="dynosai_stats":return e.stats()

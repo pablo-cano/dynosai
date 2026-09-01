@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import tempfile
 import threading
@@ -53,7 +54,9 @@ class DynosAI140Tests(unittest.TestCase):
         self.addCleanup(lambda: shutil.rmtree(self.tmp, ignore_errors=True))
 
     def test_version_is_at_least_0140(self):
-        self.assertGreaterEqual(tuple(int(part) for part in __version__.split(".")), (0, 14, 0))
+        match = re.search(r"(\d+)\.(\d+)\.(\d+)", __version__)
+        self.assertIsNotNone(match)
+        self.assertGreaterEqual(tuple(int(part) for part in match.groups()), (0, 14, 0))
 
     def test_project_detector_identifies_typescript_and_suggests_npm_test(self):
         (self.tmp / "package.json").write_text(json.dumps({"scripts": {"test": "vitest run", "build": "next build"}}), encoding="utf-8")

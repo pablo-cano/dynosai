@@ -22,6 +22,7 @@ REQUIRED = [
     "SECURITY.md",
     "pyproject.toml",
     "docs/ARCHITECTURE.md",
+    "docs/COMPATIBILITY.md",
     "docs/QUALITY_AND_VALIDATION.md",
     "docs/STUDIO.md",
     "apps/studio/index.html",

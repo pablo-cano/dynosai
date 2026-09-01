@@ -23,7 +23,7 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `execution_profiles.py` | Strict/Balanced/Autonomous host policy, local runtime bind and unsupported-runtime refusal |
 | `capability_manifests.py` | Cursor ACP / Codex app-server contracts and refusal of uncertified clients/packs |
 | `execution_runtime.py` | Provider-neutral ExecutionRuntime and local hands implementation |
-| `harness_contracts.py` | Typed execution/recovery/handle contracts and component flags |
+| `harness_contracts.py` | Typed execution/recovery/handle contracts and optional harness feature flags |
 | `secrets.py` | Credential redaction and secret broker (model refuse-closed; optional local runtime vault) |
 | `validation_integrity.py` | Requirement → evidence → validation integrity reports |
 | `db.py` | SQLite schema, migrations, persistence and audit storage |

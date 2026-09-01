@@ -1,6 +1,6 @@
 # DynosAI Local Studio
 
-DynosAI Studio is the local graphical interface for the governed DynosAI workflow. The 0.19 line keeps the 0.14.1 guided product, 0.15 reviews, 0.16 team slots, 0.17 eval cases and 0.18 execution profiles, and shows certified Cursor ACP / Codex app-server manifests on Overview.
+DynosAI Studio is the local graphical interface for the governed DynosAI workflow. It keeps the 0.14.1 guided product, 0.15 reviews, 0.16 team slots, 0.17 eval cases, 0.18 execution profiles and 0.19 certified-provider inventory. Overview also shows optional harness features. Navigation after a project is selected is Overview, New change, Work, Approvals, Project checks and Project settings.
 
 ## What Studio is for
 

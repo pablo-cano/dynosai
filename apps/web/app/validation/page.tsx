@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Validation",
-  description: "How the DynosAI 0.19.0 capability-manifest layer preserves the 0.13.0 certified governed core, Studio, harness, team scheduling, eval intelligence and execution profiles while refusing uncertified clients.",
+  description: "How DynosAI 1.0.0-rc.1 freezes contracts on the 0.13.0 certified governed core, Studio, harness, team scheduling, eval intelligence and execution profiles. The historical Green/Brown matrix remains historical; it is not a 1.0 live certification.",
 };
 
 const matrix = [
@@ -23,9 +23,9 @@ export default function ValidationPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8">
       <div className="max-w-3xl">
-        <Badge>β Public beta · 0.19.0</Badge>
-        <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">The beta baseline is backed by evidence, not by a version number.</h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI 0.19.0 preserves the accepted 0.13.0 governed-core behavior, Studio, harness, team scheduling, eval intelligence and execution profiles while publishing capability manifests for Cursor ACP and Codex app-server. The real-provider Green/Brown matrix shown below remains the core provider baseline; additional clients and extension packs are not certified.</p>
+        <Badge>Public RC · Contract freeze</Badge>
+        <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">The 0.13 core matrix is historical evidence, not a 1.0 certification.</h1>
+        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI 1.0.0-rc.1 freezes MCP, CLI and schema v6 contracts on the accepted 0.13.0 governed-core behavior plus Studio, harness, team scheduling, eval intelligence, execution profiles and certified Cursor ACP / Codex app-server transports. The Green/Brown table below is the historical 0.13.0 provider baseline. RC1 does not copy it forward as 1.0 live proof; those four cells stay unproven for 1.0 until real provider runs exist.</p>
       </div>
 
       <div className="mt-12 overflow-x-auto rounded-2xl border border-border">
@@ -54,7 +54,7 @@ export default function ValidationPage() {
           <CardHeader><CardTitle>What it does not prove</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
             <p>It is not a universal guarantee across every language, repository size, CI system, security policy, or provider version.</p>
-            <p>DynosAI remains pre-1.0 and benefits from real-world feedback on larger repositories and broader stacks.</p>
+            <p>DynosAI 1.0.0-rc.1 freezes contracts and still benefits from real-world feedback. It is not a production-ready 1.0 claim.</p>
             <p>The Predictive Router remains in shadow mode even though the historical sample size now crosses its quantitative authority gates.</p>
           </CardContent>
         </Card>

@@ -133,12 +133,23 @@ Still incomplete inside 0.19 (do not advertise as done):
 
 **Goal:** publish stable contracts suitable for broader production adoption.
 
-Exit criteria include:
+### RC1 — Contract freeze (this release)
 
-- stable application/CLI/MCP contracts and documented compatibility guarantees;
+Delivered in `1.0.0-rc.1`:
+
+- `docs/COMPATIBILITY.md` and a frozen unique MCP name set (31), regression-tested;
+- optional harness switches reuse `DYNOSAI_HARNESS_*` (context handles, team scheduling, eval intelligence) with a safe degraded path;
+- host-owned project settings for those switches; MCP agents cannot mutate them;
+- one explicit release-gate policy shared by CI, `scripts/build_release.py` and local `pytest`;
+- public status **Public RC · Contract freeze**. Schema remains v6.
+
+This RC does **not** ship a production-ready 1.0, installer, live 1.0 certification matrix, OS-level sandbox, additional certified clients, or autonomous predictive routing.
+
+### Remaining 1.0 exit criteria
+
 - desktop/local installer path with upgrade policy;
-- multi-platform CI and installed-package validation;
-- published provider/capability certification matrix;
+- multi-platform installed-package validation;
+- published provider/capability certification matrix from real Codex/Cursor greenfield and brownfield runs;
 - mature Eval Registry and release-quality evidence;
 - security/runtime policy model documented and regression-tested;
 - contribution and extension model ready for external ecosystem growth.

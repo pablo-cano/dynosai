@@ -174,13 +174,20 @@ class ContextHandleStore:
         enabled: bool | None = None,
         inline_limit: int = INLINE_LIMIT,
     ) -> Any:
-        """Persist a handle and, when enabled, replace large bodies with a preview."""
+        """Persist a handle and, when enabled, replace large bodies with a preview.
+
+        Turning handle creation off leaves the inline body intact and does not
+        write a new handle. Existing handles remain readable.
+        """
         if not isinstance(result, dict):
             return result
         if enabled is None:
             enabled = harness_enabled("context_handles", True)
         out = dict(result)
         metrics = {"mode": "inline", "bytes_omitted": 0, "handle_id": None, "enabled": enabled}
+        if not enabled:
+            out["context_handle_metrics"] = metrics
+            return out
 
         def attach(artifact_type: str, body: Any, replace_key: str | None = None) -> None:
             nonlocal metrics

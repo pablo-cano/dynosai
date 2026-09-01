@@ -17,12 +17,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / "dist"
 EXCLUDED_DIRS = {".git", ".pytest_cache", "__pycache__", ".venv", "venv", "node_modules", ".next", "out", "dist", "build", "dynosai_flow.egg-info"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".tsbuildinfo"}
-HISTORICAL_TESTS = (
-    "tests/test_07.py",
-    "tests/test_brownfield06.py",
-    "tests/test_hardening.py",
-    "tests/test_runtime05.py",
-)
 
 
 def run(*args: str, cwd: Path = ROOT) -> None:
@@ -65,10 +59,7 @@ def main() -> int:
     run(sys.executable, "scripts/check_studio_sync.py")
 
     if not args.skip_tests:
-        command = [sys.executable, "-m", "pytest"]
-        for test in HISTORICAL_TESTS:
-            command.append(f"--ignore={test}")
-        run(*command)
+        run(sys.executable, "-m", "pytest")
 
     if not args.skip_web:
         for command in (("npm", "run", "check"), ("npm", "run", "typecheck"), ("npm", "run", "lint"), ("npm", "run", "build")):
@@ -88,7 +79,16 @@ def main() -> int:
     manifest = {
         "version": version(),
         "built_at": datetime.now(timezone.utc).isoformat(),
-        "stable_test_policy": {"excluded_historical_suites": list(HISTORICAL_TESTS)},
+        "stable_test_policy": {
+            "command": "python -m pytest",
+            "excluded_historical_suites": [
+                "tests/test_07.py",
+                "tests/test_brownfield06.py",
+                "tests/test_hardening.py",
+                "tests/test_runtime05.py",
+            ],
+            "historical_override": "DYNOSAI_HISTORICAL_TESTS=1",
+        },
         "artifacts": [{"name": p.name, "size": p.stat().st_size, "sha256": sha256(p)} for p in artifacts],
     }
     manifest_path = DIST / f"dynosai-{version()}-manifest.json"

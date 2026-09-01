@@ -34,14 +34,10 @@ jobs:
 
       - name: Stable regression tests
         run: |
-          # These four aggregate suites exercise historical pre-stable contracts
-          # that were superseded by the versioned compatibility/regression suites.
-          # They remain in the repository for historical/manual diagnostics.
-          python -m pytest \
-            --ignore=tests/test_07.py \
-            --ignore=tests/test_brownfield06.py \
-            --ignore=tests/test_hardening.py \
-            --ignore=tests/test_runtime05.py
+          # Stable regression tests. Historical aggregate suites stay in the
+          # repository and are excluded by tests/conftest.py unless
+          # DYNOSAI_HISTORICAL_TESTS=1.
+          python -m pytest
 
   web:
     name: Website

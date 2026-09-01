@@ -12,19 +12,23 @@ python scripts/check_studio_sync.py
 
 before release packaging.
 
-## 0.14.1 UX model
+## Current UX model
 
-Primary navigation is intentionally non-technical:
+Primary navigation is project-scoped after a repository is selected:
 
-- Home
-- New task
-- In progress
-- Reviews
+- Home (project hub when no project is selected)
+- Overview
+- New change
+- Work
+- Approvals
 - Project checks
+- Project settings
 - Settings
 - Help
 
 Risk internals, diagnostics and the provider-neutral event stream are hidden until the user enables **Show technical details** in Settings.
+
+Project settings include coding-agent/workspace defaults, execution profile, auto-approve (off by default), optional harness features and model routing. Optional harness features are optimizations, not security authority.
 
 The public website and Studio share the same DynosAI brand SVG. Theme preference supports System, Light and Dark and is stored only in browser local storage.
 
@@ -47,3 +51,7 @@ Project settings choose Strict, Balanced or Autonomous. Code/merge reviews show 
 ## 0.19.0 certified providers
 
 Overview lists Cursor ACP and Codex app-server. Additional clients are not shipped.
+
+## 1.0.0-rc.1 optional harness
+
+Overview shows compact On/Off chips for context optimization, governed team scheduling and eval intelligence. Project settings can change those host-owned switches. Execution profiles, human gates and certified-provider refusal stay required and are not presented as optional optimizations.

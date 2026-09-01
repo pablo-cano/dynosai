@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+# Historical diagnostic suite. Excluded from the stable release gate
+# (`python -m pytest`) unless DYNOSAI_HISTORICAL_TESTS=1.
+
 import json
 import os
 import shutil

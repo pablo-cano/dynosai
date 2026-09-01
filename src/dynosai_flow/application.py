@@ -26,6 +26,7 @@ from .validation_integrity import evaluate_integrity
 from .cost_telemetry import governed_change_cost
 from .secrets import redact_text
 from .capability_manifests import capability_report, provider_manifest
+from .harness_contracts import harness_report_from_project
 
 
 class ProjectDetector:
@@ -587,6 +588,23 @@ class DynosAIApplication:
         self.events.emit("ExecutionProfileSet", payload={"profile": evidence.get("profile"), "os_network_enforcement": False})
         return evidence
 
+    def harness_report(self) -> dict[str, Any]:
+        """Host-visible optional harness settings. Agents cannot change these through MCP."""
+        info = self.detector.detect(self.root)
+        if not info.get("has_dynosai"):
+            return harness_report_from_project()
+        try:
+            return self.engine.harness_report()
+        except Exception:
+            return harness_report_from_project()
+
+    def set_harness_features(self, updates: dict[str, Any]) -> dict[str, Any]:
+        """Persist optional harness settings. This is a host/Studio action, not an MCP tool."""
+        self.engine._ensure_ready()
+        report = self.engine.set_harness_features(updates)
+        self.events.emit("HarnessFeaturesSet", payload={"features": {item["name"]: item["enabled"] for item in report.get("features") or []}})
+        return report
+
     def provider_capabilities(self, name: str | None = None) -> dict[str, Any]:
         """Host-owned adapter inventory. Additional clients are not assumed certified."""
         if name:
@@ -658,6 +676,7 @@ class DynosAIApplication:
             overview["auto_approve"] = False
             overview["execution_policy"] = {"profile": "balanced", "os_network_enforcement": False, "human_gates": "required", "enforcement": "decision_only"}
             overview["provider_capabilities"] = capability_report()
+            overview["harness"] = harness_report_from_project()
             return overview
         self.engine.db.initialize()
         overview["project"] = self.engine.db.get_meta("project_name", self.root.name)
@@ -675,6 +694,7 @@ class DynosAIApplication:
         except Exception:
             overview["eval_intelligence"] = {"cases": [], "predictive_routing": "shadow", "live_provider_evals": False}
         overview["provider_capabilities"] = capability_report()
+        overview["harness"] = self.harness_report()
         return overview
 
     def resume(self, provider: str, work_id: str | None = None, *, at_provider_boundary: bool = True) -> dict[str, Any]:

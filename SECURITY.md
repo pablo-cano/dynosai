@@ -2,7 +2,7 @@
 
 ## Supported version
 
-The latest `0.19.x` release is the supported public beta baseline while the project remains pre-1.0.
+The latest public line is `1.0.0-rc.1` (`1.0.0rc1`). It remains a beta-classified release candidate. Schema authority is v6. Production `1.0.0` is not claimed.
 
 ## Reporting a vulnerability
 

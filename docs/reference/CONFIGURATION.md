@@ -1,8 +1,10 @@
 # Configuration Reference
 
-DynosAI prefers explicit CLI/project configuration. Environment variables are primarily runtime, provider, diagnostic, or advanced controls.
+DynosAI prefers explicit CLI/project configuration. Environment variables are primarily runtime, provider, diagnostic, or advanced controls. Optional harness features are normally toggled in Studio Project settings. Environment overrides are for CI, evals and diagnostics.
 
-Common variables present in the 0.19.0 codebase include:
+Precedence for optional harness features: environment → project setting → default. See `docs/COMPATIBILITY.md`.
+
+Common variables present in the 1.0 codebase include:
 
 ```text
 DYNOSAI_PROJECT
@@ -28,7 +30,15 @@ DYNOSAI_DEPENDENCY_PROFILE
 DYNOSAI_TOKEN_TELEMETRY
 DYNOSAI_TOKEN_USAGE_FILE
 DYNOSAI_TOKEN_CALIBRATION_PATH
+DYNOSAI_HARNESS_CONTEXT_HANDLES
+DYNOSAI_CONTEXT_HANDLES
+DYNOSAI_HARNESS_TEAM_SCHEDULER
+DYNOSAI_HARNESS_EVAL_INTELLIGENCE
+DYNOSAI_HARNESS_SKILLS
+DYNOSAI_HISTORICAL_TESTS
 ```
+
+There is no `DYNOSAI_DISABLE_*` family. Use positive `DYNOSAI_HARNESS_<FEATURE>=true|false` overrides. Do not use harness variables to disable human gates, execution profiles, capability certification or path security.
 
 Acceptance/debug-specific variables also exist and should not normally be used to change production behavior:
 

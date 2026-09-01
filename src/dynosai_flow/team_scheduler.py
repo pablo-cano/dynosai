@@ -125,8 +125,13 @@ def build_team_plan(
     risk_level: str = "",
     token_budget: int = DEFAULT_TOKEN_BUDGET,
     time_budget_seconds: int = DEFAULT_TIME_BUDGET_SECONDS,
+    parallel: bool = True,
 ) -> dict[str, Any]:
-    """Turn an approved task DAG into serial/parallel waves with file-disjoint leases."""
+    """Turn an approved task DAG into serial/parallel waves with file-disjoint leases.
+
+    When ``parallel`` is false, each wave contains a single lease so ordinary
+    single-session work remains functional. Already-claimed leases still appear.
+    """
     pending = {str(task["id"]): task for task in tasks if str(task.get("state") or "") != "completed"}
     completed = {str(task["id"]) for task in tasks if str(task.get("state") or "") == "completed"}
     waves: list[dict[str, Any]] = []
@@ -138,17 +143,22 @@ def build_team_plan(
             break
         batch: list[dict[str, Any]] = []
         owned: set[str] = set()
-        for task in ready:
-            files = set(_task_files(task))
-            if files & owned:
-                continue
-            batch.append(task)
-            owned |= files
-        if not batch:
+        if not parallel:
             batch = [ready[0]]
+            owned = set(_task_files(ready[0]))
+        else:
+            for task in ready:
+                files = set(_task_files(task))
+                if files & owned:
+                    continue
+                batch.append(task)
+                owned |= files
+            if not batch:
+                batch = [ready[0]]
+                owned = set(_task_files(ready[0]))
         wave_index += 1
         wave_id = f"TEAM-WAVE-{wave_index}"
-        kind = "parallel" if len(batch) > 1 else "serial"
+        kind = "parallel" if parallel and len(batch) > 1 else "serial"
         per_lease = max(8_000, int(token_budget / max(1, len(batch))))
         leases = [
             _lease_for(
@@ -176,7 +186,7 @@ def build_team_plan(
     return {
         "policy": TEAM_POLICY,
         "spawn_providers": False,
-        "parallelism": "lease",
+        "parallelism": "lease" if parallel else "serial_fallback",
         "waves": waves,
         "parallel_batches": parallel_batches,
         "blocked": list(pending),
