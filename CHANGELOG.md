@@ -20,6 +20,7 @@ All notable public changes to DynosAI are documented here. The project uses sema
 
 - Human gates, capability certification, path security and execution-profile enforcement are not kill-switches. There is no `DYNOSAI_DISABLE_*` family. Schema remains v6. Agents cannot mutate harness settings through MCP.
 - Turning context-handle creation off keeps historical `dynosai_retrieve_handle` reads. Scheduler off uses serial fallback and a structured `feature_disabled` refusal. Eval intelligence off hides propose/mining while keeping historical cases readable.
+- Website Next.js and `eslint-config-next` are 16.3.3 (Dependabot #14/#15).
 
 ### Validation
 
