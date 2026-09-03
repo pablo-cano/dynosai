@@ -145,7 +145,7 @@ Delivered in `1.0.0-rc.1`:
 
 This RC does **not** ship a production-ready 1.0, installer, live 1.0 certification matrix, OS-level sandbox, additional certified clients, or autonomous predictive routing.
 
-### RC2 — Certification evidence (this release)
+### RC2 — Certification evidence
 
 Delivered in `1.0.0-rc.2`:
 
@@ -153,6 +153,16 @@ Delivered in `1.0.0-rc.2`:
 - historical 0.13 evidence preserved and not copied into 1.0 live cells;
 - two host-opened governed session identities claiming file-disjoint leases without provider spawn;
 - overlap serialization, fan-in conflict blocking, and scheduler-off serial fallback.
+
+This RC still does **not** contain a real 1.0 live provider matrix, installer, OS sandbox, extra certified clients, or autonomous predictive routing.
+
+### RC3 — Eval maturity (this release)
+
+Delivered in `1.0.0-rc.3`:
+
+- acceptance ZIP importer into bounded Eval Registry cases; inbox-only improvement; no provider spawn;
+- promoted `governed_change_cost()` with completed-work aggregates on stats, scorecard, overview and Studio;
+- stable authority prefix hash without dumping the MCP tool list or claiming a cache hit.
 
 This RC still does **not** contain a real 1.0 live provider matrix, installer, OS sandbox, extra certified clients, or autonomous predictive routing.
 

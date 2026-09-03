@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import zipfile
 from pathlib import Path
 from typing import Any
 
+from .eval_registry import EvalRegistry
 from .model_control import NON_MODEL_FAILURES, PREDICTIVE_LEARNING_EXCLUDED_FAILURES
 from .util import json_loads, utc_now
 
@@ -145,7 +147,9 @@ def _merge_cases(existing: list[dict[str, Any]], mined: list[dict[str, Any]]) ->
         fingerprint = str(prev.get("fingerprint") or "")
         if fingerprint in seen:
             continue
-        if str(prev.get("status") or "") in {"proposed", "regressed"}:
+        status = str(prev.get("status") or "")
+        source = str((prev.get("detail") or {}).get("source") or prev.get("source") or "")
+        if status in {"proposed", "regressed"} or source == "acceptance_zip":
             merged.append(prev)
     return merged[:MAX_CASES]
 
@@ -290,3 +294,74 @@ def improvement_description(case: dict[str, Any]) -> str:
         f"Layer={attribution.get('layer')} kind={attribution.get('kind')}. "
         "Keep the existing governed workflow. Do not expand scope beyond this regression."
     )
+
+
+ACCEPTANCE_SCENARIO_MAP = {
+    "fibonacci": "greenfield_implementation",
+    "orderflow-contract-discounts": "brownfield_feature",
+}
+
+
+def _acceptance_summary(zip_path: Path) -> dict[str, Any]:
+    with zipfile.ZipFile(zip_path) as archive:
+        names = archive.namelist()
+        candidate = next((name for name in names if name.endswith("suite/summary-final.json")), None)
+        if candidate is None:
+            candidate = next((name for name in names if name.endswith("summary-final.json")), None)
+        if candidate is None:
+            raise ValueError("acceptance zip missing summary-final.json")
+        payload = json.loads(archive.read(candidate).decode("utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("acceptance summary is not an object")
+    return payload
+
+
+def import_acceptance_bundle(root: str | Path, zip_path: str | Path, db: Any | None = None) -> dict[str, Any]:
+    """Import failed acceptance-ZIP children into bounded eval cases. Never starts a provider."""
+    del db
+    archive = Path(zip_path).expanduser().resolve()
+    summary = _acceptance_summary(archive)
+    children = [item for item in (summary.get("children") or []) if isinstance(item, dict)]
+    failed = [item for item in children if str(item.get("status") or "").lower() not in {"passed", "pass", "ok"}]
+    existing = load_cases(root)
+    mined: list[dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
+    registry = EvalRegistry(root)
+    for child in failed[:MAX_CASES]:
+        scenario_id = ACCEPTANCE_SCENARIO_MAP.get(str(child.get("scenario") or ""), "mined_regression")
+        case = _make_case(
+            kind=str(child.get("failure_kind") or "validation"),
+            source="acceptance_zip",
+            summary=f"Acceptance {child.get('provider') or 'unknown'} {child.get('scenario') or 'case'} failed",
+            scenario=scenario_id,
+            work_id=child.get("work_id"),
+            detail={
+                "source": "acceptance_zip",
+                "provider": child.get("provider"),
+                "scenario": child.get("scenario"),
+                "bundle": str(archive),
+            },
+        )
+        mined.append(case)
+        records.append(registry.record({
+            "scenario": scenario_id,
+            "scenario_version": "1",
+            "harness": {"source": "acceptance_zip", "provider": child.get("provider")},
+            "success": False,
+            "failure_category": child.get("failure_kind") or "validation",
+            "provider": child.get("provider") or "offline",
+            "note": "imported acceptance zip; no live provider spawn",
+        }))
+    saved = save_cases(root, _merge_cases(existing, mined))
+    fingerprints = {str(case.get("fingerprint")) for case in mined}
+    imported_cases = [case for case in saved if str(case.get("fingerprint")) in fingerprints]
+    return {
+        "imported": len(imported_cases),
+        "cases": imported_cases,
+        "eval_records": records[: len(imported_cases)],
+        "spawn_provider": False,
+        "auto_start": False,
+        "auto_start_provider": False,
+        "bounded": True,
+        "predictive_routing": "shadow",
+    }

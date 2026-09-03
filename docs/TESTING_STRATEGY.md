@@ -34,6 +34,10 @@ When website files change, also run `npm run check`, `npm run typecheck`, `npm r
 
 `tests/test_220.py` freezes `MATRIX_1.0`: four provider-aware cells stay `not_run`, historical 0.13 evidence remains separate, and two governed session identities can claim file-disjoint leases without spawning providers. Overlap serializes; scheduler-off stays serial. This is not a live-provider 1.0 certification.
 
+## 1.0 RC3 eval maturity and measurable efficiency
+
+`tests/test_230.py` covers acceptance ZIP import into bounded Eval Registry cases, inbox-only improvement, `governed_change_cost()` aggregates, the rule that unused advertised MCP tools are not waste, and a stable authority prefix that does not dump the 31-tool list or claim a cache hit.
+
 ## 2. Migration and recovery tests
 
 Release-candidate hardening covers database migration, duplicate/pending gates, restart/resume, missing or corrupted checkpoints, corrupted telemetry/model-control state, portable snapshot integrity, and atomic restore behavior.

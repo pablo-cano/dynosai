@@ -39,7 +39,7 @@ export default function HomePage() {
           <div className="max-w-4xl">
             <div className="mb-6 flex flex-wrap items-center gap-2">
               <Badge>Open source · MIT</Badge>
-              <Badge>Public RC · Certification evidence</Badge>
+              <Badge>Public RC · Eval maturity</Badge>
               <Badge>Runs locally</Badge>
             </div>
             <h1 className="max-w-5xl text-5xl font-bold tracking-[-0.055em] sm:text-6xl lg:text-7xl">
@@ -119,9 +119,9 @@ export default function HomePage() {
       <section className="border-y border-border bg-muted/45">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <div>
-            <Badge>New in 1.0.0-rc.2</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Honest 1.0 cells. No copied Quality 100.</h2>
-            <p className="mt-5 leading-7 text-muted-foreground">RC2 publishes MATRIX_1.0 with Codex and Cursor greenfield and brownfield cells still marked not_run. Two host-opened governed sessions can claim file-disjoint leases. Historical 0.13 evidence stays historical.</p>
+            <Badge>New in 1.0.0-rc.3</Badge>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Measurable evals. No invented waste.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">RC3 imports failed acceptance ZIPs into bounded eval cases, publishes governed-change cost aggregates, and hashes a stable authority prefix. Unused advertised MCP tools are not scored as waste. This is not production-ready 1.0.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
@@ -191,9 +191,9 @@ export default function HomePage() {
         <div className="rounded-3xl border border-border bg-foreground px-6 py-12 text-background sm:px-10 lg:px-14">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <div className="mb-4 inline-flex rounded-full border border-background/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">Public RC · Certification evidence</div>
+              <div className="mb-4 inline-flex rounded-full border border-background/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">Public RC · Eval maturity</div>
               <h2 className="text-3xl font-bold tracking-tight">Try it on one real feature.</h2>
-              <p className="mt-4 max-w-2xl leading-7 opacity-75">DynosAI is open source under MIT. 1.0.0-rc.2 publishes certification placeholders; it is not production-ready 1.0. Use normal engineering review and project-specific validation.</p>
+              <p className="mt-4 max-w-2xl leading-7 opacity-75">DynosAI is open source under MIT. 1.0.0-rc.3 publishes eval-maturity evidence; it is not production-ready 1.0. Use normal engineering review and project-specific validation.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button size="lg" variant="outline" className="border-background/25 bg-background text-foreground hover:bg-background/90" asChild>

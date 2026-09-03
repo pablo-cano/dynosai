@@ -501,6 +501,25 @@ function evalCasesHtml(data) {
   }).join("");
   return `<div class="eval-cases"><div class="eval-cases-head"><strong>${esc(t("eval.title"))}</strong><small>${esc(String(cases.length))}</small></div>${rows}<p class="eval-cases-note">${esc(t("eval.shadow"))}</p></div>`;
 }
+function evalImportHtml() {
+  return `<div class="eval-import"><div class="eval-cases-head"><strong>${esc(t("eval.import"))}</strong></div><div class="eval-import-row"><input id="eval-import-path" type="text" data-i18n-placeholder="eval.importPlaceholder" placeholder="${esc(t("eval.importPlaceholder"))}" /><button class="compact" type="button" data-eval-import="1">${esc(t("eval.importAction"))}</button></div><p class="eval-cases-note">${esc(t("eval.importNote"))}</p></div>`;
+}
+async function importAcceptanceBundle() {
+  const input = $("eval-import-path");
+  const path = String(input && input.value || "").trim();
+  if (!path) { showAlert(t("eval.importPlaceholder")); return; }
+  try {
+    await withOperation("operation.saveSettings", async () => {
+      await api("/api/eval/import", {method:"POST", body:JSON.stringify({path})});
+      await refresh({preserveView:true});
+    });
+  } catch (error) { showAlert(error.message); }
+}
+function governedChangeHtml(data) {
+  const cost = data.governed_change || {};
+  if (cost.completed_work == null && cost.successful == null) return "";
+  return `<div class="harness-status" id="governed-change-card"><div class="harness-status-head"><strong>${esc(t("cost.title"))}</strong></div><div class="harness-chip-row"><div class="harness-chip"><span>${esc(t("cost.completed"))}</span><strong>${esc(String(cost.completed_work ?? 0))}</strong></div><div class="harness-chip"><span>${esc(t("cost.successful"))}</span><strong>${esc(String(cost.successful ?? 0))}</strong></div></div><p class="provider-caps-note">${esc(t("cost.note"))}</p></div>`;
+}
 function harnessStatusHtml(data) {
   const features = (data.harness && data.harness.features) || [];
   if (!features.length) return "";
@@ -806,6 +825,10 @@ function renderProject(data) {
   $("home-reviews").textContent = String(reviews.length);
   const evalRoot = $("eval-intelligence");
   if (evalRoot) evalRoot.innerHTML = evalCasesHtml(data);
+  const importRoot = $("eval-import");
+  if (importRoot) importRoot.innerHTML = evalImportHtml();
+  const costRoot = $("governed-change");
+  if (costRoot) costRoot.innerHTML = governedChangeHtml(data);
   const harnessRoot = $("harness-features");
   if (harnessRoot) harnessRoot.innerHTML = harnessStatusHtml(data);
   const capsRoot = $("provider-capabilities");
@@ -1208,6 +1231,7 @@ function wireEvents() {
     if (target.dataset.routeModel && routeDialogState) { $("route-model-input").value = target.dataset.routeModel; routeDialogState.model = target.dataset.routeModel; document.querySelectorAll("[data-route-model]").forEach((node) => node.classList.toggle("active", node === target)); renderRouteEfforts(target.dataset.routeModel, recommendedModel(routingProvider, target.dataset.routeModel)?.recommended_effort); }
     if (target.hasAttribute("data-route-effort") && routeDialogState) { routeDialogState.effort = target.dataset.routeEffort || null; document.querySelectorAll("[data-route-effort]").forEach((node) => node.classList.toggle("active", node === target)); }
     if (target.dataset.evalPropose) { proposeEvalImprovement(target.dataset.evalPropose); return; }
+    if (target.dataset.evalImport) { importAcceptanceBundle(); return; }
     if (target.dataset.reviewAction) {
       const card = target.closest("[data-review-id]");
       if (!card) return;

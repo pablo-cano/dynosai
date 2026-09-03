@@ -644,6 +644,16 @@ class StudioAPI:
                     return 409, exc.payload()
                 except ValueError as exc:
                     return 400, {"error": "validation", "message": str(exc)}
+            if path == "/api/eval/import":
+                zip_path = str(payload.get("path") or "").strip()
+                if not zip_path:
+                    return 400, {"error": "validation", "message": "path is required"}
+                try:
+                    return 200, app.import_acceptance_bundle(zip_path)
+                except FeatureDisabledError as exc:
+                    return 409, exc.payload()
+                except ValueError as exc:
+                    return 400, {"error": "validation", "message": str(exc)}
             if path == "/api/execution-profile":
                 profile = str(payload.get("profile") or "").strip()
                 if not profile:

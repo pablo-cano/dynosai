@@ -10,6 +10,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 import traceback
 from pathlib import Path
 from typing import Any
@@ -467,7 +468,20 @@ class MCPServer:
             transport_instruction=("For managed Codex tool results, structuredContent is authoritative and content.text may be only a compact compatibility envelope." if self.provider in {"codex","openai"} else "For Cursor and generic clients, content.text contains the complete authoritative tool result because some Cursor CLI streams do not expose MCP structuredContent to the model.")
             studio_gates=os.environ.get("DYNOSAI_HUMAN_GATE_TRANSPORT","").lower()=="studio"
             gate_instruction=("Human gates are returned as human_interaction tool payloads because DynosAI Studio owns the approval UI. Stop the current turn immediately when one is returned; never self-approve." if studio_gates else "Human gates are requested through MCP Elicitation when the client advertises elicitation capability; never self-approve.")
-            return self._response(rid,{"protocolVersion":selected,"capabilities":{"tools":{"listChanged":True}},"serverInfo":{"name":"dynosai-flow","version":__version__},"instructions":f"DynosAI is provider-native. Start/adopt/attach with dynosai_project and start/resume a feature with dynosai_work/dynosai_resume. Keep one provider session for the feature. {gate_instruction} {transport_instruction} Use dynosai_read for concrete reads, dynosai_ask for SQL/text and dynosai_find_symbol for code identifiers."})
+            prefix_note=" Discover remaining tools via tools/list."
+            try:
+                from .prompt_prefix import build_authority_prefix, persist_prefix
+                prefix=build_authority_prefix()
+                if (self.engine.root/".dynosai"/"knowledge.db").exists():
+                    prefix=persist_prefix(self.engine.root, prefix)
+                    try:
+                        self.engine.db.audit("PromptPrefixRecorded", prefix.get("hash"), {"claims_cache_hit": False, "schema": "PROMPT_PREFIX_1.0"})
+                    except Exception:
+                        pass
+                prefix_note=f" Stable authority prefix {str(prefix.get('hash') or '')[:12]}. Discover remaining tools via tools/list. Prefix hash is cacheable structure, not provider cache telemetry."
+            except Exception:
+                pass
+            return self._response(rid,{"protocolVersion":selected,"capabilities":{"tools":{"listChanged":True}},"serverInfo":{"name":"dynosai-flow","version":__version__},"instructions":f"DynosAI is provider-native. Start/adopt/attach with dynosai_project and start/resume a feature with dynosai_work/dynosai_resume. Keep one provider session for the feature. {gate_instruction} {transport_instruction} Use dynosai_read for concrete reads, dynosai_ask for SQL/text and dynosai_find_symbol for code identifiers.{prefix_note}"})
         if method=="notifications/initialized": self.initialized=True; return None
         if method=="notifications/cancelled": return None
         if method=="ping": return self._response(rid,{})
@@ -490,7 +504,13 @@ class MCPServer:
                 _validate_tool_arguments(name,args)
                 if name not in READ_ONLY_TOOLS and not self._mutation_authorized(name,args):
                     raise PermissionError("No active governed provider session. Start/resume work through DynosAI first.")
+                started=time.perf_counter()
                 result=self.call_tool(name,args)
+                duration_ms=int((time.perf_counter()-started)*1000)
+                try:
+                    result_bytes=len(json.dumps(result,ensure_ascii=False,default=str).encode("utf-8"))
+                except Exception:
+                    result_bytes=None
                 if name in {"dynosai_git_diff","dynosai_ask","dynosai_run_validation"}:
                     try:
                         enabled=True
@@ -510,7 +530,7 @@ class MCPServer:
                 try:
                     if normalization:
                         self.engine.db.audit("MCPToolNormalized",str(requested_name),{**normalization,"session_id":self.session and self.session.get("id"),"work_id":self._session_work_id(),"run_id":self._run_id()})
-                    self.engine.db.audit("MCPToolCalled",name,{"requested_tool":requested_name,"provider_session_id":self.provider_session and self.provider_session.get("id"),"session_id":self.session and self.session.get("id"),"work_id":self._session_work_id(),"run_id":self._run_id()})
+                    self.engine.db.audit("MCPToolCalled",name,{"requested_tool":requested_name,"provider_session_id":self.provider_session and self.provider_session.get("id"),"session_id":self.session and self.session.get("id"),"work_id":self._session_work_id(),"run_id":self._run_id(),"duration_ms":duration_ms,"result_bytes":result_bytes})
                 except Exception:
                     pass
                 studio_gates=os.environ.get("DYNOSAI_HUMAN_GATE_TRANSPORT","").lower()=="studio"

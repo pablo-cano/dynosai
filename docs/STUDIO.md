@@ -1,6 +1,6 @@
 # DynosAI Local Studio
 
-DynosAI Studio is the local graphical interface for the governed DynosAI workflow. It keeps the 0.14.1 guided product, 0.15 reviews, 0.16 team slots, 0.17 eval cases, 0.18 execution profiles and 0.19 certified-provider inventory. Overview also shows optional harness features and MATRIX_1.0 live cells (`not_run` until real provider evidence exists). Navigation after a project is selected is Overview, New change, Work, Approvals, Project checks and Project settings.
+DynosAI Studio is the local graphical interface for the governed DynosAI workflow. It keeps the 0.14.1 guided product, 0.15 reviews, 0.16 team slots, 0.17 eval cases, 0.18 execution profiles and 0.19 certified-provider inventory. Overview also shows optional harness features, MATRIX_1.0 live cells (`not_run` until real provider evidence exists), acceptance-ZIP import and governed-change cost totals. Navigation after a project is selected is Overview, New change, Work, Approvals, Project checks and Project settings.
 
 ## What Studio is for
 

@@ -23,7 +23,7 @@ from .agent_config import AgentConfiguration
 from .validation_discovery import ValidationDiscovery
 from .risk import RiskAssessment
 from .validation_integrity import evaluate_integrity
-from .cost_telemetry import governed_change_cost
+from .cost_telemetry import aggregate_governed_change_cost, empty_governed_change_aggregate, governed_change_cost
 from .secrets import redact_text
 from .capability_manifests import capability_report, provider_manifest
 from .certification_matrix import summarize_live_matrix
@@ -679,6 +679,7 @@ class DynosAIApplication:
             overview["provider_capabilities"] = capability_report()
             overview["harness"] = harness_report_from_project()
             overview["live_matrix"] = summarize_live_matrix()
+            overview["governed_change"] = empty_governed_change_aggregate()
             return overview
         self.engine.db.initialize()
         overview["project"] = self.engine.db.get_meta("project_name", self.root.name)
@@ -698,6 +699,10 @@ class DynosAIApplication:
         overview["provider_capabilities"] = capability_report()
         overview["harness"] = self.harness_report()
         overview["live_matrix"] = summarize_live_matrix()
+        try:
+            overview["governed_change"] = aggregate_governed_change_cost(self.engine.db)
+        except Exception:
+            overview["governed_change"] = empty_governed_change_aggregate()
         return overview
 
     def resume(self, provider: str, work_id: str | None = None, *, at_provider_boundary: bool = True) -> dict[str, Any]:
@@ -836,5 +841,14 @@ class DynosAIApplication:
             "EvalImprovementProposed",
             work_id=(result.get("work") or {}).get("id"),
             payload={"case_id": case_id, "spawn_provider": False, "auto_start": False},
+        )
+        return result
+
+    def import_acceptance_bundle(self, path: str) -> dict[str, Any]:
+        """Host-owned acceptance ZIP import: bounded eval cases, inbox-only, no provider spawn."""
+        result = self.engine.import_acceptance_bundle(path)
+        self.events.emit(
+            "AcceptanceBundleImported",
+            payload={"imported": result.get("imported"), "spawn_provider": False, "auto_start": False},
         )
         return result

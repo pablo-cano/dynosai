@@ -19,7 +19,8 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `cost_telemetry.py` | Usage/cost telemetry and cost-per-successful-governed-change aggregation |
 | `context_handles.py` | Persistent pass-by-reference handles for large artifacts |
 | `eval_registry.py` | Versioned eval scenarios and offline harness comparisons |
-| `eval_intelligence.py` | Failure attribution, local-trace mining and inbox-only improvement loop |
+| `eval_intelligence.py` | Failure attribution, local-trace mining, acceptance ZIP import and inbox-only improvement loop |
+| `prompt_prefix.py` | Deterministic MCP authority prefix hash; cacheable structure, not a cache-hit claim |
 | `execution_profiles.py` | Strict/Balanced/Autonomous host policy, local runtime bind and unsupported-runtime refusal |
 | `capability_manifests.py` | Cursor ACP / Codex app-server contracts and refusal of uncertified clients/packs |
 | `certification_matrix.py` | MATRIX_1.0 live Codex/Cursor × greenfield/brownfield cells; historical 0.13 evidence stays separate |
