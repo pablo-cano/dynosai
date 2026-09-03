@@ -9,7 +9,24 @@ This guide takes a new user from a clean clone to a governed DynosAI project.
 - At least one supported coding-agent provider if you want provider-native execution. The current public provider surface is Codex or Cursor.
 - Internet access may be needed the first time the local embedding model is downloaded. Runtime project state remains local.
 
-## 2. Install from source
+## 2. Install
+
+DynosAI is **not published on PyPI**. Install from a verified local wheel built by the existing release tooling, or from a source checkout.
+
+### Verified local wheel
+
+From a clone of this repository:
+
+```bash
+python scripts/build_release.py
+python scripts/install_local_wheel.py --wheel dist/dynosai_flow-1.0.0rc4-py3-none-any.whl
+```
+
+`install_local_wheel.py` reads `SHA256SUMS.txt` next to the wheel (or `--sums`) and refuses remote URLs. There is no curl-pipe installer.
+
+`scripts/build_release.py --skip-tests` / `--skip-web` are local diagnostics, not a release promotion path.
+
+### Source checkout
 
 ```bash
 git clone <your-dynosai-repository-url>

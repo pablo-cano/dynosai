@@ -2,6 +2,27 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 1.0.0-rc.4 - 2026-09-03
+
+### Added
+
+- Studio exposes existing `doctor` / `deep_doctor` checks on Overview and Diagnostics via `GET /api/doctor`. The check logic is unchanged.
+- `scripts/install_local_wheel.py` verifies `SHA256SUMS.txt` before installing a local wheel and refuses remote/index URLs including pypi.org.
+- CI installed-wheel smoke on Ubuntu, Windows and macOS (Python 3.11) in a fresh venv outside the checkout with `PYTHONPATH` cleared.
+- Upgrade-preservation smoke from representative 0.19.0 schema-v6 state to the 1.0 wheel without wiping work.
+
+### Changed
+
+- Package version is `1.0.0rc4`. Display surfaces may show `1.0.0-rc.4`. Public status is **Public RC · Installation**, not stable 1.0.
+
+### Security
+
+- Schema remains v6. Unique MCP names remain 31. DynosAI is not published on PyPI.
+
+### Validation
+
+- Added `tests/test_240.py` for Studio doctor, verified local-wheel install, CI matrix shape, checkout-src refusal and 0.19.0 upgrade preservation.
+
 ## 1.0.0-rc.3 - 2026-09-01
 
 ### Added

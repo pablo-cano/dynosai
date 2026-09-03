@@ -28,6 +28,7 @@ from .secrets import redact_text
 from .capability_manifests import capability_report, provider_manifest
 from .certification_matrix import summarize_live_matrix
 from .harness_contracts import harness_report_from_project
+from .providers import MachineProviderSetup
 
 
 class ProjectDetector:
@@ -430,6 +431,12 @@ class DynosAIApplication:
             "steps": steps,
             "primary_action": primary,
         }
+
+    def doctor(self, *, deep: bool = False) -> dict[str, Any]:
+        """Expose existing machine/project doctor checks without rewriting them."""
+        if not self.detector.detect(self.root).get("has_dynosai"):
+            return MachineProviderSetup().doctor(deep=deep)
+        return self.engine.deep_doctor() if deep else self.engine.doctor()
 
     def _completion_review_detail(self, work_id: str, summary: dict[str, Any]) -> dict[str, Any]:
         """Bounded Requirement → Evidence → Diff → Validation view for code/merge gates."""

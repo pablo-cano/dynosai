@@ -11,7 +11,7 @@ from dynosai_flow.version import __version__
 
 class DynosAI127RC2CompatibilityTests(unittest.TestCase):
     def test_version_is_0127(self):
-        self.assertEqual(__version__, "1.0.0rc3")
+        self.assertEqual(__version__, "1.0.0rc4")
 
     def test_codex_auto_transport_remains_structured_primary(self):
         value={"accepted":False,"error_type":"validation","details":{"missing":["requirements"]},"payload":"x"*4000}

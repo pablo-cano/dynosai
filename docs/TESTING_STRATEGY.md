@@ -38,6 +38,12 @@ When website files change, also run `npm run check`, `npm run typecheck`, `npm r
 
 `tests/test_230.py` covers acceptance ZIP import into bounded Eval Registry cases, inbox-only improvement, `governed_change_cost()` aggregates, the rule that unused advertised MCP tools are not waste, and a stable authority prefix that does not dump the 31-tool list or claim a cache hit.
 
+## 1.0 RC4 installation and installed-package smoke
+
+`tests/test_240.py` covers Studio doctor/deep-doctor exposure, verified local-wheel checksums, the Linux Python matrix plus Ubuntu/Windows/macOS wheel smoke job, refusal to treat checkout `src/` imports as installed-package tests, and upgrade preservation from representative 0.19.0 schema-v6 state.
+
+Installed-package CI is `scripts/ci_installed_wheel.py` → `scripts/smoke_installed_package.py`. Those scripts run after a wheel install in a fresh venv, not as part of the checkout `python -m pytest` suite.
+
 ## 2. Migration and recovery tests
 
 Release-candidate hardening covers database migration, duplicate/pending gates, restart/resume, missing or corrupted checkpoints, corrupted telemetry/model-control state, portable snapshot integrity, and atomic restore behavior.

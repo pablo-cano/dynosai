@@ -26,4 +26,4 @@ MCP unique surface remains **31**.
 
 ## Next
 
-RC4 is installation, doctor-in-Studio and installed-package CI. Do not start it from this note alone; wait for an explicit instruction.
+RC4 (installation, doctor-in-Studio and installed-package CI) is delivered in `1.0.0-rc.4`.
