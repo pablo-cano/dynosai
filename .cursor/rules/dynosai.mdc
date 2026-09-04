@@ -1,0 +1,48 @@
+---
+description: DynosAI workflow is mandatory
+alwaysApply: true
+---
+
+# DynosAI Provider-Native Protocol
+
+Este proyecto está gobernado por DynosAI. El agente escribe código; DynosAI Core gobierna workflow, memoria, scope, Git, validación y evidencia.
+
+1. Para una necesidad funcional usa el MCP de DynosAI; no ejecutes `dynosai open` ni cambies de aplicación.
+2. Una feature usa una única sesión persistente del proveedor desde Discovery hasta Done.
+3. Consulta `dynosai_get_next_action`; su `contract` es autoritativo.
+4. Las decisiones humanas (clarificaciones, Spec Review, Plan Review, scope, Code Review y Merge) se resuelven mediante MCP Elicitation. Nunca autoapruebes un gate.
+5. No escribas código antes de que el estado sea `implementing`. Durante implementación respeta estrictamente el scope devuelto por DynosAI.
+6. Usa `dynosai_submit_spec`, `dynosai_submit_plan` y `dynosai_register_result`; DynosAI valida cada contrato y evidencia.
+7. Para contexto: reutiliza primero `context_checkpoint` y el `task_queue` actual; carga sólo secciones faltantes con `dynosai_checkpoint`. Usa `dynosai_ask` para memoria/SQL/texto, `dynosai_find_symbol` para identificadores y `dynosai_read` sólo para contenido concreto que aún no esté consolidado.
+8. Git de escritura pertenece al controlador DynosAI; el agente no hace branch/commit/merge por su cuenta.
+9. Las validaciones se ejecutan mediante `dynosai_run_validation` y perfiles aprobados.
+10. Si la sesión del proveedor se reinicia, usa `dynosai_resume`; la fuente de verdad es `.dynosai/knowledge.db`, no el historial del chat.
+11. Los Markdown son vistas regenerables.
+
+<!-- DYNOSAI:AGENT-CONFIG:BEGIN -->
+# DynosAI managed agent configuration
+
+Provider: cursor
+Project archetype: data-ai
+Context strategy: progressive
+
+## DynosAI Core
+Follow the DynosAI workflow, inspect before editing, preserve project conventions, keep changes scoped, and report evidence rather than claiming unverified success.
+
+## Context Budget
+Use progressive disclosure: load only the instructions, skills and references needed for the current activity. Prefer summaries and targeted retrieval over indiscriminate repository reads.
+
+## Spec Driven Development
+Keep implementation traceable to specification, plan, tasks and evidence. Treat approved scope and acceptance criteria as constraints.
+
+## Testing
+Run the smallest relevant validation after changes and the project acceptance gate before completion. Never report tests as passing unless their result was observed.
+
+## Security
+Do not expose secrets, credentials or private keys. Prefer environment-variable references and least-privilege tooling. Do not broaden permissions without an explicit requirement.
+
+## Skills
+Load skills progressively and only when relevant to the current activity.
+
+- debugging: Diagnose defects using evidence, minimal reproduction and hypothesis-driven investigation.
+<!-- DYNOSAI:AGENT-CONFIG:END -->
