@@ -82,6 +82,8 @@ Overview is the only project page available before DynosAI initialization. It sh
 
 When local traces contain failures, Overview also shows **eval cases**. Creating an improvement task from a case puts work in the inbox only; Studio does not start a coding agent from that button. Predictive routing stays in shadow mode.
 
+Overview shows **doctor** results from the same checks as `dynosai doctor`. Deep doctor is opt-in and reuses existing MCP/provider probes. Diagnostics repeats those controls.
+
 Overview lists **certified providers**: Cursor ACP and Codex app-server. Additional clients are not shipped.
 
 ### Project → New change

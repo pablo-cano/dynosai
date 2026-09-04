@@ -58,6 +58,7 @@ const activityScroll = {};
 const diagnosticScroll = {};
 let lastWindowScrollY = 0;
 let lastTutorialScrollKey = "";
+let doctorState = null;
 window.addEventListener("scroll", () => {
   lastWindowScrollY = window.scrollY || document.documentElement.scrollTop || 0;
 }, {passive: true});
@@ -520,6 +521,31 @@ function governedChangeHtml(data) {
   if (cost.completed_work == null && cost.successful == null) return "";
   return `<div class="harness-status" id="governed-change-card"><div class="harness-status-head"><strong>${esc(t("cost.title"))}</strong></div><div class="harness-chip-row"><div class="harness-chip"><span>${esc(t("cost.completed"))}</span><strong>${esc(String(cost.completed_work ?? 0))}</strong></div><div class="harness-chip"><span>${esc(t("cost.successful"))}</span><strong>${esc(String(cost.successful ?? 0))}</strong></div></div><p class="provider-caps-note">${esc(t("cost.note"))}</p></div>`;
 }
+function doctorHtml(payload) {
+  if (!payload) return `<div class="empty-state compact-empty"><p>${esc(t("doctor.loading"))}</p></div>`;
+  const checks = Object.entries(payload.checks || {});
+  const rows = checks.map(([name, ok]) => `<div class="list-item"><strong class="${ok ? "risk-low" : "risk-high"}">${esc(ok ? t("doctor.pass") : t("doctor.fail"))}</strong><small>${esc(name)}</small></div>`).join("");
+  const ready = !!(payload.ready || payload.full_ready);
+  return `<div class="harness-status" id="doctor-card"><div class="harness-status-head"><strong>${esc(t("doctor.title"))}</strong><span class="state-chip">${esc(ready ? t("doctor.ready") : t("doctor.notReady"))}</span></div><div class="list">${rows || `<div class="list-item"><small>—</small></div>`}</div><div class="panel-actions"><button class="secondary compact" type="button" data-doctor-run="1">${esc(t("doctor.run"))}</button><button class="secondary compact" type="button" data-doctor-run="deep">${esc(t("doctor.deep"))}</button></div><p class="provider-caps-note">${esc(t("doctor.note"))}</p></div>`;
+}
+async function loadDoctor(deep = false) {
+  if (!hasProject()) { doctorState = null; renderDoctor(); return; }
+  try {
+    doctorState = await withOperation(deep ? "operation.working" : "operation.working", async () => api(deep ? "/api/doctor?deep=1" : "/api/doctor"));
+    renderDoctor();
+  } catch (error) {
+    doctorState = null;
+    renderDoctor();
+    showAlert(error.message);
+  }
+}
+function renderDoctor() {
+  const html = doctorHtml(doctorState);
+  const overview = $("doctor");
+  const diag = $("diag-doctor");
+  if (overview) overview.innerHTML = html;
+  if (diag) diag.innerHTML = html;
+}
 function harnessStatusHtml(data) {
   const features = (data.harness && data.harness.features) || [];
   if (!features.length) return "";
@@ -829,6 +855,7 @@ function renderProject(data) {
   if (importRoot) importRoot.innerHTML = evalImportHtml();
   const costRoot = $("governed-change");
   if (costRoot) costRoot.innerHTML = governedChangeHtml(data);
+  renderDoctor();
   const harnessRoot = $("harness-features");
   if (harnessRoot) harnessRoot.innerHTML = harnessStatusHtml(data);
   const capsRoot = $("provider-capabilities");
@@ -872,8 +899,10 @@ async function refresh({preserveView = true} = {}) {
       executions = overview.initialized ? (await api("/api/execution")).items || [] : [];
       events = overview.initialized ? (await api("/api/events")).items || [] : [];
       modelRouting = overview.initialized ? await api(`/api/model-routing?provider=${encodeURIComponent(routingProvider)}`) : null;
+      try { doctorState = await api("/api/doctor"); } catch (error) { doctorState = null; }
     } else {
       overview = null; reviews = []; reviewHistory = []; executions = []; events = []; modelRouting = null; preferenceProjectRoot = null;
+      doctorState = null;
       setBadge("progress-badge", 0); setBadge("reviews-badge", 0);
     }
     const pageY = window.scrollY || lastWindowScrollY;
@@ -1232,6 +1261,7 @@ function wireEvents() {
     if (target.hasAttribute("data-route-effort") && routeDialogState) { routeDialogState.effort = target.dataset.routeEffort || null; document.querySelectorAll("[data-route-effort]").forEach((node) => node.classList.toggle("active", node === target)); }
     if (target.dataset.evalPropose) { proposeEvalImprovement(target.dataset.evalPropose); return; }
     if (target.dataset.evalImport) { importAcceptanceBundle(); return; }
+    if (target.dataset.doctorRun) { loadDoctor(target.dataset.doctorRun === "deep"); return; }
     if (target.dataset.reviewAction) {
       const card = target.closest("[data-review-id]");
       if (!card) return;

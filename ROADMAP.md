@@ -156,7 +156,7 @@ Delivered in `1.0.0-rc.2`:
 
 This RC still does **not** contain a real 1.0 live provider matrix, installer, OS sandbox, extra certified clients, or autonomous predictive routing.
 
-### RC3 — Eval maturity (this release)
+### RC3 — Eval maturity
 
 Delivered in `1.0.0-rc.3`:
 
@@ -166,10 +166,20 @@ Delivered in `1.0.0-rc.3`:
 
 This RC still does **not** contain a real 1.0 live provider matrix, installer, OS sandbox, extra certified clients, or autonomous predictive routing.
 
+### RC4 — Installation (this release)
+
+Delivered in `1.0.0-rc.4`:
+
+- existing doctor/deep-doctor exposed in Studio without rewriting the checks;
+- verified local-wheel install (`SHA256SUMS.txt`, `scripts/install_local_wheel.py`); not published on PyPI;
+- installed-package CI smoke on Ubuntu, Windows and macOS from a fresh venv outside the checkout;
+- upgrade-preservation from representative 0.19.0 schema-v6 state.
+
+This RC still does **not** contain a real 1.0 live provider matrix, a PyPI package, OS sandbox, extra certified clients, or autonomous predictive routing.
+
 ### Remaining 1.0 exit criteria
 
-- desktop/local installer path with upgrade policy;
-- multi-platform installed-package validation;
+- desktop installer packages beyond the verified local wheel;
 - published provider/capability certification matrix from real Codex/Cursor greenfield and brownfield runs;
 - mature Eval Registry and release-quality evidence;
 - security/runtime policy model documented and regression-tested;

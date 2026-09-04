@@ -2,7 +2,7 @@
 
 ## Supported version
 
-The latest public line is `1.0.0-rc.3` (`1.0.0rc3`). It remains a beta-classified release candidate. Schema authority is v6. Production `1.0.0` is not claimed. The 1.0 live certification cells are `not_run` until real provider evidence exists.
+The latest public line is `1.0.0-rc.4` (`1.0.0rc4`). It remains a beta-classified release candidate. Schema authority is v6. Production `1.0.0` is not claimed. The 1.0 live certification cells are `not_run` until real provider evidence exists. DynosAI is not published on PyPI.
 
 ## Reporting a vulnerability
 

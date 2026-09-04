@@ -225,7 +225,7 @@ Compatible 1.0.x releases will not:
 - Eval intelligence mining (optional harness feature; not a live-provider
   leaderboard).
 - Team parallelism beyond host-opened governed sessions.
-- Installer / installed-package CI (planned for a later RC).
+- Desktop installer packages beyond the verified local wheel (RC4 ships wheel checksums and installed-package CI; DynosAI is not on PyPI).
 - OS-level network interception, Docker, VM and remote runtimes (not shipped).
 - Additional certified clients beyond Cursor ACP and Codex app-server.
 - Debug/acceptance CLI internals.

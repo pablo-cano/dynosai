@@ -26,6 +26,7 @@ from .studio_projects import StudioProjectRegistry, browse_directory, create_dir
 from .version import DISPLAY_VERSION, __version__
 from .capability_manifests import SHIPPED_PROVIDERS, capability_report, provider_manifest
 from .harness_contracts import FeatureDisabledError
+from .providers import MachineProviderSetup
 
 
 SUPPORTED_STUDIO_PROVIDERS = set(SHIPPED_PROVIDERS)
@@ -404,6 +405,11 @@ class StudioAPI:
                     "root": str(self.root) if self.root else None,
                     "project_selected": self.has_project,
                 }
+            if path == "/api/doctor":
+                deep = str((query.get("deep") or ["0"])[0] or "").strip().lower() in {"1", "true", "yes"}
+                if not self.has_project:
+                    return 200, MachineProviderSetup().doctor(deep=deep)
+                return 200, self._require_app().doctor(deep=deep)
             if path == "/api/projects":
                 return 200, {"current": str(self.root) if self.root else None, "items": self.registry.list(current=self.root)}
             if path == "/api/provider-capabilities":

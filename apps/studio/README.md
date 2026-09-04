@@ -60,6 +60,10 @@ Overview shows Codex/Cursor × greenfield/brownfield cells. They stay **Not run*
 
 Overview can import a local acceptance ZIP into bounded eval cases and shows governed-change cost totals. Unused advertised MCP tools are not treated as waste.
 
+## 1.0.0-rc.4 installation
+
+Overview and Diagnostics show doctor / deep-doctor results from the existing engine checks. Installation is a verified local wheel, not PyPI.
+
 ## 1.0.0-rc.1 optional harness
 
 Overview shows compact On/Off chips for context optimization, governed team scheduling and eval intelligence. Project settings can change those host-owned switches. Execution profiles, human gates and certified-provider refusal stay required and are not presented as optional optimizations.

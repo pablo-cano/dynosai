@@ -30,9 +30,9 @@ export default function ValidationPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8">
       <div className="max-w-3xl">
-        <Badge>Public RC · Eval maturity</Badge>
+        <Badge>Public RC · Installation</Badge>
         <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">1.0 live cells stay not_run until real provider runs exist.</h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI 1.0.0-rc.3 still publishes MATRIX_1.0 with four provider-aware cells. None of them copy 0.13 Quality 100 scores. The historical table further down is the 0.13.0 core baseline, not 1.0 live proof.</p>
+        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI 1.0.0-rc.4 still publishes MATRIX_1.0 with four provider-aware cells. None of them copy 0.13 Quality 100 scores. The historical table further down is the 0.13.0 core baseline, not 1.0 live proof.</p>
       </div>
 
       <h2 className="mt-12 text-2xl font-bold tracking-tight">MATRIX_1.0 live certification</h2>
@@ -70,7 +70,7 @@ export default function ValidationPage() {
           <CardHeader><CardTitle>What it does not prove</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
             <p>It is not a universal guarantee across every language, repository size, CI system, security policy, or provider version.</p>
-            <p>DynosAI 1.0.0-rc.3 publishes MATRIX_1.0 placeholders plus eval-maturity evidence and still benefits from real-world feedback. It is not a production-ready 1.0 claim.</p>
+            <p>DynosAI 1.0.0-rc.4 publishes MATRIX_1.0 placeholders plus installation evidence and still benefits from real-world feedback. It is not a production-ready 1.0 claim.</p>
             <p>The Predictive Router remains in shadow mode even though the historical sample size now crosses its quantitative authority gates.</p>
           </CardContent>
         </Card>
