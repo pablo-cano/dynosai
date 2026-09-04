@@ -29,4 +29,4 @@ MCP unique surface remains **31**.
 
 ## Next
 
-RC5 is threat model, contribution/certification process and freeze. Do not start it from this note alone; wait for an explicit instruction.
+RC5 (threat model, contribution/certification process and freeze) is delivered in `1.0.0-rc.5`.

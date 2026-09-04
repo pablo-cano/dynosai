@@ -44,6 +44,10 @@ When website files change, also run `npm run check`, `npm run typecheck`, `npm r
 
 Installed-package CI is `scripts/ci_installed_wheel.py` → `scripts/smoke_installed_package.py`. Those scripts run after a wheel install in a fresh venv, not as part of the checkout `python -m pytest` suite.
 
+## 1.0 RC5 threat model and freeze
+
+`tests/test_250.py` covers `docs/THREAT_MODEL.md` honesty (enforced vs not enforced), `CONTRIBUTING.md` keeping external PRs closed, path/secret/symlink/Git/certified-client/timeout/loopback/Host/JSON POST regressions, and the freeze contract (schema v6, 31 MCP names, MATRIX_1.0 `not_run`, Studio loopback honesty). This is not live-provider 1.0 certification.
+
 ## 2. Migration and recovery tests
 
 Release-candidate hardening covers database migration, duplicate/pending gates, restart/resume, missing or corrupted checkpoints, corrupted telemetry/model-control state, portable snapshot integrity, and atomic restore behavior.

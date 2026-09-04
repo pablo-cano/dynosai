@@ -36,7 +36,7 @@ The production output is written to `apps/web/out/`.
 
 ## Content
 
-Product documentation routes are registered in `lib/docs.ts` and rendered during the static build. The `1.0.0-rc.4` site includes dedicated `/studio/` and `/roadmap/` product pages and describes Studio, the verified harness, governed team scheduling, eval intelligence, execution profiles, certified provider manifests, the frozen 1.0 compatibility contract, MATRIX_1.0 `not_run` cells, eval-maturity evidence and the verified local-wheel install path. Public status is **Public RC · Installation**, not stable 1.0.
+Product documentation routes are registered in `lib/docs.ts` and rendered during the static build. The `1.0.0-rc.5` site includes dedicated `/studio/` and `/roadmap/` product pages and describes Studio, the verified harness, governed team scheduling, eval intelligence, execution profiles, certified provider manifests, the frozen 1.0 compatibility contract, MATRIX_1.0 `not_run` cells, eval-maturity evidence, the verified local-wheel install path and the 1.0 threat model. Public status is **Public RC · Freeze**, not stable 1.0.
 
 ## Deployment
 

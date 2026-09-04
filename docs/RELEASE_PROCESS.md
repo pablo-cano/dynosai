@@ -2,7 +2,7 @@
 
 ## Versioning
 
-Pre-1.0 used semantic-style numbering. From 1.0 release candidates, Python/package versions follow PEP 440 (`1.0.0rc4`). Display surfaces may show `1.0.0-rc.4`.
+Pre-1.0 used semantic-style numbering. From 1.0 release candidates, Python/package versions follow PEP 440 (`1.0.0rc5`). Display surfaces may show `1.0.0-rc.5`.
 
 `1.0.0` remains reserved until the documented certification and installed-package gates are actually green. Remaining on `1.0.0rcN` is an honest successful outcome.
 
@@ -76,7 +76,7 @@ git tag -a v0.19.0 9e4c69eaabb34b687e58d1b4eb9bc3091d42d58d -m "DynosAI 0.19.0"
 Future 1.0 candidates may use:
 
 ```bash
-git tag -a v1.0.0-rc.4 -m "DynosAI 1.0.0-rc.4"
+git tag -a v1.0.0-rc.5 -m "DynosAI 1.0.0-rc.5"
 ```
 
 Do not push tags or GitHub releases from an RC implementation task unless explicitly instructed.

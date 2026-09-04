@@ -2,6 +2,26 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 1.0.0-rc.5 - 2026-09-04
+
+### Added
+
+- `docs/THREAT_MODEL.md` freezes enforced vs not-enforced 1.0 controls, including the honest local-browser/loopback surface.
+- `CONTRIBUTING.md` documents maintainer development, the shared release gate and the certified-provider process. External pull requests remain closed on purpose.
+- Studio Help states that loopback is not a full security boundary (English and Spanish).
+
+### Changed
+
+- Package version is `1.0.0rc5`. Display surfaces may show `1.0.0-rc.5`. Public status is **Public RC · Freeze**, not stable 1.0.
+
+### Security
+
+- Schema remains v6. Unique MCP names remain 31. Loopback, Host-header and JSON POST controls stay enforced and are not claimed as a complete local security boundary. DynosAI is not published on PyPI.
+
+### Validation
+
+- Added `tests/test_250.py` for threat-model honesty, contribution policy, enforced path/secret/Git/certified-client/timeout/loopback checks and the freeze contract.
+
 ## 1.0.0-rc.4 - 2026-09-03
 
 ### Added

@@ -1,6 +1,6 @@
 {
   "name": "@dynosai/web",
-  "version": "1.0.0rc4",
+  "version": "1.0.0rc5",
   "private": true,
   "scripts": {
     "dev": "next dev",

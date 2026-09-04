@@ -234,3 +234,6 @@ Compatible 1.0.x releases will not:
 RC1 does not prove a production-ready 1.0. It freezes the contract so later
 RCs can add evidence without moving the public surface. RC2 adds MATRIX_1.0
 placeholders and two-session lease proof; it still does not fill live cells.
+RC5 documents the threat model in `docs/THREAT_MODEL.md`. Loopback, Host
+checks and JSON POSTs are enforced and are not a full security boundary.
+OS-level network sandbox, Docker, VM and remote execution remain not shipped.
