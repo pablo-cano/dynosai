@@ -166,7 +166,7 @@ Delivered in `1.0.0-rc.3`:
 
 This RC still does **not** contain a real 1.0 live provider matrix, installer, OS sandbox, extra certified clients, or autonomous predictive routing.
 
-### RC4 — Installation (this release)
+### RC4 — Installation
 
 Delivered in `1.0.0-rc.4`:
 
@@ -177,13 +177,24 @@ Delivered in `1.0.0-rc.4`:
 
 This RC still does **not** contain a real 1.0 live provider matrix, a PyPI package, OS sandbox, extra certified clients, or autonomous predictive routing.
 
+### RC5 — Freeze (this release)
+
+Delivered in `1.0.0-rc.5`:
+
+- `docs/THREAT_MODEL.md` with enforced vs not-enforced controls, linked from `SECURITY.md`;
+- regression coverage for path/secret/Git/certified-client/timeout/loopback/Host/JSON POST limits without rewriting those engines;
+- `CONTRIBUTING.md` for maintainer development and certified-provider process; external pull requests remain closed on purpose;
+- Studio Help states that loopback is not a full security boundary;
+- public status **Public RC · Freeze**. Schema remains v6.
+
+This RC still does **not** contain a real 1.0 live provider matrix, a PyPI package, OS sandbox, extra certified clients, autonomous predictive routing, or an open external-PR model.
+
 ### Remaining 1.0 exit criteria
 
 - desktop installer packages beyond the verified local wheel;
 - published provider/capability certification matrix from real Codex/Cursor greenfield and brownfield runs;
 - mature Eval Registry and release-quality evidence;
-- security/runtime policy model documented and regression-tested;
-- contribution and extension model ready for external ecosystem growth.
+- an external contribution and extension model, if and when the project opens pull requests. Remaining on `1.0.0rc5` with PRs closed is an honest freeze, not an unfinished threat model.
 
 ## Product principles
 

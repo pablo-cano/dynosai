@@ -15,6 +15,7 @@ const releases = [
   ["1.0 RC2", "Certification evidence", "MATRIX_1.0 cells exist and stay not_run. Two host-opened sessions can claim file-disjoint leases. Historical 0.13 Quality 100 is not copied forward."],
   ["1.0 RC3", "Eval maturity", "Acceptance ZIP importer, governed-change cost aggregates and a stable authority prefix. Unused MCP tools are not waste. Still not production-ready 1.0."],
   ["1.0 RC4", "Installation", "Studio doctor, verified local wheel (not PyPI), installed-package CI on Ubuntu/Windows/macOS, and 0.19.0 schema-v6 upgrade preservation. Still not production-ready 1.0."],
+  ["1.0 RC5", "Freeze", "Threat model (enforced vs not enforced), contribution/certification process, and Studio loopback honesty. External PRs stay closed. Still not production-ready 1.0."],
 ];
 
 export default function RoadmapPage() {

@@ -40,7 +40,7 @@ Coding Agent / CLI / Local Studio
  SQLite knowledge.db     Git repository
 ```
 
-Public 1.0 compatibility (MCP names, public CLI, schema v6, Git vs knowledge.db) is documented in `docs/COMPATIBILITY.md`. The loopback App Server is Studio transport, not a general third-party API. `MATRIX_1.0` live cells are provider-aware and stay `not_run` until real provider evidence exists.
+Public 1.0 compatibility (MCP names, public CLI, schema v6, Git vs knowledge.db) is documented in `docs/COMPATIBILITY.md`. The 1.0 threat model is `docs/THREAT_MODEL.md`. The loopback App Server is Studio transport, not a general third-party API. `MATRIX_1.0` live cells are provider-aware and stay `not_run` until real provider evidence exists.
 ```
 
 ## Authority boundaries
@@ -57,7 +57,7 @@ Public 1.0 compatibility (MCP names, public CLI, schema v6, Git vs knowledge.db)
 
 `application.py` is the provider-neutral application boundary shared by CLI/MCP and graphical clients. `app_server.py` exposes a small loopback-only HTTP/JSON adapter for Local Studio. The browser never reads `.dynosai/knowledge.db` directly.
 
-The App Server is intentionally not a remote administration plane: it accepts only loopback bindings and does not enable cross-origin access.
+The App Server is intentionally not a remote administration plane: it accepts only loopback bindings and does not enable cross-origin access. Loopback is not a full security boundary; see `docs/THREAT_MODEL.md`.
 
 ### MCP
 

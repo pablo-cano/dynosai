@@ -203,7 +203,7 @@ This changes presentation only. It does not weaken Git controls, validation poli
 
 ## Local security boundary
 
-The App Server accepts loopback bindings only (`127.0.0.1` or `localhost`). CORS is not enabled and non-loopback Host values are rejected.
+The App Server accepts loopback bindings only (`127.0.0.1`, `localhost` or `::1`). CORS is not enabled, non-loopback Host values are rejected, and mutating `/api/` POSTs require JSON. That is **not a full security boundary** against other local processes or browsers. See `docs/THREAT_MODEL.md`.
 
 ```text
 Local Studio

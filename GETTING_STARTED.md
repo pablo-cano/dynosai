@@ -19,7 +19,7 @@ From a clone of this repository:
 
 ```bash
 python scripts/build_release.py
-python scripts/install_local_wheel.py --wheel dist/dynosai_flow-1.0.0rc4-py3-none-any.whl
+python scripts/install_local_wheel.py --wheel dist/dynosai_flow-1.0.0rc5-py3-none-any.whl
 ```
 
 `install_local_wheel.py` reads `SHA256SUMS.txt` next to the wheel (or `--sums`) and refuses remote URLs. There is no curl-pipe installer.

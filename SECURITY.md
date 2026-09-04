@@ -2,7 +2,7 @@
 
 ## Supported version
 
-The latest public line is `1.0.0-rc.4` (`1.0.0rc4`). It remains a beta-classified release candidate. Schema authority is v6. Production `1.0.0` is not claimed. The 1.0 live certification cells are `not_run` until real provider evidence exists. DynosAI is not published on PyPI.
+The latest public line is `1.0.0-rc.5` (`1.0.0rc5`). It remains a beta-classified release candidate. Schema authority is v6. Production `1.0.0` is not claimed. The 1.0 live certification cells are `not_run` until real provider evidence exists. DynosAI is not published on PyPI.
 
 ## Reporting a vulnerability
 
@@ -28,6 +28,8 @@ DynosAI is designed to reduce agent authority, not to create a perfect sandbox. 
 - validation command allow/configuration boundaries.
 
 Users remain responsible for operating-system permissions, secrets management, provider credentials, repository access, CI security, and the commands they approve as validation profiles.
+
+The 1.0 threat model (enforced vs not enforced, including the local-browser/loopback surface) is documented in [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md). Loopback is not a full security boundary.
 
 ## Secrets
 

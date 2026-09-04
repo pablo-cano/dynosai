@@ -39,7 +39,7 @@ export default function HomePage() {
           <div className="max-w-4xl">
             <div className="mb-6 flex flex-wrap items-center gap-2">
               <Badge>Open source · MIT</Badge>
-              <Badge>Public RC · Installation</Badge>
+              <Badge>Public RC · Freeze</Badge>
               <Badge>Runs locally</Badge>
             </div>
             <h1 className="max-w-5xl text-5xl font-bold tracking-[-0.055em] sm:text-6xl lg:text-7xl">
@@ -119,9 +119,9 @@ export default function HomePage() {
       <section className="border-y border-border bg-muted/45">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <div>
-            <Badge>New in 1.0.0-rc.4</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Install the wheel. See doctor in Studio.</h2>
-            <p className="mt-5 leading-7 text-muted-foreground">RC4 exposes existing doctor checks in Studio, installs from a verified local wheel (not PyPI), and smokes the installed package on Ubuntu, Windows and macOS. Schema v6 state from 0.19.0 is not wiped. This is not production-ready 1.0.</p>
+            <Badge>New in 1.0.0-rc.5</Badge>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Threat model written. Loopback is not a sandbox.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">RC5 documents enforced vs not-enforced controls, keeps external pull requests closed, and says plainly that Studio loopback is not a full security boundary. MATRIX_1.0 cells stay not_run. This is not production-ready 1.0.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
@@ -191,9 +191,9 @@ export default function HomePage() {
         <div className="rounded-3xl border border-border bg-foreground px-6 py-12 text-background sm:px-10 lg:px-14">
           <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <div className="mb-4 inline-flex rounded-full border border-background/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">Public RC · Installation</div>
+              <div className="mb-4 inline-flex rounded-full border border-background/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">Public RC · Freeze</div>
               <h2 className="text-3xl font-bold tracking-tight">Try it on one real feature.</h2>
-              <p className="mt-4 max-w-2xl leading-7 opacity-75">DynosAI is open source under MIT. 1.0.0-rc.4 publishes installation evidence; it is not production-ready 1.0. Use normal engineering review and project-specific validation.</p>
+              <p className="mt-4 max-w-2xl leading-7 opacity-75">DynosAI is open source under MIT. 1.0.0-rc.5 freezes the threat model and contribution process; it is not production-ready 1.0. Use normal engineering review and project-specific validation.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button size="lg" variant="outline" className="border-background/25 bg-background text-foreground hover:bg-background/90" asChild>

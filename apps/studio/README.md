@@ -64,6 +64,10 @@ Overview can import a local acceptance ZIP into bounded eval cases and shows gov
 
 Overview and Diagnostics show doctor / deep-doctor results from the existing engine checks. Installation is a verified local wheel, not PyPI.
 
+## 1.0.0-rc.5 freeze
+
+Help states that loopback Studio is not a full security boundary. External pull requests remain closed. The threat model lives in `docs/THREAT_MODEL.md`.
+
 ## 1.0.0-rc.1 optional harness
 
 Overview shows compact On/Off chips for context optimization, governed team scheduling and eval intelligence. Project settings can change those host-owned switches. Execution profiles, human gates and certified-provider refusal stay required and are not presented as optional optimizations.

@@ -4,7 +4,7 @@
 export const siteConfig = {
   name: "DynosAI",
   shortName: "DynosAI",
-  version: "1.0.0-rc.4",
+  version: "1.0.0-rc.5",
   url: "https://www.dynosai.com",
   description:
     "A local-first orchestration and governance layer for AI coding agents, with durable workflow state, scope control, Git evidence, validation, human gates, and auditability.",
@@ -12,5 +12,5 @@ export const siteConfig = {
   linkedin: "https://www.linkedin.com/in/pablo-cano-galan/",
   github: "https://github.com/pablo-cano/dynosai",
   license: "MIT",
-  status: "Public RC · Installation",
+  status: "Public RC · Freeze",
 } as const;
