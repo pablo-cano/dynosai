@@ -35,9 +35,9 @@ def venv_python(venv: Path) -> Path:
 
 
 def main() -> int:
-    wheels = sorted(DIST.glob("dynosai_flow-*.whl"))
+    wheels = sorted(DIST.glob("dynosai-*.whl")) or sorted(DIST.glob("dynosai_flow-*.whl"))
     if not wheels:
-        print("No dynosai_flow wheel in dist/; build it first", file=sys.stderr)
+        print("No dynosai / dynosai_flow wheel in dist/; build it first", file=sys.stderr)
         return 2
     wheel = wheels[-1]
     parent = Path(tempfile.mkdtemp(prefix="dynosai-wheel-ci-"))

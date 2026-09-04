@@ -11,7 +11,7 @@ This guide takes a new user from a clean clone to a governed DynosAI project.
 
 ## 2. Install
 
-DynosAI is **not published on PyPI**. Install from a verified local wheel built by the existing release tooling, or from a source checkout.
+DynosAI is **not published on PyPI**. The supported zero-source production path is a verified wheel (local build or GitHub Release artifact) plus `SHA256SUMS.txt`. A native desktop installer is not required for 1.0.
 
 ### Verified local wheel
 
@@ -19,10 +19,19 @@ From a clone of this repository:
 
 ```bash
 python scripts/build_release.py
-python scripts/install_local_wheel.py --wheel dist/dynosai_flow-1.0.0rc5-py3-none-any.whl
+python scripts/install_local_wheel.py --wheel dist/dynosai-1.0.0rc6-py3-none-any.whl
 ```
 
-`install_local_wheel.py` reads `SHA256SUMS.txt` next to the wheel (or `--sums`) and refuses remote URLs. There is no curl-pipe installer.
+The same wheel can be installed with `pipx` or `uv tool` after checksum verification:
+
+```bash
+pipx install --force dist/dynosai-1.0.0rc6-py3-none-any.whl
+uv tool install --force dist/dynosai-1.0.0rc6-py3-none-any.whl
+```
+
+Upgrade by installing a newer verified wheel the same way. Rollback by installing the previous verified wheel. Uninstall with `pipx uninstall dynosai`, `uv tool uninstall dynosai`, or `python -m pip uninstall dynosai`.
+
+`install_local_wheel.py` reads `SHA256SUMS.txt` next to the wheel (or `--sums`) and refuses remote URLs. There is no curl-pipe installer. Do not install from the public PyPI index until an explicit publication.
 
 `scripts/build_release.py --skip-tests` / `--skip-web` are local diagnostics, not a release promotion path.
 

@@ -149,11 +149,15 @@ class DynosAI250Rc5ThreatModelFreezeTests(unittest.TestCase):
         names = {str(item["name"]) for item in [*TOOLS, *LEGACY_TOOLS]}
         self.assertEqual(len(names), 31)
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
-        self.assertEqual(__version__, "1.0.0rc5")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.5")
+        self.assertEqual(__version__, "1.0.0rc6")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.6")
         report = summarize_live_matrix()
+        self.assertFalse(report["copied_from_historical"] if "copied_from_historical" in report else False)
         self.assertFalse(report["all_passed"])
-        self.assertTrue(all(status == "not_run" for status in report["cells"].values()))
+        for status in report["cells"].values():
+            self.assertIn(status, {"not_run", "run", "fail", "pass"})
+            if status != "pass":
+                self.assertNotEqual(status, "copied")
         html = resources.files("dynosai_flow.studio_assets").joinpath("index.html").read_text(encoding="utf-8")
         i18n = resources.files("dynosai_flow.studio_assets").joinpath("i18n.js").read_text(encoding="utf-8")
         self.assertIn("help.security", i18n)

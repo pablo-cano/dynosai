@@ -16,6 +16,14 @@ const releases = [
   ["1.0 RC3", "Eval maturity", "Acceptance ZIP importer, governed-change cost aggregates and a stable authority prefix. Unused MCP tools are not waste. Still not production-ready 1.0."],
   ["1.0 RC4", "Installation", "Studio doctor, verified local wheel (not PyPI), installed-package CI on Ubuntu/Windows/macOS, and 0.19.0 schema-v6 upgrade preservation. Still not production-ready 1.0."],
   ["1.0 RC5", "Freeze", "Threat model (enforced vs not enforced), contribution/certification process, and Studio loopback honesty. External PRs stay closed. Still not production-ready 1.0."],
+  ["1.0 RC6", "Standards & Release Evidence", "MCP 2026-07-28 plus legacy 2025 hosts, unified release gate, eval corpus, PyPI name ADR, Agent Plugins ADR. MATRIX_1.0 stays honest. Last planned RC before stable."],
+  ["1.0 RC7", "Contingency only", "No features. Exists only if RC6 live certification finds defects. If RC6 is green, skip to stable."],
+  ["1.0.0", "Stable Governance Core", "Promotion with minimal delta from the accepted RC. Requires green gates, live Tier-A matrix, current MCP compatibility and coherent public surfaces. No features during promotion."],
+  ["1.1", "Enforced Secure Runtimes", "Move filesystem, network, credential and process-tree controls from logical decisions to real runtime backends. Stay local-first. No mandatory Docker for Core."],
+  ["1.2", "Portable Agent Plugins", "Consume Agent Plugins (plugin.json + extensions.com.dynosai). Local directory and Git URL first. No marketplace. No silent authority."],
+  ["1.3", "ACP Governance Gateway", "Investigate DynosAI as an ACP-consumed governance layer in front of coding agents. Certify clients with greenfield, brownfield, refusal, gate and recovery tests."],
+  ["1.4", "Long-Horizon Governed Operations", "Durable background work, pause/resume, quotas and parked review jobs. Not a generic swarm. Background never means auto-merge."],
+  ["1.5", "Eval flywheel & adaptive routing", "Failure to eval to shadow recommendation. Predictive routing stays recommendation-only until evidence. No silent quality downshift."],
 ];
 
 export default function RoadmapPage() {

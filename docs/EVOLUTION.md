@@ -33,6 +33,7 @@ DynosAI has been developed through repeated local and real-provider acceptance l
 | 1.0.0rc3 | Eval maturity | Acceptance ZIP importer, governed_change_cost aggregates, PROMPT_PREFIX_1.0 hash without cache-hit claims |
 | 1.0.0rc4 | Installation | Studio doctor, verified local wheel, cross-OS installed-package smoke, 0.19.0 schema-v6 upgrade preservation |
 | 1.0.0rc5 | Freeze | Threat model enforced vs not enforced, contribution/certification process, loopback honesty; PRs remain closed |
+| 1.0.0rc6 | Standards & release evidence | MCP 2026-07-28 + legacy, unified release gate, eval corpus, distribution ADR; MATRIX_1.0 stays honest |
 
 ## How changes are recorded now
 

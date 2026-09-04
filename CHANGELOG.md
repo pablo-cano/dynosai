@@ -2,6 +2,35 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 1.0.0-rc.6 - 2026-09-04
+
+### Added
+
+- MCP revision `2026-07-28` on stdio: `server/discover`, per-request protocol `_meta`, deterministic `tools/list` ordering, list cache metadata and `resultType` envelopes. Legacy `2025-11-25` / `2025-06-18` initialize behaviour is unchanged.
+- `scripts/release_gate.py` as the single executable stable release gate.
+- MATRIX_1.0 trial records and `scripts/run_matrix_1_0.py` (probe-only by default; live trials are explicit attempts).
+- Eval Registry catalog expanded to a Tier A / Tier B release corpus with provenance and graders.
+- ADRs for the PyPI name `dynosai`, Agent Plugins (`com.dynosai`) and MCP protocol eras.
+
+### Changed
+
+- Package version is `1.0.0rc6`. Display surfaces may show `1.0.0-rc.6`. Public status is **Public RC · Standards & Release Evidence**, not stable 1.0.
+- Python distribution name is `dynosai`. The import package remains `dynosai_flow`. MCP `serverInfo.name` remains `dynosai-flow`.
+- CI Python job runs `python scripts/release_gate.py` (includes Studio/package sync). Historical aggregate suites stay excluded.
+- Roadmap separates RC6 must-haves, RC7 contingency, stable promotion, and 1.1–1.5.
+- Codex and Cursor acceptance Popen streams use UTF-8 on Windows so Spanish prompts and JSON-RPC are not decoded as cp1252.
+- OrderFlow brownfield fixture tests use in-memory SQLite so Windows seed cleanup does not hit WinError 32.
+- `dynosai_get_next_action` returns a bootstrap contract (`dynosai_project` / `dynosai_work start`) when no governed session exists, instead of a dead-end PermissionError.
+- GitManager treats only the project toplevel as a repo, so nested greenfield directories no longer inherit a dirty parent checkout.
+
+### Security
+
+- Schema remains v6. Unique MCP names remain 31. Loopback is still not a full security boundary. DynosAI is not published on PyPI. Predictive routing stays shadow-only.
+
+### Validation
+
+- Added `tests/test_260.py` for protocol eras, unified release gate, eval catalog, ADRs and honest MATRIX_1.0 rules.
+
 ## 1.0.0-rc.5 - 2026-09-04
 
 ### Added

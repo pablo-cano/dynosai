@@ -68,7 +68,7 @@ class DynosAI019CapabilityManifestTests(unittest.TestCase):
         self.assertEqual(capability_report()["certification"], "0.13.0-matrix")
 
     def test_schema_and_version_remain_governed(self):
-        self.assertEqual(__version__, "1.0.0rc5")
+        self.assertEqual(__version__, "1.0.0rc6")
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
 
 

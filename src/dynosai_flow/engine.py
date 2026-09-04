@@ -862,10 +862,10 @@ class DynosAI:
         cases=load_cases(self.root)
         policy=self.execution_policy()
         caps=capability_report()
-        from .mcp import LEGACY_TOOLS, TOOLS
+        from .mcp import CURRENT_PROTOCOL, LEGACY_TOOLS, SUPPORTED_PROTOCOLS, TOOLS
         mcp_names={str(item.get("name") or "") for item in [*TOOLS,*LEGACY_TOOLS] if item.get("name")}
         harness=self.harness_report()
-        payload={"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"mcp_surface_frozen":True,"mcp_tool_count":len(mcp_names),"harness":{"features":{item["name"]:item["enabled"] for item in harness.get("features") or []},"precedence":harness.get("precedence")},"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False,"enabled":self.harness_feature("eval_intelligence")},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"},"capability_manifests":{"shipped_providers":caps["shipped_providers"],"shipped_adapters":caps["shipped_adapters"],"extension_packs":False,"human_gates":"required"},"live_matrix":summarize_live_matrix()}
+        payload={"runs":total,"verified_runs":verified,"success_rate":round(verified/max(1,total),3),"context_tokens":context,"actual_files":actual,"suggested_files":suggested,"predicted_file_precision":round(precision,3),"predicted_file_recall":round(recall,3),"retrieval_queries":int((self.db.one('SELECT COUNT(*) n FROM retrieval_events') or {'n':0})['n']),"semantic_documents":int((self.db.one('SELECT COUNT(*) n FROM semantic_documents') or {'n':0})['n']),"mcp_calls":mcp_calls,"mcp_failures":mcp_failures,"scope_requests":scope_requests,"validation_runs":validation_runs,"mcp_surface_frozen":True,"mcp_tool_count":len(mcp_names),"mcp_protocols_supported":list(SUPPORTED_PROTOCOLS),"mcp_protocol_current":CURRENT_PROTOCOL,"harness":{"features":{item["name"]:item["enabled"] for item in harness.get("features") or []},"precedence":harness.get("precedence")},"eval_intelligence":{"open":sum(1 for case in cases if case.get("status")=="open"),"proposed":sum(1 for case in cases if case.get("status")=="proposed"),"regressed":sum(1 for case in cases if case.get("status")=="regressed"),"predictive_routing":"shadow","live_provider_evals":False,"enabled":self.harness_feature("eval_intelligence")},"execution_policy":{"profile":policy.get("profile"),"network":policy.get("network"),"dependencies":policy.get("dependencies"),"os_network_enforcement":False,"human_gates":"required","enforcement":"decision_only"},"capability_manifests":{"shipped_providers":caps["shipped_providers"],"shipped_adapters":caps["shipped_adapters"],"extension_packs":False,"human_gates":"required"},"live_matrix":summarize_live_matrix()}
         payload["governed_change"]=aggregate_governed_change_cost(self.db)
         payload["prompt_prefix"]=summarize_prefix(self.root)
         return payload
@@ -1455,7 +1455,7 @@ class DynosAI:
         neural model inference are reported separately instead of being invented.
         """
         import importlib.util
-        from .mcp import TOOLS, SUPPORTED_PROTOCOLS
+        from .mcp import CURRENT_PROTOCOL, TOOLS, SUPPORTED_PROTOCOLS
         from .runtime import user_home, CURSOR_CONFIG_VERSION
         d=self.doctor(); tables={r["name"] for r in self.db.query("SELECT name FROM sqlite_master WHERE type IN ('table','view')")}; cols={}
         for table in ("runs","tasks","symbols","semantic_documents","agent_sessions"):
@@ -1473,7 +1473,7 @@ class DynosAI:
             "security":category({
                 "secret_read_denied":d["checks"]["secret_policy"],"managed_write_denied":not PathPolicyEngine(self.root).decision(".dynosai/config.toml","write",agent=True).allowed,"git_content_mediated":not self.git_guard.check(["diff","HEAD~1"])[0],"session_expiry":"expires_at" in cols.get("agent_sessions",set()),"scope_is_explicit":"scope_requests" in tables}),
             "agent_integration":category({
-                "mcp_entrypoint":d["checks"]["mcp_entrypoint"],"mcp_current_protocol":"2025-11-25" in SUPPORTED_PROTOCOLS,"mcp_tooling":len(TOOLS)>=20,"work_bound_sessions":{"run_id","work_id","worktree","permissions"}<=cols.get("agent_sessions",set()),"portable_agent_command":True}),
+                "mcp_entrypoint":d["checks"]["mcp_entrypoint"],"mcp_current_protocol":CURRENT_PROTOCOL in SUPPORTED_PROTOCOLS and "2025-11-25" in SUPPORTED_PROTOCOLS and "2025-06-18" in SUPPORTED_PROTOCOLS,"mcp_tooling":len(TOOLS)>=20,"work_bound_sessions":{"run_id","work_id","worktree","permissions"}<=cols.get("agent_sessions",set()),"portable_agent_command":True}),
             "agent_runtime":category({
                 "runtime_broker":self.runtime.status().get("schema_version")==1,
                 "cursor_global_mcp": ("cursor" not in self.db.get_meta("connected_agents").split(",")) or (user_home()/".cursor"/"mcp.json").exists(),

@@ -133,68 +133,165 @@ Still incomplete inside 0.19 (do not advertise as done):
 
 **Goal:** publish stable contracts suitable for broader production adoption.
 
+DynosAI is a **local-first governed control plane for agentic software development**.
+Coding agents are workers. DynosAI governs intention and contracts, scope, Git,
+durable workflow state, permissions, leases, budgets, validation, human gates,
+evidence, evals, provider certification, recovery, and cost/quality attribution.
+
+It is not another coding agent, prompt framework, SDD-only framework, swarm
+orchestrator, proprietary skill format, or IDE.
+
 ### RC1 — Contract freeze
 
-Delivered in `1.0.0-rc.1`:
-
-- `docs/COMPATIBILITY.md` and a frozen unique MCP name set (31), regression-tested;
-- optional harness switches reuse `DYNOSAI_HARNESS_*` (context handles, team scheduling, eval intelligence) with a safe degraded path;
-- host-owned project settings for those switches; MCP agents cannot mutate them;
-- one explicit release-gate policy shared by CI, `scripts/build_release.py` and local `pytest`;
-- public status **Public RC · Contract freeze**. Schema remains v6.
-
-This RC does **not** ship a production-ready 1.0, installer, live 1.0 certification matrix, OS-level sandbox, additional certified clients, or autonomous predictive routing.
+Delivered in `1.0.0-rc.1`: frozen MCP names (31), optional harness switches,
+schema v6, one documented release-gate policy.
 
 ### RC2 — Certification evidence
 
-Delivered in `1.0.0-rc.2`:
-
-- versioned `MATRIX_1.0` with Codex/Cursor × greenfield/brownfield cells, all `not_run`;
-- historical 0.13 evidence preserved and not copied into 1.0 live cells;
-- two host-opened governed session identities claiming file-disjoint leases without provider spawn;
-- overlap serialization, fan-in conflict blocking, and scheduler-off serial fallback.
-
-This RC still does **not** contain a real 1.0 live provider matrix, installer, OS sandbox, extra certified clients, or autonomous predictive routing.
+Delivered in `1.0.0-rc.2`: versioned `MATRIX_1.0` placeholders; two-session
+file-disjoint leases. Historical 0.13 evidence stays historical.
 
 ### RC3 — Eval maturity
 
-Delivered in `1.0.0-rc.3`:
-
-- acceptance ZIP importer into bounded Eval Registry cases; inbox-only improvement; no provider spawn;
-- promoted `governed_change_cost()` with completed-work aggregates on stats, scorecard, overview and Studio;
-- stable authority prefix hash without dumping the MCP tool list or claiming a cache hit.
-
-This RC still does **not** contain a real 1.0 live provider matrix, installer, OS sandbox, extra certified clients, or autonomous predictive routing.
+Delivered in `1.0.0-rc.3`: acceptance ZIP importer, governed-change cost
+aggregates, stable authority prefix.
 
 ### RC4 — Installation
 
-Delivered in `1.0.0-rc.4`:
+Delivered in `1.0.0-rc.4`: Studio doctor, verified local-wheel checksums,
+installed-package CI, 0.19.0 schema-v6 upgrade preservation.
 
-- existing doctor/deep-doctor exposed in Studio without rewriting the checks;
-- verified local-wheel install (`SHA256SUMS.txt`, `scripts/install_local_wheel.py`); not published on PyPI;
-- installed-package CI smoke on Ubuntu, Windows and macOS from a fresh venv outside the checkout;
-- upgrade-preservation from representative 0.19.0 schema-v6 state.
+### RC5 — Freeze
 
-This RC still does **not** contain a real 1.0 live provider matrix, a PyPI package, OS sandbox, extra certified clients, or autonomous predictive routing.
+Delivered in `1.0.0-rc.5`: threat model, contribution/certification process,
+loopback honesty. External PRs remain closed.
 
-### RC5 — Freeze (this release)
+### 1.0.0-rc.6 — Standards & Release Evidence (this candidate)
 
-Delivered in `1.0.0-rc.5`:
+Must-have before stable. No new autonomous authority.
 
-- `docs/THREAT_MODEL.md` with enforced vs not-enforced controls, linked from `SECURITY.md`;
-- regression coverage for path/secret/Git/certified-client/timeout/loopback/Host/JSON POST limits without rewriting those engines;
-- `CONTRIBUTING.md` for maintainer development and certified-provider process; external pull requests remain closed on purpose;
-- Studio Help states that loopback is not a full security boundary;
-- public status **Public RC · Freeze**. Schema remains v6.
+- MCP `2026-07-28` compatibility with backwards compatibility for
+  `2025-11-25` and `2025-06-18`
+- unified executable release gate (`scripts/release_gate.py`) shared by CI,
+  `scripts/build_release.py` and local preparation
+- live `MATRIX_1.0` runner with explicit trials (no silent retry-to-pass)
+- release eval corpus (Tier A provider certification + Tier B quality cases)
+- distribution-name decision (`dynosai` on PyPI when published; import stays
+  `dynosai_flow`)
+- supported install contract: at least one zero-source production path with
+  clean install, upgrade, rollback/uninstall and integrity evidence
+- documentation accuracy (`docs/CODE_QUALITY.md` generated from the tree)
+- Agent Plugins ADR (no marketplace, no DynosAI Pack format)
+- schema remains v6; 31 frozen MCP names; Predictive Router stays shadow-only
 
-This RC still does **not** contain a real 1.0 live provider matrix, a PyPI package, OS sandbox, extra certified clients, autonomous predictive routing, or an open external-PR model.
+### 1.0.0-rc.7 — Contingency only
 
-### Remaining 1.0 exit criteria
+No features are planned. RC7 exists only if RC6 live certification discovers
+defects that require a second candidate. If RC6 is completely green, skip
+directly to stable.
 
-- desktop installer packages beyond the verified local wheel;
-- published provider/capability certification matrix from real Codex/Cursor greenfield and brownfield runs;
-- mature Eval Registry and release-quality evidence;
-- an external contribution and extension model, if and when the project opens pull requests. Remaining on `1.0.0rc5` with PRs closed is an honest freeze, not an unfinished threat model.
+### 1.0.0 — Stable Governance Core
+
+A promotion with **minimal delta** from the accepted RC. No features during
+promotion. Stable requires:
+
+- release gate green
+- website gate green if the site changed
+- installed-wheel / install smoke green
+- provider Tier-A matrix green
+- no dishonest or `not_run` stable claims
+- current MCP compatibility decision complete
+- threat model still honest
+- clean upgrade path
+- release quality evidence
+- all public version/status surfaces coherent
+
+## 1.1 — Enforced Secure Runtimes
+
+Move important controls from logical decisions to real enforcement. Design a
+stable runtime backend interface, for example:
+
+```text
+ExecutionRuntime
+    LocalExecutionRuntime
+    SandboxedLocalRuntime
+    OpenShellRuntime
+    ContainerRuntime
+```
+
+Investigate existing implementations before building a sandbox. Needs:
+filesystem policy enforcement, network enforcement, credential brokering,
+process-tree policy, timeout/resource ceilings, runtime capability manifest,
+auditable policy decisions, no silent fallback from a strict runtime, and a
+common conformance suite per backend.
+
+Stay local-first. Do not make an external dependency mandatory for Core.
+
+## 1.2 — Portable Agent Plugins + DynosAI Governance Extensions
+
+Implement Agent Plugins compatibility (`plugin.json`, `skills/`, `mcp.json`,
+`extensions.com.dynosai`). First iteration: local directory and Git URL /
+immutable revision. No marketplace.
+
+Capabilities: local discovery, manifest validation, path containment, skills,
+MCP config, namespaced DynosAI extension, host-owned enable/disable, trust
+metadata, hashes/versioning, project compatibility, eval fixtures,
+validators/policies. A plugin must not add authority silently. Each
+plugin/skill must be measurable enabled vs disabled for quality, tokens, cost,
+latency and regressions.
+
+## 1.3 — ACP Governance Gateway
+
+Investigate DynosAI as an agent endpoint/governance layer consumed by ACP
+clients:
+
+```text
+IDE / Client → ACP → DynosAI governance → underlying coding agent
+```
+
+Investigate the current ACP specification, registry, capability negotiation,
+session lifecycle, blocking user interactions, permissions and
+provider-native extensions. Do not certify a client merely because it
+connects. Each new client needs a capability manifest, conformance,
+greenfield, brownfield, refusal, human-gate and recovery tests.
+
+## 1.4 — Long-Horizon Governed Operations
+
+Do not build a generic swarm. Use provider-native workers/subagents where they
+exist. DynosAI governs work, scope, lease, budget, context, evidence,
+checkpoint, validation, human gate, fan-in and merge authority.
+
+Add when safe: durable background queue, pause/resume, checkpoints, provider
+quota pause state, budget/deadline ceilings, parked `needs_review` jobs,
+scheduled maintenance, CI-triggered governed work. Background/autonomous must
+never mean auto-merge.
+
+## 1.5 — Eval/Data Flywheel & Adaptive Routing
+
+```text
+real failure → trace → bounded eval → reproduce → compare
+→ recommendation → shadow → validated promotion
+```
+
+Expand failure attribution. Add eval versioning, environment fingerprints,
+multiple trials, confidence intervals where useful, broken/ambiguous-case
+review, provider/model/skill/runtime comparisons, cost per successful
+governed change, latency, human-intervention rate, false-completion rate and
+scope-violation rate.
+
+Predictive Router: shadow → recommendation only → opt-in bounded automatic
+routing. Never shadow → full autonomous authority without evidence. No silent
+quality downshift to save cost.
+
+## Continuous architecture health
+
+From 1.0, avoid accumulating large monolithic controllers. Do not impose a
+mass formatter/refactor. Create characterization tests around each hotspot
+before extracting services. Approximate future order: `engine.py`,
+`acceptance.py`, `mcp.py`, `token_usage.py`, `debug.py`, `cli.py`. Extract
+real conceptual boundaries (protocol adapters, certification evidence,
+execution runtime, eval services, release services, telemetry), not functions
+whose only purpose is a lower LOC count.
 
 ## Product principles
 

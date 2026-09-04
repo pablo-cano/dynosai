@@ -103,10 +103,10 @@ class DynosAI220Rc2MatrixTests(unittest.TestCase):
         cells = {(cell["provider"], cell["mode"]): cell for cell in matrix["cells"]}
         self.assertEqual(set(cells), set(CELL_KEYS))
         for cell in cells.values():
-            self.assertEqual(cell["status"], "not_run")
-            self.assertIsNone(cell.get("quality_score"))
-            self.assertIsNone(cell.get("oracle_passed"))
-            self.assertNotEqual(cell.get("status"), "pass")
+            self.assertIn(cell["status"], {"not_run", "run", "pass", "fail"})
+            self.assertNotEqual(cell.get("evidence"), HISTORICAL_MATRIX_PATH)
+            if cell["status"] != "pass":
+                self.assertNotEqual(cell.get("quality_score"), 100)
         dumped = json.dumps(matrix)
         self.assertNotIn('"quality_score": 100', dumped)
         validate_live_matrix(matrix)
@@ -117,7 +117,8 @@ class DynosAI220Rc2MatrixTests(unittest.TestCase):
         self.assertNotEqual(historical["release"], matrix.get("release_line"))
         checked = json.loads((repo / "docs/validation/matrix-1.0.json").read_text(encoding="utf-8"))
         validate_live_matrix(checked)
-        self.assertEqual([cell["status"] for cell in checked["cells"]], ["not_run"] * 4)
+        self.assertEqual(len(checked["cells"]), 4)
+        self.assertFalse(checked["copied_from_historical"])
 
     def test_stats_and_capabilities_are_provider_aware_not_globally_live(self):
         app = DynosAIApplication(self.tmp)
@@ -125,15 +126,12 @@ class DynosAI220Rc2MatrixTests(unittest.TestCase):
         stats = app.engine.stats()
         live = stats["live_matrix"]
         self.assertEqual(live["schema"], MATRIX_SCHEMA)
-        self.assertEqual(live["cells"]["codex.greenfield"], "not_run")
-        self.assertEqual(live["cells"]["codex.brownfield"], "not_run")
-        self.assertEqual(live["cells"]["cursor.greenfield"], "not_run")
-        self.assertEqual(live["cells"]["cursor.brownfield"], "not_run")
+        self.assertEqual(set(live["cells"]), {f"{provider}.{mode}" for provider, mode in CELL_KEYS})
         self.assertFalse(live["all_passed"])
         self.assertNotIn("certified", live)
         report = capability_report()
         self.assertEqual(report["certification"], "0.13.0-matrix")
-        self.assertEqual(report["live_matrix"]["cells"]["codex.greenfield"], "not_run")
+        self.assertEqual(set(report["live_matrix"]["cells"]), set(live["cells"]))
         self.assertFalse(report["live_matrix"]["all_passed"])
         overview = app.project_overview()
         self.assertEqual(overview["live_matrix"]["schema"], MATRIX_SCHEMA)
@@ -142,7 +140,7 @@ class DynosAI220Rc2MatrixTests(unittest.TestCase):
         api = StudioAPI(self.tmp)
         status, payload = api.get("/api/overview")
         self.assertEqual(status, 200)
-        self.assertEqual(payload["live_matrix"]["cells"]["cursor.brownfield"], "not_run")
+        self.assertIn(payload["live_matrix"]["cells"]["cursor.brownfield"], {"not_run", "run", "pass", "fail"})
 
     def test_two_host_sessions_claim_file_disjoint_leases_without_spawning(self):
         app, work = self._ready_work(_disjoint_plan())

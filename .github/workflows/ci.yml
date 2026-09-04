@@ -27,17 +27,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[dev]"
 
-      - name: Repository quality checks
-        run: |
-          python -m compileall -q src/dynosai_flow
-          python scripts/check_repository.py
-
-      - name: Stable regression tests
-        run: |
-          # Stable regression tests. Historical aggregate suites stay in the
-          # repository and are excluded by tests/conftest.py unless
-          # DYNOSAI_HISTORICAL_TESTS=1.
-          python -m pytest
+      - name: Release gate
+        run: python scripts/release_gate.py
+        # compileall + repository check + Studio/package sync + stable pytest.
+        # Historical aggregate suites stay excluded unless DYNOSAI_HISTORICAL_TESTS=1.
 
   installed-wheel:
     name: Installed wheel (${{ matrix.os }})
