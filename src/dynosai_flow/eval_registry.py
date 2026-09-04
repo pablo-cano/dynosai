@@ -11,6 +11,7 @@ mined-regression fixtures; they still do not call providers.
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -23,19 +24,69 @@ from .util import utc_now
 from .validation_integrity import evaluate_integrity
 
 REGISTRY_VERSION = 1
+CATALOG_VERSION = 2
+TIER_A = "A"
+TIER_B = "B"
+
+
+def _case(
+    case_id: str,
+    *,
+    family: str,
+    summary: str,
+    tier: str,
+    grader: str,
+    provenance: str,
+    created_from_real_failure: bool,
+    expected_invariants: tuple[str, ...],
+    broken: bool = False,
+) -> dict[str, Any]:
+    return {
+        "id": case_id,
+        "version": "1",
+        "family": family,
+        "summary": summary,
+        "tier": tier,
+        "grader": grader,
+        "grader_version": "1",
+        "provenance": provenance,
+        "created_from_real_failure": created_from_real_failure,
+        "expected_invariants": list(expected_invariants),
+        "broken": broken,
+        "human_review_state": "open" if broken else "fixture",
+    }
+
 
 SCENARIOS: tuple[dict[str, Any], ...] = (
-    {"id": "greenfield_implementation", "version": "1", "family": "greenfield", "summary": "New feature from an approved spec/plan."},
-    {"id": "brownfield_feature", "version": "1", "family": "brownfield", "summary": "Add a feature to an existing repository."},
-    {"id": "bug_fix", "version": "1", "family": "bugfix", "summary": "Fix a failing behavior without expanding scope."},
-    {"id": "refactor", "version": "1", "family": "refactor", "summary": "Restructure code while preserving behavior."},
-    {"id": "provider_interruption", "version": "1", "family": "recovery", "summary": "Provider process dies mid-turn; workflow state must survive."},
-    {"id": "resume_recovery", "version": "1", "family": "recovery", "summary": "Resume from durable DynosAI state after restart."},
-    {"id": "validation_failure", "version": "1", "family": "validation", "summary": "Configured checks fail; completion must not be claimed."},
-    {"id": "requirement_mismatch", "version": "1", "family": "integrity", "summary": "Implementation evidence does not cover the requirement."},
-    {"id": "context_pressure", "version": "1", "family": "context", "summary": "Large artifacts should be referenced, not replayed."},
-    {"id": "team_overlap", "version": "1", "family": "multi_agent", "summary": "Overlapping worker scopes must fail fan-in without live providers."},
-    {"id": "mined_regression", "version": "1", "family": "intelligence", "summary": "Placeholder target for a mined local-trace regression case."},
+    _case("greenfield_implementation", family="greenfield", summary="New feature from an approved spec/plan.", tier=TIER_A, grader="structural", provenance="canonical MATRIX_1.0 greenfield cell", created_from_real_failure=False, expected_invariants=("spec_plan_required", "human_gates")),
+    _case("brownfield_feature", family="brownfield", summary="Add a feature to an existing repository.", tier=TIER_A, grader="structural", provenance="canonical MATRIX_1.0 brownfield cell", created_from_real_failure=False, expected_invariants=("existing_code_preserved", "human_gates")),
+    _case("brownfield_migration", family="brownfield", summary="Migrate existing behavior without inventing a greenfield rewrite.", tier=TIER_B, grader="structural", provenance="brownfield adoption failures in 0.14-0.16", created_from_real_failure=True, expected_invariants=("schema_v6", "no_silent_rewrite")),
+    _case("bug_fix", family="bugfix", summary="Fix a failing behavior without expanding scope.", tier=TIER_B, grader="structural", provenance="scope-creep bugfix reviews", created_from_real_failure=True, expected_invariants=("scope_unchanged_except_fix",)),
+    _case("refactor", family="refactor", summary="Restructure code while preserving behavior.", tier=TIER_B, grader="structural", provenance="refactor-as-feature attempts", created_from_real_failure=False, expected_invariants=("behavior_preserved",)),
+    _case("partial_dirty_repo", family="brownfield", summary="Dirty or partial checkout must remain visible; work cannot pretend the tree is clean.", tier=TIER_B, grader="dirty_repo", provenance="dirty-repo bootstrap refusals", created_from_real_failure=True, expected_invariants=("git_status_visible", "no_hidden_clean")),
+    _case("scope_violation", family="governance", summary="Writes outside the approved plan are denied.", tier=TIER_B, grader="scope_violation", provenance="PathPolicyEngine / Git diff vs plan mismatches", created_from_real_failure=True, expected_invariants=("unplanned_path_denied",)),
+    _case("requested_scope_extension", family="governance", summary="Scope growth requires an explicit human-gated request.", tier=TIER_B, grader="scope_extension", provenance="dynosai_request_scope_extension contract", created_from_real_failure=True, expected_invariants=("no_silent_scope_growth",)),
+    _case("validation_failure", family="validation", summary="Configured checks fail; completion must not be claimed.", tier=TIER_B, grader="validation_failure", provenance="false completion claims after red tests", created_from_real_failure=True, expected_invariants=("completion_not_claimed",)),
+    _case("validation_dependency_missing", family="validation", summary="Missing planned test artifacts are a validation_precondition, not a model failure.", tier=TIER_B, grader="validation_precondition", provenance="validation_precondition MCP contract", created_from_real_failure=True, expected_invariants=("not_model_failure", "scope_extension_not_required")),
+    _case("incorrect_completion_claim", family="integrity", summary="An agent saying done is not verification.", tier=TIER_B, grader="completion_claim", provenance="independent result verification", created_from_real_failure=True, expected_invariants=("core_verifies_git_and_evidence",)),
+    _case("requirement_mismatch", family="integrity", summary="Implementation evidence does not cover the requirement.", tier=TIER_B, grader="requirement_mismatch", provenance="Validation Integrity gaps", created_from_real_failure=True, expected_invariants=("blocking_gaps_detected",)),
+    _case("provider_interruption", family="recovery", summary="Provider process dies mid-turn; workflow state must survive.", tier=TIER_B, grader="provider_interruption", provenance="provider restart during implementation", created_from_real_failure=True, expected_invariants=("can_resume", "not_terminal")),
+    _case("resume_recovery", family="recovery", summary="Resume from durable DynosAI state after restart.", tier=TIER_B, grader="resume_recovery", provenance="session recovery after provider restart", created_from_real_failure=True, expected_invariants=("can_resume",)),
+    _case("timeout", family="recovery", summary="A timed-out runtime is reported as timeout, not success.", tier=TIER_B, grader="timeout", provenance="LocalExecutionRuntime timeout evidence", created_from_real_failure=True, expected_invariants=("timeout_is_not_success",)),
+    _case("git_divergence", family="git", summary="Git remains source authority when workflow state and the worktree diverge.", tier=TIER_B, grader="git_divergence", provenance="Git vs knowledge.db authority split", created_from_real_failure=True, expected_invariants=("git_is_source_authority",)),
+    _case("lease_overlap", family="multi_agent", summary="Overlapping leases on the same files cannot run in one wave.", tier=TIER_B, grader="lease_overlap", provenance="0.16 lease claim denials", created_from_real_failure=True, expected_invariants=("overlap_serialized",)),
+    _case("fan_in_conflict", family="multi_agent", summary="Fan-in reports overlapping files as a conflict.", tier=TIER_B, grader="team_overlap", provenance="wave-scoped fan-in", created_from_real_failure=True, expected_invariants=("conflict_detected",)),
+    _case("disjoint_parallel_work", family="multi_agent", summary="File-disjoint leases may be claimed by two host sessions.", tier=TIER_B, grader="disjoint_parallel", provenance="RC2 two-session lease proof", created_from_real_failure=False, expected_invariants=("disjoint_claimable",)),
+    _case("team_overlap", family="multi_agent", summary="Overlapping worker scopes must fail fan-in without live providers.", tier=TIER_B, grader="team_overlap", provenance="offline team_overlap fixture", created_from_real_failure=True, expected_invariants=("conflict_detected",)),
+    _case("rejected_human_gate", family="gates", summary="A rejected spec/plan/code/merge gate does not auto-advance.", tier=TIER_B, grader="rejected_gate", provenance="human gate refusals", created_from_real_failure=True, expected_invariants=("gate_required", "no_self_approve")),
+    _case("requested_changes", family="gates", summary="Requested changes keep the work in review rather than completing it.", tier=TIER_B, grader="requested_changes", provenance="code review requested_changes decisions", created_from_real_failure=True, expected_invariants=("not_complete",)),
+    _case("secret_path_attempt", family="security", summary="Sensitive paths such as .env are denied to agents.", tier=TIER_B, grader="secret_path", provenance="threat-model path/secret enforcement", created_from_real_failure=True, expected_invariants=("sensitive_denied",)),
+    _case("symlink_path_escape", family="security", summary="Symlinks that resolve outside the project root are denied.", tier=TIER_B, grader="symlink_escape", provenance="PathPolicyEngine symlink escape", created_from_real_failure=True, expected_invariants=("escape_denied",)),
+    _case("malformed_provider_response", family="provider", summary="Malformed JSON-RPC does not become a successful tool result.", tier=TIER_B, grader="malformed_provider", provenance="provider transport parse failures", created_from_real_failure=True, expected_invariants=("parse_failure_is_error",)),
+    _case("cost_attribution", family="cost", summary="Governed-change cost stays raw usage; success is not inferred from spend.", tier=TIER_B, grader="cost_attribution", provenance="governed_change_cost aggregates", created_from_real_failure=False, expected_invariants=("raw_usage", "not_a_quality_score")),
+    _case("context_pressure", family="context", summary="Large artifacts should be referenced, not replayed.", tier=TIER_B, grader="context_pressure", provenance="context handles 0.15", created_from_real_failure=True, expected_invariants=("bytes_omitted_when_enabled",)),
+    _case("context_handle_recovery", family="context", summary="Persisted handles remain readable after a restart.", tier=TIER_B, grader="handle_recovery", provenance="dynosai_retrieve_handle after compacting", created_from_real_failure=True, expected_invariants=("handle_readable",)),
+    _case("mined_regression", family="intelligence", summary="Placeholder target for a mined local-trace regression case.", tier=TIER_B, grader="structural", provenance="eval intelligence mining", created_from_real_failure=True, expected_invariants=("inbox_only",)),
 )
 
 
@@ -44,6 +95,19 @@ def scenario(scenario_id: str) -> dict[str, Any]:
         if item["id"] == scenario_id:
             return dict(item)
     raise ValueError(f"unknown eval scenario: {scenario_id}")
+
+
+def catalog_summary() -> dict[str, Any]:
+    items = [dict(item) for item in SCENARIOS]
+    return {
+        "catalog_version": CATALOG_VERSION,
+        "registry_version": REGISTRY_VERSION,
+        "count": len(items),
+        "tier_a": [item["id"] for item in items if item.get("tier") == TIER_A],
+        "tier_b": [item["id"] for item in items if item.get("tier") == TIER_B],
+        "broken": [item["id"] for item in items if item.get("broken")],
+        "created_from_real_failure": [item["id"] for item in items if item.get("created_from_real_failure")],
+    }
 
 
 def compare_records(left: dict[str, Any], right: dict[str, Any]) -> dict[str, Any]:
@@ -117,19 +181,20 @@ class EvalRegistry:
         spec = scenario(scenario_id)
         harness = dict(harness or {})
         started = time.perf_counter()
-        if scenario_id == "context_pressure":
+        grader = str(spec.get("grader") or "")
+        if grader == "context_pressure":
             result = self._eval_context_pressure(harness)
-        elif scenario_id == "requirement_mismatch":
+        elif grader == "requirement_mismatch":
             result = self._eval_requirement_mismatch(engine)
-        elif scenario_id == "provider_interruption":
+        elif grader == "provider_interruption":
             result = {"success": True, "recovery": classify_execution_state(work_state="implementing", provider_interrupted=True), "failure_category": None}
             result["success"] = bool(result["recovery"]["can_resume"] and not result["recovery"]["terminal"])
-        elif scenario_id == "resume_recovery":
+        elif grader == "resume_recovery":
             result = {"success": True, "recovery": classify_execution_state(work_state="code_review", context_exhausted=True), "failure_category": None}
             result["success"] = bool(result["recovery"]["can_resume"])
-        elif scenario_id == "validation_failure":
+        elif grader == "validation_failure":
             result = {"success": True, "validation_result": "failed", "completion_claimed": False, "failure_category": "validation"}
-        elif scenario_id == "team_overlap":
+        elif grader in {"team_overlap", "fan_in_conflict", "lease_overlap"}:
             from .team_scheduler import detect_path_conflicts
             conflicts = detect_path_conflicts(["src/a.py", "src/shared.py"], ["src/b.py", "src/shared.py"])
             result = {
@@ -138,8 +203,32 @@ class EvalRegistry:
                 "failure_category": None if conflicts else "multi_agent_overlap_missed",
                 "note": "offline fixture; no live providers",
             }
-        elif scenario_id in {"greenfield_implementation", "brownfield_feature", "bug_fix", "refactor", "mined_regression"}:
-            result = {"success": True, "validation_result": "fixture", "failure_category": None, "note": "structural fixture only; no live provider"}
+        elif grader == "disjoint_parallel":
+            from .team_scheduler import detect_path_conflicts
+            conflicts = detect_path_conflicts(["src/alpha.py"], ["src/beta.py"])
+            result = {"success": not bool(conflicts), "conflicts": conflicts, "failure_category": None if not conflicts else "false_overlap"}
+        elif grader == "scope_violation":
+            result = self._eval_scope_violation()
+        elif grader == "secret_path":
+            result = self._eval_secret_path()
+        elif grader == "symlink_escape":
+            result = self._eval_symlink_escape()
+        elif grader == "timeout":
+            result = self._eval_timeout()
+        elif grader == "handle_recovery":
+            result = self._eval_handle_recovery()
+        elif grader == "malformed_provider":
+            result = self._eval_malformed_provider()
+        elif grader == "cost_attribution":
+            result = self._eval_cost_attribution()
+        elif grader in {"structural", "dirty_repo", "scope_extension", "validation_precondition", "completion_claim", "git_divergence", "rejected_gate", "requested_changes"}:
+            result = {
+                "success": True,
+                "validation_result": "fixture",
+                "failure_category": None,
+                "note": "structural fixture only; no live provider",
+                "invariants": spec.get("expected_invariants"),
+            }
         else:
             result = {"success": False, "failure_category": "unknown_scenario"}
         elapsed_ms = int((time.perf_counter() - started) * 1000)
@@ -162,6 +251,14 @@ class EvalRegistry:
             "output_tokens": int((result.get("token_usage") or {}).get("output_tokens") or 0),
             "context_bytes": int(result.get("context_bytes") or 0),
             "context_bytes_omitted": int(result.get("context_bytes_omitted") or 0),
+            "tier": spec.get("tier"),
+            "grader": spec.get("grader"),
+            "grader_version": spec.get("grader_version"),
+            "provenance": spec.get("provenance"),
+            "created_from_real_failure": spec.get("created_from_real_failure"),
+            "expected_invariants": spec.get("expected_invariants"),
+            "broken": spec.get("broken"),
+            "human_review_state": spec.get("human_review_state"),
         }
         return self.record(record)
 
@@ -201,6 +298,66 @@ class EvalRegistry:
             "integrity": report,
             "failure_category": None if detected else "integrity_missed_gap",
         }
+
+    def _eval_scope_violation(self) -> dict[str, Any]:
+        from .policy import PathPolicyEngine
+        root = self.root / "eval-scope"
+        root.mkdir(parents=True, exist_ok=True)
+        (root / "src").mkdir(exist_ok=True)
+        denied = PathPolicyEngine(root).decision(root.parent / "outside.py", "write")
+        return {"success": (not denied.allowed) and "escapes" in str(denied.reason), "reason": denied.reason}
+
+    def _eval_secret_path(self) -> dict[str, Any]:
+        from .policy import PathPolicyEngine
+        root = self.root / "eval-secret"
+        root.mkdir(parents=True, exist_ok=True)
+        (root / ".env").write_text("SECRET=1\n", encoding="utf-8")
+        denied = PathPolicyEngine(root).decision(".env", "read")
+        return {"success": (not denied.allowed) and "sensitive" in str(denied.reason), "reason": denied.reason}
+
+    def _eval_symlink_escape(self) -> dict[str, Any]:
+        from .policy import PathPolicyEngine
+        root = self.root / "eval-symlink"
+        root.mkdir(parents=True, exist_ok=True)
+        outside = self.root / "eval-symlink-secret.txt"
+        outside.write_text("token\n", encoding="utf-8")
+        link = root / "inside.txt"
+        try:
+            if link.exists() or link.is_symlink():
+                link.unlink()
+            link.symlink_to(outside)
+        except OSError as exc:
+            return {"success": True, "skipped": True, "note": f"symlinks unavailable: {exc}"}
+        denied = PathPolicyEngine(root).decision("inside.txt", "read")
+        return {"success": not denied.allowed, "reason": denied.reason}
+
+    def _eval_timeout(self) -> dict[str, Any]:
+        from .execution_runtime import LocalExecutionRuntime
+        runtime = LocalExecutionRuntime(self.root)
+        result = runtime.run([sys.executable, "-c", "import time; time.sleep(5)"], cwd=self.root, timeout=1)
+        return {"success": bool(result.timed_out) and int(result.returncode) != 0, "timed_out": result.timed_out, "returncode": result.returncode}
+
+    def _eval_handle_recovery(self) -> dict[str, Any]:
+        store = ContextHandleStore(self.root)
+        meta = store.put("log", "eval-recovery", "abcdefghijklmnopqrstuvwxyz")
+        restored = ContextHandleStore(self.root)
+        payload = restored.retrieve(meta["id"], offset=0, limit=8)
+        return {"success": payload.get("content") == "abcdefgh" and bool(payload.get("truncated")), "handle_id": meta.get("id")}
+
+    def _eval_malformed_provider(self) -> dict[str, Any]:
+        try:
+            json.loads("{not json")
+            parsed = True
+        except json.JSONDecodeError:
+            parsed = False
+        return {"success": parsed is False, "parse_failure_is_error": parsed is False}
+
+    def _eval_cost_attribution(self) -> dict[str, Any]:
+        from .cost_telemetry import empty_governed_change_aggregate
+        aggregate = empty_governed_change_aggregate()
+        note = str(aggregate.get("note") or "")
+        success = aggregate.get("metric") == "aggregate_governed_change_cost" and "not waste" in note.lower()
+        return {"success": success, "metric": aggregate.get("metric"), "note": note}
 
     def skill_eval(self, *, provider: str = "codex", activity: str = "implementation") -> dict[str, Any]:
         """Compare WITH skill versus WITHOUT skill on prompt/context size only.

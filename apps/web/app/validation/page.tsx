@@ -6,18 +6,15 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { liveMatrixHeadline, loadLiveMatrixCells } from "@/lib/matrix";
+import { siteConfig } from "@/lib/site";
+
+const liveCells = loadLiveMatrixCells();
 
 export const metadata: Metadata = {
   title: "Validation",
-  description: "MATRIX_1.0 live certification cells are not_run. Historical 0.13 Codex/Cursor Green/Brown evidence remains historical and is not copied into 1.0.",
+  description: `MATRIX_1.0 live cells: ${liveCells.map((cell) => `${cell.provider}.${cell.mode}=${cell.status}`).join(", ")}. Historical 0.13 evidence remains historical.`,
 };
-
-const liveMatrix = [
-  ["Codex", "Greenfield", "not_run"],
-  ["Codex", "Brownfield", "not_run"],
-  ["Cursor", "Greenfield", "not_run"],
-  ["Cursor", "Brownfield", "not_run"],
-];
 
 const historical = [
   ["Codex", "Greenfield · Fibonacci", "PASS", "100", "8/8"],
@@ -30,16 +27,16 @@ export default function ValidationPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 lg:px-8">
       <div className="max-w-3xl">
-        <Badge>Public RC · Freeze</Badge>
-        <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">1.0 live cells stay not_run until real provider runs exist.</h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI 1.0.0-rc.5 still publishes MATRIX_1.0 with four provider-aware cells. None of them copy 0.13 Quality 100 scores. The historical table further down is the 0.13.0 core baseline, not 1.0 live proof.</p>
+        <Badge>{siteConfig.status}</Badge>
+        <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">{liveMatrixHeadline(liveCells)}</h1>
+        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI {siteConfig.version} publishes MATRIX_1.0 with four provider-aware cells. None of them copy 0.13 Quality 100 scores. A cell is pass only after a real trial. The historical table further down is the 0.13.0 core baseline, not 1.0 live proof.</p>
       </div>
 
       <h2 className="mt-12 text-2xl font-bold tracking-tight">MATRIX_1.0 live certification</h2>
       <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
         <table className="w-full min-w-[520px] text-sm">
           <thead className="bg-muted text-left"><tr><th className="p-4">Provider</th><th className="p-4">Mode</th><th className="p-4">Status</th></tr></thead>
-          <tbody>{liveMatrix.map((row) => <tr key={`${row[0]}-${row[1]}`} className="border-t border-border">{row.map((value) => <td key={value} className="p-4">{value}</td>)}</tr>)}</tbody>
+          <tbody>{liveCells.map((cell) => <tr key={`${cell.provider}-${cell.mode}`} className="border-t border-border"><td className="p-4">{cell.provider}</td><td className="p-4">{cell.mode}</td><td className="p-4">{cell.status}</td></tr>)}</tbody>
         </table>
       </div>
 
@@ -61,16 +58,16 @@ export default function ValidationPage() {
         <Card>
           <CardHeader><CardTitle>What the matrix proves</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-            <p>Both supported providers can complete governed greenfield work with the current governed workflow.</p>
-            <p>Both can preserve and extend existing behavior in the brownfield scenario while passing independent Oracle checks.</p>
-            <p>Codex uses structured-primary MCP transport while Cursor uses the compatibility transport required by its CLI stream.</p>
+            <p>The historical 0.13.0 matrix proved both supported providers could complete governed greenfield work with the then-current workflow.</p>
+            <p>Both preserved and extended existing behavior in the brownfield scenario while passing independent Oracle checks.</p>
+            <p>Codex used structured-primary MCP transport while Cursor used the compatibility transport required by its CLI stream. That is not 1.0 live proof.</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader><CardTitle>What it does not prove</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
             <p>It is not a universal guarantee across every language, repository size, CI system, security policy, or provider version.</p>
-            <p>DynosAI 1.0.0-rc.5 publishes MATRIX_1.0 placeholders plus freeze evidence and still benefits from real-world feedback. It is not a production-ready 1.0 claim.</p>
+            <p>DynosAI {siteConfig.version} records MATRIX_1.0 from real trials or leaves cells honestly not_run. Historical 0.13 evidence is not copied. It is not a production-ready 1.0 claim.</p>
             <p>The Predictive Router remains in shadow mode even though the historical sample size now crosses its quantitative authority gates.</p>
           </CardContent>
         </Card>

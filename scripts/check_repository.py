@@ -121,6 +121,7 @@ def main() -> int:
 
     forbidden_prefixes = (
         "src/dynosai_flow.egg-info/",
+        "src/dynosai.egg-info/",
         "dist/",
         "build/",
     )

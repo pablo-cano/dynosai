@@ -11,9 +11,11 @@ from typing import Any
 
 from .version import DISPLAY_VERSION, __version__
 
+from .mcp_protocol import CURRENT_PROTOCOL
+
 PREFIX_SCHEMA = "PROMPT_PREFIX_1.0"
 PREFIX_FILE = Path(".dynosai") / "runtime" / "prompt-prefix.json"
-DEFAULT_PROTOCOL = "2025-11-25"
+DEFAULT_PROTOCOL = CURRENT_PROTOCOL
 
 
 def build_authority_prefix(*, schema_version: int = 6, mcp_tool_count: int = 31, protocol: str = DEFAULT_PROTOCOL) -> dict[str, Any]:

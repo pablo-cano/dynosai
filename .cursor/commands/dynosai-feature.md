@@ -1,0 +1,1 @@
+Inicia una feature dentro de esta misma sesión usando dynosai_work action=start. Sigue dynosai_get_next_action y usa MCP Elicitation para todas las decisiones humanas; no cierres ni relances el proveedor.

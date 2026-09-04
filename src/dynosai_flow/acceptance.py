@@ -305,7 +305,7 @@ Deterministic user decisions for this acceptance fixture (register them as decis
 {decisions}
 
 Required flow, in this SAME provider session and SAME workspace:
-1. Call dynosai_project action=initialize for the current directory with language={scenario['language']} and test_command={json.dumps(scenario['test_command'])}. Let DynosAI auto-detect greenfield/brownfield.
+1. Call dynosai_project action=initialize for the current directory with language={scenario['language']} and test_command={json.dumps(scenario['test_command'])}. Let DynosAI auto-detect greenfield/brownfield. If dynosai_get_next_action is consulted first and returns work=null with a bootstrap contract, call that contract.tool with contract.arguments immediately; do not explore the host filesystem or external skills first.
 2. Call dynosai_work action=start with the exact business goal above and workspace_strategy=interactive_branch.
 3. Register ALL deterministic decisions above in ONE dynosai_register_decision call using its `decisions` array.
 4. Use dynosai_get_next_action with execute=true as the orchestration primitive. DynosAI will auto-advance deterministic transitions but will never auto-approve human gates. Build and submit a complete structured spec when requested. If DynosAI returns action_snapshot.unchanged=true or a contract ref with unchanged=true, reuse the previously delivered authoritative action instead of polling again until task/repository state changes.
@@ -424,7 +424,7 @@ class CursorAcceptanceDriver:
         command += ["-p","--force","--approve-mcps","--output-format","stream-json",prompt]
         started=time.monotonic()
         stdout_path=logs/"provider-stream.jsonl"; stderr_path=logs/"provider-stderr.log"
-        proc=subprocess.Popen(executable_command(command[0], *command[1:]),cwd=project,env=env,text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=1)
+        proc=subprocess.Popen(executable_command(command[0], *command[1:]),cwd=project,env=env,text=True,encoding="utf-8",errors="replace",stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=1)
         stdout_lines=0; stderr_lines=0; observed=None; last_progress=time.monotonic(); last_heartbeat=started; termination_reason=None
         lock=threading.Lock(); usage_pending={"input_chars":0,"output_chars":0,"reasoning_chars":0,"last_flush":time.monotonic()}
         def _flush_usage_estimate(force:bool=False):
@@ -632,7 +632,7 @@ class CodexAppServerDriver:
         if logger: env["DYNOSAI_ACCEPTANCE_PROCESS_TRACE_MIRROR"]=str(logger.paths.root/"mcp-activity.jsonl")
         if logger:
             logger.emit("provider_launch",phase="provider",provider="codex",message="launching Codex app-server",model=(model_route.model if model_route else None))
-        proc=subprocess.Popen(executable_command(self.executable,"app-server","--listen","stdio://"),cwd=project,env=env,text=True,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=1)
+        proc=subprocess.Popen(executable_command(self.executable,"app-server","--listen","stdio://"),cwd=project,env=env,text=True,encoding="utf-8",errors="strict",stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=1)
         usage_stop=threading.Event(); usage_thread=None
         if usage:
             codex_home=Path(managed.root)/"home"

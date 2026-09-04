@@ -204,8 +204,8 @@ class DynosAI240Rc4InstallationTests(unittest.TestCase):
         names = {str(item["name"]) for item in [*TOOLS, *LEGACY_TOOLS]}
         self.assertEqual(len(names), 31)
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
-        self.assertEqual(__version__, "1.0.0rc5")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.5")
+        self.assertEqual(__version__, "1.0.0rc6")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.6")
         server = create_server(self.tmp, port=0)
         host, port = server.server_address[:2]
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -214,7 +214,7 @@ class DynosAI240Rc4InstallationTests(unittest.TestCase):
         with urllib.request.urlopen(f"http://{host}:{port}/api/health", timeout=3) as response:
             health = json.loads(response.read().decode("utf-8"))
         self.assertTrue(health["ok"])
-        self.assertEqual(health["version"], "1.0.0rc5")
+        self.assertEqual(health["version"], "1.0.0rc6")
         with urllib.request.urlopen(f"http://{host}:{port}/index.html", timeout=3) as response:
             page = response.read().decode("utf-8")
         self.assertIn('id="doctor"', page)

@@ -40,3 +40,13 @@ apps/web/.vercel/
 apps/web/.tsbuildinfo
 
 *.tsbuildinfo
+.dynosai/knowledge.db*
+.dynosai/state/events.jsonl
+.dynosai/backups/
+.dynosai/worktrees/
+.dynosai/runtime/
+.dynosai/generated/
+*.db-wal
+*.db-shm
+.env
+.env.*

@@ -48,6 +48,22 @@ add a hidden frozen list inside application code.
 `dynosai_stats` reports `mcp_surface_frozen: true` and `mcp_tool_count`. There
 is no extra MCP tool for this.
 
+## MCP protocol revisions
+
+DynosAI 1.0 speaks these MCP revisions on **stdio**:
+
+```text
+2026-07-28
+2025-11-25
+2025-06-18
+```
+
+`2026-07-28` is the current advertisement (`server/discover`, per-request
+`_meta`, deterministic `tools/list` ordering). Cursor ACP and Codex app-server
+keep the `2025-11-25` initialize handshake. Adding a revision must not drop a
+previous one in 1.0.x. Remote Streamable HTTP, Tasks and Apps are not part of
+the 1.0 contract. See `docs/adr/0003-mcp-protocol-eras.md`.
+
 ## Stable public CLI contract
 
 Only the documented user-facing commands are a 1.0 compatibility commitment.
@@ -221,11 +237,16 @@ Compatible 1.0.x releases will not:
 
 - Predictive model routing (shadow only; no autonomous spend).
 - Live 1.0 certification matrix cells until they are filled by real provider
-  runs (`MATRIX_1.0` exists; every cell is currently `not_run`).
+  runs (`MATRIX_1.0` exists; cells stay `not_run` or record an explicit trial.
+  Historical 0.13 scores are never copied forward).
 - Eval intelligence mining (optional harness feature; not a live-provider
   leaderboard).
 - Team parallelism beyond host-opened governed sessions.
-- Desktop installer packages beyond the verified local wheel (RC4 ships wheel checksums and installed-package CI; DynosAI is not on PyPI).
+- Public PyPI publication (the distribution name `dynosai` is reserved in
+  `docs/adr/0001-pypi-distribution-name.md`; this RC is not published).
+- Native desktop installer packages. The 1.0 install contract is a verified
+  wheel (pipx / uv tool / local checksum install) with upgrade, rollback and
+  uninstall.
 - OS-level network interception, Docker, VM and remote runtimes (not shipped).
 - Additional certified clients beyond Cursor ACP and Codex app-server.
 - Debug/acceptance CLI internals.
@@ -236,4 +257,6 @@ RCs can add evidence without moving the public surface. RC2 adds MATRIX_1.0
 placeholders and two-session lease proof; it still does not fill live cells.
 RC5 documents the threat model in `docs/THREAT_MODEL.md`. Loopback, Host
 checks and JSON POSTs are enforced and are not a full security boundary.
-OS-level network sandbox, Docker, VM and remote execution remain not shipped.
+RC6 adds MCP `2026-07-28` compatibility, a unified release gate, an eval
+corpus and the distribution-name ADR. OS-level network sandbox, Docker, VM
+and remote execution remain not shipped.

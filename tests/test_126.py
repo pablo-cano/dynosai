@@ -61,7 +61,7 @@ class ReleaseCandidate0126Tests(unittest.TestCase):
         return wid,prep
 
     def test_version_is_0126(self):
-        self.assertEqual(__version__,"1.0.0rc5")
+        self.assertEqual(__version__,"1.0.0rc6")
 
     def test_v5_duplicate_pending_gate_migrates_to_single_pending_idempotently(self):
         db=Database(self.root); db.initialize()

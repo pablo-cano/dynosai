@@ -2,7 +2,7 @@
 
 ## Versioning
 
-Pre-1.0 used semantic-style numbering. From 1.0 release candidates, Python/package versions follow PEP 440 (`1.0.0rc5`). Display surfaces may show `1.0.0-rc.5`.
+Pre-1.0 used semantic-style numbering. From 1.0 release candidates, Python/package versions follow PEP 440 (`1.0.0rc6`). Display surfaces may show `1.0.0-rc.6`.
 
 `1.0.0` remains reserved until the documented certification and installed-package gates are actually green. Remaining on `1.0.0rcN` is an honest successful outcome.
 
@@ -38,7 +38,13 @@ chore: prepare 0.13.1 release metadata
 
 ## Pull-request / release gate
 
-The supported release gate is one explicit policy shared by CI, `scripts/build_release.py` and local release preparation:
+The supported release gate is one executable shared by CI, `scripts/build_release.py` and local release preparation:
+
+```bash
+python scripts/release_gate.py
+```
+
+That is the only source of truth. It runs:
 
 ```bash
 python -m compileall -q src/dynosai_flow
@@ -76,7 +82,7 @@ git tag -a v0.19.0 9e4c69eaabb34b687e58d1b4eb9bc3091d42d58d -m "DynosAI 0.19.0"
 Future 1.0 candidates may use:
 
 ```bash
-git tag -a v1.0.0-rc.5 -m "DynosAI 1.0.0-rc.5"
+git tag -a v1.0.0-rc.6 -m "DynosAI 1.0.0-rc.6"
 ```
 
 Do not push tags or GitHub releases from an RC implementation task unless explicitly instructed.

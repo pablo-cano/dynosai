@@ -211,8 +211,8 @@ class DynosAI230Rc3EvalMaturityTests(unittest.TestCase):
         names = {str(item["name"]) for item in [*TOOLS, *LEGACY_TOOLS]}
         self.assertEqual(len(names), 31)
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
-        self.assertEqual(__version__, "1.0.0rc5")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.5")
+        self.assertEqual(__version__, "1.0.0rc6")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.6")
         html = resources.files("dynosai_flow.studio_assets").joinpath("index.html").read_text(encoding="utf-8")
         script = resources.files("dynosai_flow.studio_assets").joinpath("app.js").read_text(encoding="utf-8")
         i18n = resources.files("dynosai_flow.studio_assets").joinpath("i18n.js").read_text(encoding="utf-8")

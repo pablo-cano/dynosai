@@ -28,9 +28,18 @@ from .context_control import EvidenceCache, ContextCheckpointStore
 from .model_control import ModelControlPlane, classify_validation_failure
 from .context_handles import ContextHandleStore
 from .secrets import redact_value
-
-SUPPORTED_PROTOCOLS=("2025-11-25","2025-06-18")
-CURRENT_PROTOCOL=SUPPORTED_PROTOCOLS[0]
+from .mcp_protocol import (
+    CURRENT_PROTOCOL,
+    NOT_INITIALIZED_CODE,
+    PROTOCOL_2026,
+    SUPPORTED_PROTOCOLS,
+    client_identity_from_params,
+    is_stateless_protocol,
+    resolve_protocol_version,
+    unsupported_protocol_error,
+)
+from . import mcp_protocol_2026 as protocol_2026
+from . import mcp_protocol_legacy as protocol_legacy
 
 
 def tool(name:str,description:str,properties:dict[str,Any]|None=None,required:list[str]|None=None,*,schema:dict[str,Any]|None=None)->dict[str,Any]:
@@ -454,49 +463,112 @@ class MCPServer:
         if isinstance(compact,dict): compact={**compact,"evidence_cache":meta}
         return compact
 
-    def handle(self,message:dict[str,Any])->dict[str,Any]|ElicitationExchange|None:
-        method=message.get("method"); rid=message.get("id")
-        if method=="initialize":
-            params=message.get("params") or {}
-            requested=str(params.get("protocolVersion") or CURRENT_PROTOCOL)
-            selected=requested if requested in SUPPORTED_PROTOCOLS else CURRENT_PROTOCOL; self.negotiated=selected
-            self.provider=self._infer_provider(params)
-            self.client_capabilities=ProviderCapabilityService.from_initialize(self.provider,{**params,"protocolVersion":selected})
+    def _authority_instructions(self)->str:
+        transport_instruction=("For managed Codex tool results, structuredContent is authoritative and content.text may be only a compact compatibility envelope." if self.provider in {"codex","openai"} else "For Cursor and generic clients, content.text contains the complete authoritative tool result because some Cursor CLI streams do not expose MCP structuredContent to the model.")
+        studio_gates=os.environ.get("DYNOSAI_HUMAN_GATE_TRANSPORT","").lower()=="studio"
+        gate_instruction=("Human gates are returned as human_interaction tool payloads because DynosAI Studio owns the approval UI. Stop the current turn immediately when one is returned; never self-approve." if studio_gates else "Human gates are requested through MCP Elicitation when the client advertises elicitation capability; never self-approve.")
+        prefix_note=" Discover remaining tools via tools/list."
+        try:
+            from .prompt_prefix import build_authority_prefix, persist_prefix
+            prefix=build_authority_prefix(protocol=self.negotiated or CURRENT_PROTOCOL)
             if (self.engine.root/".dynosai"/"knowledge.db").exists():
-                try: ProviderCapabilityService(self.engine.db).record(self.client_capabilities)
-                except Exception: pass
-            transport_instruction=("For managed Codex tool results, structuredContent is authoritative and content.text may be only a compact compatibility envelope." if self.provider in {"codex","openai"} else "For Cursor and generic clients, content.text contains the complete authoritative tool result because some Cursor CLI streams do not expose MCP structuredContent to the model.")
-            studio_gates=os.environ.get("DYNOSAI_HUMAN_GATE_TRANSPORT","").lower()=="studio"
-            gate_instruction=("Human gates are returned as human_interaction tool payloads because DynosAI Studio owns the approval UI. Stop the current turn immediately when one is returned; never self-approve." if studio_gates else "Human gates are requested through MCP Elicitation when the client advertises elicitation capability; never self-approve.")
-            prefix_note=" Discover remaining tools via tools/list."
+                prefix=persist_prefix(self.engine.root, prefix)
+                try:
+                    self.engine.db.audit("PromptPrefixRecorded", prefix.get("hash"), {"claims_cache_hit": False, "schema": "PROMPT_PREFIX_1.0", "mcp_protocol": prefix.get("mcp_protocol")})
+                except Exception:
+                    pass
+            prefix_note=f" Stable authority prefix {str(prefix.get('hash') or '')[:12]}. Discover remaining tools via tools/list. Prefix hash is cacheable structure, not provider cache telemetry."
+        except Exception:
+            pass
+        return f"DynosAI is provider-native. Start/adopt/attach with dynosai_project and start/resume a feature with dynosai_work/dynosai_resume. Keep one provider session for the feature. {gate_instruction} {transport_instruction} Use dynosai_read for concrete reads, dynosai_ask for SQL/text and dynosai_find_symbol for code identifiers.{prefix_note}"
+
+    def _bind_request_identity(self, params: dict[str, Any], *, protocol: str | None = None) -> None:
+        identity = client_identity_from_params(params)
+        selected = protocol or identity.get("protocolVersion") or self.negotiated
+        if selected:
+            self.negotiated = str(selected)
+        info = identity.get("clientInfo") or {}
+        caps = identity.get("capabilities") or {}
+        if info:
+            self.provider = self._infer_provider({"clientInfo": info})
+        if not info and not caps:
+            return
+        payload = {
+            "protocolVersion": self.negotiated or "",
+            "clientInfo": info,
+            "capabilities": caps,
+        }
+        provider = getattr(self, "provider", None) or "unknown"
+        self.client_capabilities = ProviderCapabilityService.from_initialize(provider, payload)
+        engine = getattr(self, "engine", None)
+        if engine is not None and (engine.root / ".dynosai" / "knowledge.db").exists():
             try:
-                from .prompt_prefix import build_authority_prefix, persist_prefix
-                prefix=build_authority_prefix()
-                if (self.engine.root/".dynosai"/"knowledge.db").exists():
-                    prefix=persist_prefix(self.engine.root, prefix)
-                    try:
-                        self.engine.db.audit("PromptPrefixRecorded", prefix.get("hash"), {"claims_cache_hit": False, "schema": "PROMPT_PREFIX_1.0"})
-                    except Exception:
-                        pass
-                prefix_note=f" Stable authority prefix {str(prefix.get('hash') or '')[:12]}. Discover remaining tools via tools/list. Prefix hash is cacheable structure, not provider cache telemetry."
+                ProviderCapabilityService(engine.db).record(self.client_capabilities)
             except Exception:
                 pass
-            return self._response(rid,{"protocolVersion":selected,"capabilities":{"tools":{"listChanged":True}},"serverInfo":{"name":"dynosai-flow","version":__version__},"instructions":f"DynosAI is provider-native. Start/adopt/attach with dynosai_project and start/resume a feature with dynosai_work/dynosai_resume. Keep one provider session for the feature. {gate_instruction} {transport_instruction} Use dynosai_read for concrete reads, dynosai_ask for SQL/text and dynosai_find_symbol for code identifiers.{prefix_note}"})
+
+    def _tools_list_payload(self, protocol: str) -> dict[str, Any]:
+        activity = self._current_activity()
+        disclosure = (os.environ.get("DYNOSAI_PHASE_TOOL_DISCLOSURE") or "").lower()
+        # Adaptive mode is safe for clients that ignore listChanged: the first
+        # list is the full lean managed surface. If they honor the notification
+        # and re-list later, subsequent lists shrink to the current phase.
+        first_adaptive = disclosure == "adaptive" and self._last_advertised_activity is None
+        tools = advertised_tools(None if first_adaptive else activity)
+        self._last_advertised_activity = activity
+        meta = phase_tool_surface(activity)
+        meta["initial_safe_superset"] = bool(first_adaptive)
+        meta["mcp_protocol"] = protocol
+        if is_stateless_protocol(protocol):
+            return protocol_2026.tools_list_result(tools, meta)
+        return protocol_legacy.tools_list_result(tools, meta)
+
+    def _handle_initialize(self, rid: Any, params: dict[str, Any]) -> dict[str, Any]:
+        requested = str(params.get("protocolVersion") or CURRENT_PROTOCOL)
+        if requested not in SUPPORTED_PROTOCOLS:
+            code, message, data = unsupported_protocol_error(requested)
+            return self._error(rid, code, message, data)
+        self._bind_request_identity(params, protocol=requested)
+        return self._response(rid, protocol_legacy.initialize_result(protocol=requested, instructions=self._authority_instructions()))
+
+    def _handle_discover(self, rid: Any, params: dict[str, Any]) -> dict[str, Any]:
+        identity = client_identity_from_params(params)
+        requested = str(identity.get("protocolVersion") or PROTOCOL_2026)
+        if requested not in SUPPORTED_PROTOCOLS:
+            code, message, data = unsupported_protocol_error(requested)
+            return self._error(rid, code, message, data)
+        self._bind_request_identity(params, protocol=requested)
+        return self._response(rid, protocol_2026.discover_result(instructions=self._authority_instructions()))
+
+    def _tool_call_response(self,rid:Any,result:Any,*,tool_name:str,protocol:str)->dict[str,Any]:
+        payload=_tool_result_payload(result,provider=self.provider,tool_name=tool_name)
+        if is_stateless_protocol(protocol):
+            payload=protocol_2026.wrap_tool_result(payload)
+        else:
+            payload=protocol_legacy.wrap_tool_result(payload)
+        return self._response(rid,payload)
+
+    def handle(self,message:dict[str,Any])->dict[str,Any]|ElicitationExchange|None:
+        method=message.get("method"); rid=message.get("id")
+        params=message.get("params") if isinstance(message.get("params"), dict) else {}
+        if method=="initialize":
+            return self._handle_initialize(rid, params)
+        if method=="server/discover":
+            return self._handle_discover(rid, params)
         if method=="notifications/initialized": self.initialized=True; return None
         if method=="notifications/cancelled": return None
-        if method=="ping": return self._response(rid,{})
-        if not self.negotiated: return self._error(rid,-32002,"Server not initialized")
+        if method=="ping":
+            if params: self._bind_request_identity(params)
+            return self._response(rid,{})
+        protocol=resolve_protocol_version(params, self.negotiated)
+        if protocol is None:
+            return self._error(rid, NOT_INITIALIZED_CODE, "Server not initialized")
+        if protocol not in SUPPORTED_PROTOCOLS:
+            code, message, data = unsupported_protocol_error(protocol)
+            return self._error(rid, code, message, data)
+        self._bind_request_identity(params, protocol=protocol)
         if method=="tools/list":
-            activity=self._current_activity()
-            disclosure=(os.environ.get("DYNOSAI_PHASE_TOOL_DISCLOSURE") or "").lower()
-            # Adaptive mode is safe for clients that ignore listChanged: the first
-            # list is the full lean managed surface. If they honor the notification
-            # and re-list later, subsequent lists shrink to the current phase.
-            first_adaptive=disclosure=="adaptive" and self._last_advertised_activity is None
-            tools=advertised_tools(None if first_adaptive else activity)
-            self._last_advertised_activity=activity
-            meta=phase_tool_surface(activity); meta["initial_safe_superset"]=bool(first_adaptive)
-            return self._response(rid,{"tools":tools,"dynosaiToolSurface":meta})
+            return self._response(rid, self._tools_list_payload(protocol))
         if method=="tools/call":
             params=message.get("params",{}); requested_name=params.get("name"); raw_args=params.get("arguments") or {}
             try:
@@ -530,44 +602,102 @@ class MCPServer:
                 try:
                     if normalization:
                         self.engine.db.audit("MCPToolNormalized",str(requested_name),{**normalization,"session_id":self.session and self.session.get("id"),"work_id":self._session_work_id(),"run_id":self._run_id()})
-                    self.engine.db.audit("MCPToolCalled",name,{"requested_tool":requested_name,"provider_session_id":self.provider_session and self.provider_session.get("id"),"session_id":self.session and self.session.get("id"),"work_id":self._session_work_id(),"run_id":self._run_id(),"duration_ms":duration_ms,"result_bytes":result_bytes})
+                    self.engine.db.audit("MCPToolCalled",name,{"requested_tool":requested_name,"provider_session_id":self.provider_session and self.provider_session.get("id"),"session_id":self.session and self.session.get("id"),"work_id":self._session_work_id(),"run_id":self._run_id(),"duration_ms":duration_ms,"result_bytes":result_bytes,"mcp_protocol":protocol})
                 except Exception:
                     pass
                 studio_gates=os.environ.get("DYNOSAI_HUMAN_GATE_TRANSPORT","").lower()=="studio"
                 if isinstance(result,dict) and result.get("human_interaction") and self.client_capabilities.elicitation_form and not studio_gates:
                     return ElicitationExchange(rid,dict(result["human_interaction"]),result,bool(args.get("execute",False)))
-                return self._response(rid,_tool_result_payload(result,provider=self.provider,tool_name=name))
+                return self._tool_call_response(rid,result,tool_name=name,protocol=protocol)
             except ToolInputError as exc:
                 rejection={"accepted":False,"error_type":"tool_input_validation","message":str(exc),"repair_required":True,"requested_tool":requested_name}
                 try:
                     self.engine.db.audit("MCPToolRejected",str(requested_name or "unknown"),{"error":"ToolInputError","message":str(exc),"session_id":self.session and self.session.get("id")})
                 except Exception:
                     pass
-                return self._response(rid,_tool_result_payload(rejection,provider=self.provider,tool_name=str(requested_name or "unknown")))
+                return self._tool_call_response(rid,rejection,tool_name=str(requested_name or "unknown"),protocol=protocol)
             except ValueError as exc:
-                if name in {"dynosai_submit_spec","dynosai_submit_plan"}:
+                failed_name=str(locals().get("name") or requested_name or "unknown")
+                if failed_name in {"dynosai_submit_spec","dynosai_submit_plan"}:
                     rejection={"accepted":False,"error_type":"validation","message":str(exc),"repair_required":True}
                     try:
-                        self.engine.db.audit("MCPToolRejected",str(name),{"error":"ValueError","message":str(exc),"session_id":self.session and self.session.get("id")})
+                        self.engine.db.audit("MCPToolRejected",failed_name,{"error":"ValueError","message":str(exc),"session_id":self.session and self.session.get("id")})
                     except Exception:
                         pass
-                    return self._response(rid,_tool_result_payload(rejection,provider=self.provider,tool_name=str(name)))
+                    return self._tool_call_response(rid,rejection,tool_name=failed_name,protocol=protocol)
                 try:
-                    self.engine.db.audit("MCPToolFailed",str(name or "unknown"),{"error":type(exc).__name__,"session_id":self.session and self.session.get("id")})
+                    self.engine.db.audit("MCPToolFailed",failed_name,{"error":type(exc).__name__,"session_id":self.session and self.session.get("id")})
                 except Exception:
                     pass
-                return self._response(rid,{"content":[{"type":"text","text":f"{type(exc).__name__}: {exc}"}],"isError":True})
+                return self._tool_call_response(rid,{"content":[{"type":"text","text":f"{type(exc).__name__}: {exc}"}],"isError":True},tool_name=failed_name,protocol=protocol)
             except Exception as exc:
+                failed_name=str(locals().get("name") or requested_name or "unknown")
                 try:
-                    self.engine.db.audit("MCPToolFailed",str(name or "unknown"),{"error":type(exc).__name__,"session_id":self.session and self.session.get("id")})
+                    self.engine.db.audit("MCPToolFailed",failed_name,{"error":type(exc).__name__,"session_id":self.session and self.session.get("id")})
                 except Exception:
                     pass
-                return self._response(rid,{"content":[{"type":"text","text":f"{type(exc).__name__}: {exc}"}],"isError":True})
+                return self._tool_call_response(rid,{"content":[{"type":"text","text":f"{type(exc).__name__}: {exc}"}],"isError":True},tool_name=failed_name,protocol=protocol)
         return self._error(rid,-32601,f"Method not found: {method}")
+
+    def _bootstrap_orchestrator_contract(self)->dict[str,Any]|None:
+        """Return the next legal bootstrap tool when no governed work exists.
+
+        dynosai_get_next_action is the advertised orchestrator. Blocking it with
+        PermissionError before dynosai_project/dynosai_work start caused live
+        Cursor greenfield agents to stop with zero DYN work items.
+        execute=true must not auto-initialize or auto-start; it returns the same
+        contract so human gates on git/monorepo bootstrap stay mandatory.
+        """
+        try:
+            detection=self.app.detect_project()
+        except Exception:
+            detection={"classification":"EMPTY_DIRECTORY","root":str(self.engine.root)}
+        classification=str(detection.get("classification") or "EMPTY_DIRECTORY")
+        if classification=="EXISTING_DYNOSAI_PROJECT":
+            try:
+                self.engine.get_work()
+                return None
+            except Exception:
+                return {
+                    "work": None,
+                    "bootstrap": True,
+                    "detection": detection,
+                    "next": "Start a governed feature with dynosai_work action=start.",
+                    "contract": {
+                        "tool": "dynosai_work",
+                        "arguments": {"action": "start"},
+                        "deterministic_transition": False,
+                        "rules": [
+                            "Call dynosai_work action=start with the business goal before exploring the repository.",
+                            "Human gates remain mandatory; never self-approve.",
+                        ],
+                    },
+                    "human_interaction": None,
+                    "transition": None,
+                }
+        return {
+            "work": None,
+            "bootstrap": True,
+            "detection": detection,
+            "next": "Initialize/adopt/attach with dynosai_project action=initialize, then start a feature with dynosai_work action=start.",
+            "contract": {
+                "tool": "dynosai_project",
+                "arguments": {"action": "initialize"},
+                "deterministic_transition": False,
+                "rules": [
+                    "Call dynosai_project action=initialize before exploring the repository.",
+                    "Do not treat a missing session as completion.",
+                    "Human gates remain mandatory; never self-approve.",
+                ],
+            },
+            "human_interaction": None,
+            "transition": None,
+        }
 
     def _mutation_authorized(self,name:str,args:dict[str,Any])->bool:
         if name=="dynosai_project": return True
         if name=="dynosai_resume": return True
+        if name=="dynosai_get_next_action": return True
         if name=="dynosai_work":
             action=str(args.get("action") or "status")
             if action in {"start","status"}: return True
@@ -722,6 +852,12 @@ class MCPServer:
             wid=self._scoped_work(args)
             auto_default=os.environ.get("DYNOSAI_MANAGED_AGENT")=="1" and os.environ.get("DYNOSAI_AUTO_ADVANCE","1")=="1"
             execute=bool(args.get("execute",auto_default))
+            if not wid:
+                bootstrap=self._bootstrap_orchestrator_contract()
+                if bootstrap is not None:
+                    bootstrap["tool_surface"]=phase_tool_surface("discovery")
+                    bootstrap["tool_surface"]["dynamic_refresh_requested"]=os.environ.get("DYNOSAI_PHASE_TOOL_DISCLOSURE") in {"dynamic","adaptive"}
+                    return bootstrap
             result=self.app.next_action(self.provider,wid,execute)
             self._refresh_provider_session((result.get("work") or {}).get("id"))
             activity=activity_for_state(((result.get("work") or {}).get("state")))
@@ -870,7 +1006,11 @@ class MCPServer:
     @staticmethod
     def _response(rid:Any,result:Any)->dict[str,Any]:return {"jsonrpc":"2.0","id":rid,"result":result}
     @staticmethod
-    def _error(rid:Any,code:int,message:str)->dict[str,Any]:return {"jsonrpc":"2.0","id":rid,"error":{"code":code,"message":message}}
+    def _error(rid:Any,code:int,message:str,data:Any=None)->dict[str,Any]:
+        error={"code":code,"message":message}
+        if data is not None:
+            error["data"]=data
+        return {"jsonrpc":"2.0","id":rid,"error":error}
 
 
 def _write_message(message:dict[str,Any])->None:

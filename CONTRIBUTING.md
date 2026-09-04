@@ -19,7 +19,13 @@ source .venv/bin/activate        # Windows: .venv\Scripts\activate
 python -m pip install -e ".[dev]"
 ```
 
-Release gate (same command in CI, `scripts/build_release.py` and local work):
+Release gate (same executable in CI, `scripts/build_release.py` and local work):
+
+```bash
+python scripts/release_gate.py
+```
+
+That script runs:
 
 ```bash
 python -m compileall -q src/dynosai_flow
@@ -51,9 +57,9 @@ passing checkout fixtures. Certification requires:
 4. the same human gates, Git/knowledge.db authority and path policy as Cursor
    and Codex.
 
-Until those cells are real `pass` evidence, `MATRIX_1.0` stays `not_run` and
-`1.0.0` stays reserved. Remaining on `1.0.0rc5` is an honest successful
-outcome.
+Until those cells are real `pass` evidence, `MATRIX_1.0` stays `not_run` (or
+records an explicit fail with attribution) and `1.0.0` stays reserved.
+Remaining on `1.0.0rc6` is an honest successful outcome.
 
 ## Issues
 

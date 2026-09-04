@@ -59,8 +59,21 @@ class GitManager:
             raise GitError(f"git {' '.join(args)} failed: {exc}") from exc
 
     def is_repo(self) -> bool:
-        result = self._git("rev-parse", "--is-inside-work-tree", check=False)
-        return result.returncode == 0 and result.stdout.strip() == "true"
+        """True only when this root is the Git toplevel.
+
+        A subdirectory of another repository must not inherit that parent as
+        source authority. Nested greenfield fixtures live inside the DynosAI
+        checkout; treating them as the parent worktree made
+        ``git status`` dirty and blocked ``dynosai_work start``.
+        """
+        result = self._git("rev-parse", "--show-toplevel", check=False)
+        if result.returncode != 0 or not str(result.stdout or "").strip():
+            return False
+        try:
+            top = Path(result.stdout.strip()).resolve()
+        except OSError:
+            return False
+        return top == self.root.resolve()
 
     def initialize_repo(self) -> None:
         self.root.mkdir(parents=True, exist_ok=True)

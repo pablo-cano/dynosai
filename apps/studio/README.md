@@ -68,6 +68,10 @@ Overview and Diagnostics show doctor / deep-doctor results from the existing eng
 
 Help states that loopback Studio is not a full security boundary. External pull requests remain closed. The threat model lives in `docs/THREAT_MODEL.md`.
 
+## 1.0.0-rc.6 standards
+
+Overview still shows MATRIX_1.0 from real trials or honest `not_run`. MCP `serverInfo.name` remains `dynosai-flow`. Protocol support is `2026-07-28`, `2025-11-25` and `2025-06-18`. No plugin marketplace.
+
 ## 1.0.0-rc.1 optional harness
 
 Overview shows compact On/Off chips for context optimization, governed team scheduling and eval intelligence. Project settings can change those host-owned switches. Execution profiles, human gates and certified-provider refusal stay required and are not presented as optional optimizations.

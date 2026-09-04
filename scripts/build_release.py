@@ -54,12 +54,10 @@ def main() -> int:
     ap.add_argument("--skip-web", action="store_true")
     args = ap.parse_args()
 
-    run(sys.executable, "-m", "compileall", "-q", "src/dynosai_flow")
-    run(sys.executable, "scripts/check_repository.py")
-    run(sys.executable, "scripts/check_studio_sync.py")
-
-    if not args.skip_tests:
-        run(sys.executable, "-m", "pytest")
+    gate = [sys.executable, "scripts/release_gate.py"]
+    if args.skip_tests:
+        gate.append("--skip-tests")
+    run(*gate)
 
     if not args.skip_web:
         for command in (("npm", "run", "check"), ("npm", "run", "typecheck"), ("npm", "run", "lint"), ("npm", "run", "build")):

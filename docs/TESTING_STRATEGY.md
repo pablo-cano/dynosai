@@ -10,7 +10,13 @@ These tests exercise workflow state, schemas, scope rules, Git evidence, MCP con
 
 `tests/test_210.py` freezes the unique MCP tool-name set, optional harness switches, schema v6, Studio EN/ES harness copy and App Server disabled-feature responses. Compatibility scope is documented in `docs/COMPATIBILITY.md`.
 
-The supported **release gate** is the same command in CI, `scripts/build_release.py` and a local checkout:
+The supported **release gate** is one executable shared by CI, `scripts/build_release.py` and a local checkout:
+
+```bash
+python scripts/release_gate.py
+```
+
+That script runs:
 
 ```bash
 python -m compileall -q src/dynosai_flow
@@ -32,7 +38,7 @@ When website files change, also run `npm run check`, `npm run typecheck`, `npm r
 
 ## 1.0 RC2 live matrix and two-session leases
 
-`tests/test_220.py` freezes `MATRIX_1.0`: four provider-aware cells stay `not_run`, historical 0.13 evidence remains separate, and two governed session identities can claim file-disjoint leases without spawning providers. Overlap serializes; scheduler-off stays serial. This is not a live-provider 1.0 certification.
+`tests/test_220.py` freezes `MATRIX_1.0`: four provider-aware cells exist, historical 0.13 evidence remains separate, and two governed session identities can claim file-disjoint leases without spawning providers. Overlap serializes; scheduler-off stays serial. A cell may be `not_run`, `run`, `fail` or `pass`. `pass` requires real evidence. This is not a copied 0.13 certification.
 
 ## 1.0 RC3 eval maturity and measurable efficiency
 
@@ -46,7 +52,11 @@ Installed-package CI is `scripts/ci_installed_wheel.py` → `scripts/smoke_insta
 
 ## 1.0 RC5 threat model and freeze
 
-`tests/test_250.py` covers `docs/THREAT_MODEL.md` honesty (enforced vs not enforced), `CONTRIBUTING.md` keeping external PRs closed, path/secret/symlink/Git/certified-client/timeout/loopback/Host/JSON POST regressions, and the freeze contract (schema v6, 31 MCP names, MATRIX_1.0 `not_run`, Studio loopback honesty). This is not live-provider 1.0 certification.
+`tests/test_250.py` covers `docs/THREAT_MODEL.md` honesty (enforced vs not enforced), `CONTRIBUTING.md` keeping external PRs closed, path/secret/symlink/Git/certified-client/timeout/loopback/Host/JSON POST regressions, and the freeze contract (schema v6, 31 MCP names, honest MATRIX_1.0 cells, Studio loopback honesty). This is not live-provider 1.0 certification.
+
+## 1.0 RC6 standards and release evidence
+
+`tests/test_260.py` covers MCP `2026-07-28` discover/stateless list/call plus legacy `2025-11-25` / `2025-06-18` initialize, JSON-RPC `-32022` for unsupported versions, the unified `scripts/release_gate.py` source of truth, the Tier A/B eval catalog, distribution and Agent Plugins ADRs, and honest MATRIX_1.0 rules. Official `@modelcontextprotocol/conformance` is HTTP-oriented; DynosAI remains stdio and does not pretend that runner is a stdio result.
 
 ## 2. Migration and recovery tests
 
