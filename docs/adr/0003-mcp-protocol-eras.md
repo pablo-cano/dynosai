@@ -48,14 +48,23 @@ Rules:
   `tools/list` / `tools/call` with
   `params._meta["io.modelcontextprotocol/protocolVersion"]` are enough.
 - Unsupported versions return JSON-RPC `-32022` with `data.supported`.
-- Human gates stay `elicitation/create` (form mode). Multi-round
-  `input_required` is not implemented in RC6 because certified hosts use the
-  existing elicitation path.
+- Human gates for 2025 hosts stay `elicitation/create` (form mode). RC7 adds
+  2026 Multi Round-Trip `input_required` for the same DynosAI DB authority.
+  Client `inputResponses` / `requestState` are never the source of authority.
 - Exactly 31 frozen public MCP names. No Tasks, Apps, resources, sampling or
   remote HTTP transport.
-- Negotiated/used protocol is recorded on MCP tool audits, stats and MATRIX
-  environment probes.
+- Supported protocol revisions are recorded separately from the protocol a
+  provider actually negotiated on the wire (MATRIX observed protocols).
 
 Official `@modelcontextprotocol/conformance server --url` is HTTP-oriented.
-RC6 conformance evidence is the in-repo characterization suite plus an honest
+RC6/RC7 conformance evidence is the in-repo characterization suite plus an honest
 record if the official HTTP runner is not applicable to stdio.
+
+## RC7 amendment (2026-09-04)
+
+- Every 2026 request must carry `_meta` protocolVersion and clientCapabilities.
+  A later request without those fields fails; session negotiation is not reused.
+- `clientCapabilities: {}` replaces prior optional capabilities for that request.
+- `initialize` / `ping` with 2026-07-28 are rejected (`-32601`). 2025 handshake
+  remains frozen.
+- `server/discover` instructions are provider-neutral (`cacheScope=public`).

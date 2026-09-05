@@ -21,7 +21,7 @@ multi-agent swarm, and not an OS sandbox.
 | Governed workflow state | `.dynosai/knowledge.db` |
 | Human specification, plan, code-review, scope and merge gates | Human (Studio, CLI review, or MCP elicitation) |
 | Execution profile, harness optimizations, auto-approve | Host / Studio, never the MCP agent |
-| Certified provider transports | Cursor ACP and Codex app-server |
+| Certified provider transports | Cursor ACP and Codex app-server (supported 1.0 targets; live 1.0 certification pending MATRIX_1.0) |
 | Optional harness optimizations | Environment override → project setting → default |
 
 Schema authority remains **v6**. Telemetry, feature flags and harness settings
@@ -60,9 +60,12 @@ DynosAI 1.0 speaks these MCP revisions on **stdio**:
 
 `2026-07-28` is the current advertisement (`server/discover`, per-request
 `_meta`, deterministic `tools/list` ordering). Cursor ACP and Codex app-server
-keep the `2025-11-25` initialize handshake. Adding a revision must not drop a
-previous one in 1.0.x. Remote Streamable HTTP, Tasks and Apps are not part of
-the 1.0 contract. See `docs/adr/0003-mcp-protocol-eras.md`.
+are **supported 1.0 target providers** and historically speak the
+`2025-11-25` initialize handshake. DynosAI supporting 2026 is not the same
+evidence as a provider negotiating 2026. 1.0 live certification is pending
+`MATRIX_1.0`. Adding a revision must not drop a previous one in 1.0.x. Remote
+Streamable HTTP, Tasks and Apps are not part of the 1.0 contract. See
+`docs/adr/0003-mcp-protocol-eras.md`.
 
 ## Stable public CLI contract
 
@@ -173,10 +176,11 @@ Specification, plan, code-review, scope and merge remain human-governed.
   authority. `tester` is the governed validation contract. DynosAI does not
   spawn extra Cursor or Codex processes to simulate a multi-agent system.
 
-## Certified-provider boundary
+## Supported-provider boundary
 
-The shipped Studio transports are Cursor ACP and Codex app-server. Unknown
-clients and extension packs are refused. Additional IDEs are not assumed
+The shipped Studio transports are Cursor ACP and Codex app-server. They are
+supported 1.0 target providers; 1.0 live certification is pending MATRIX_1.0.
+Unknown clients and extension packs are refused. Additional IDEs are not assumed
 certified because they exist.
 
 ## Optional harness features

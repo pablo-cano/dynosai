@@ -2,7 +2,7 @@
 
 ## Supported version
 
-The latest public line is `1.0.0-rc.6` (`1.0.0rc6`). It remains a beta-classified release candidate. Schema authority is v6. Production `1.0.0` is not claimed. `MATRIX_1.0` cells are `not_run` until a real provider trial is recorded. DynosAI is not published on PyPI. The intended future PyPI name is `dynosai` (see `docs/adr/0001-pypi-distribution-name.md`).
+The latest public line is `1.0.0-rc.7` (`1.0.0rc7`). It remains a beta-classified release candidate. Schema authority is v6. Production `1.0.0` is not claimed. `MATRIX_1.0` cells currently record explicit live **fail** trials; they are not 1.0 PASS. DynosAI is not published on PyPI. The intended future PyPI name is `dynosai` (see `docs/adr/0001-pypi-distribution-name.md`).
 
 ## Reporting a vulnerability
 

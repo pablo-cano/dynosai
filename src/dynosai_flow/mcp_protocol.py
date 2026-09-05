@@ -27,6 +27,7 @@ META_SERVER_INFO = "io.modelcontextprotocol/serverInfo"
 UNSUPPORTED_PROTOCOL_CODE = -32022
 NOT_INITIALIZED_CODE = -32002
 METHOD_NOT_FOUND_CODE = -32601
+INVALID_PARAMS_CODE = -32602
 
 MCP_SERVER_NAME = "dynosai-flow"
 
@@ -59,13 +60,61 @@ def protocol_from_meta(meta: dict[str, Any]) -> str | None:
 
 
 def resolve_protocol_version(params: dict[str, Any] | None, negotiated: str | None) -> str | None:
-    """Prefer per-request `_meta` protocol version, then the session negotiation."""
+    """Legacy helper: per-request `_meta` first, then the 2025 session negotiation.
+
+    MCP 2026 must not use this fallback. Stateless requests validate `_meta` on
+    the current request via `validate_stateless_request_meta`.
+    """
     meta = extract_params_meta(params)
     requested = protocol_from_meta(meta)
     if requested:
         return requested
-    if negotiated:
+    if negotiated and is_legacy_protocol(negotiated):
         return str(negotiated)
+    return None
+
+
+def invalid_params_error(reason: str, extra: dict[str, Any] | None = None) -> tuple[int, str, dict[str, Any]]:
+    data: dict[str, Any] = {"reason": reason}
+    if extra:
+        data.update(extra)
+    return INVALID_PARAMS_CODE, "Invalid params", data
+
+
+def validate_stateless_request_meta(params: dict[str, Any] | None) -> tuple[int, str, dict[str, Any]] | None:
+    """Validate MCP 2026-07-28 per-request `_meta` without inheriting prior requests.
+
+    Every stateless request MUST include protocolVersion and clientCapabilities.
+    clientInfo is optional. An unsupported protocolVersion is `-32022`.
+    """
+    if not isinstance(params, dict):
+        return invalid_params_error("params_must_be_object")
+    meta = params.get("_meta")
+    if not isinstance(meta, dict):
+        return invalid_params_error(
+            "missing_meta",
+            {"required": [META_PROTOCOL_VERSION, META_CLIENT_CAPABILITIES]},
+        )
+    if META_PROTOCOL_VERSION not in meta:
+        return invalid_params_error("missing_protocol_version", {"required": META_PROTOCOL_VERSION})
+    requested = protocol_from_meta(meta)
+    if not requested:
+        return invalid_params_error("missing_protocol_version", {"required": META_PROTOCOL_VERSION})
+    if requested not in SUPPORTED_PROTOCOLS:
+        return unsupported_protocol_error(requested)
+    if not is_stateless_protocol(requested):
+        return invalid_params_error(
+            "stateless_protocol_required",
+            {"requested": requested, "required": PROTOCOL_2026},
+        )
+    if META_CLIENT_CAPABILITIES not in meta:
+        return invalid_params_error("missing_client_capabilities", {"required": META_CLIENT_CAPABILITIES})
+    caps = meta.get(META_CLIENT_CAPABILITIES)
+    if not isinstance(caps, dict):
+        return invalid_params_error("client_capabilities_must_be_object")
+    info = meta.get(META_CLIENT_INFO)
+    if info is not None and not isinstance(info, dict):
+        return invalid_params_error("client_info_must_be_object")
     return None
 
 

@@ -13,7 +13,8 @@ from dynosai_flow.cost_telemetry import aggregate_governed_change_cost, governed
 from dynosai_flow.db import Database
 from dynosai_flow.eval_intelligence import MAX_CASES, load_cases
 from dynosai_flow.eval_registry import EvalRegistry
-from dynosai_flow.mcp import CURRENT_PROTOCOL, LEGACY_TOOLS, TOOLS, MCPServer
+from dynosai_flow.mcp import LEGACY_TOOLS, TOOLS, MCPServer
+from dynosai_flow.mcp_protocol import PROTOCOL_2025_11
 from dynosai_flow.prompt_prefix import build_authority_prefix, compose_prompt, persist_prefix
 from dynosai_flow.util import utc_now
 from dynosai_flow.version import DISPLAY_VERSION, __version__
@@ -193,14 +194,14 @@ class DynosAI230Rc3EvalMaturityTests(unittest.TestCase):
         self.assertNotEqual(composed["prefix_hash"], composed.get("suffix_hash"))
         self.assertFalse(composed["claims_cache_hit"])
         app = self._app("Prefix")
-        stored = persist_prefix(app.engine.root, build_authority_prefix())
+        stored = persist_prefix(app.engine.root, build_authority_prefix(protocol=PROTOCOL_2025_11))
         app.engine.db.audit("PromptPrefixRecorded", stored["hash"], {"claims_cache_hit": False, "schema": "PROMPT_PREFIX_1.0"})
         stats = app.engine.stats()
         self.assertEqual(stats["prompt_prefix"]["schema"], "PROMPT_PREFIX_1.0")
         self.assertFalse(stats["prompt_prefix"]["claims_cache_hit"])
         self.assertEqual(stats["prompt_prefix"]["hash"], stored["hash"])
         server = MCPServer(app.engine.root)
-        init = server.handle({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": CURRENT_PROTOCOL, "clientInfo": {"name": "cursor-agent"}}})
+        init = server.handle({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": PROTOCOL_2025_11, "clientInfo": {"name": "cursor-agent"}}})
         instructions = init["result"]["instructions"]
         listed = [name for name in {str(item["name"]) for item in TOOLS} if name in instructions]
         self.assertLess(len(listed), 10)
@@ -211,8 +212,8 @@ class DynosAI230Rc3EvalMaturityTests(unittest.TestCase):
         names = {str(item["name"]) for item in [*TOOLS, *LEGACY_TOOLS]}
         self.assertEqual(len(names), 31)
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
-        self.assertEqual(__version__, "1.0.0rc6")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.6")
+        self.assertEqual(__version__, "1.0.0rc7")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.7")
         html = resources.files("dynosai_flow.studio_assets").joinpath("index.html").read_text(encoding="utf-8")
         script = resources.files("dynosai_flow.studio_assets").joinpath("app.js").read_text(encoding="utf-8")
         i18n = resources.files("dynosai_flow.studio_assets").joinpath("i18n.js").read_text(encoding="utf-8")

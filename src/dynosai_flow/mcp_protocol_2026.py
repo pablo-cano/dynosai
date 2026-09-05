@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from .mcp_human_gates import elicitation_create_params, input_request_key
 from .mcp_protocol import (
     PROTOCOL_2026,
     SUPPORTED_PROTOCOLS,
@@ -24,6 +25,14 @@ from .mcp_protocol import (
 
 DISCOVER_TTL_MS = 3_600_000
 LIST_TTL_MS = 0
+PUBLIC_DISCOVER_INSTRUCTIONS = (
+    "DynosAI is provider-native. Start/adopt/attach with dynosai_project and "
+    "start/resume a feature with dynosai_work/dynosai_resume. Keep one provider "
+    "session for the feature. Human gates require a human decision through the "
+    "client's elicitation or 2026 input_required flow; never self-approve. Use "
+    "dynosai_read for concrete reads, dynosai_ask for SQL/text and "
+    "dynosai_find_symbol for code identifiers."
+)
 
 
 def discover_result(*, instructions: str) -> dict[str, Any]:
@@ -57,3 +66,18 @@ def wrap_tool_result(payload: dict[str, Any]) -> dict[str, Any]:
     meta.update(result_meta(protocol=PROTOCOL_2026))
     out["_meta"] = meta
     return out
+
+
+def wrap_input_required(interaction: dict[str, Any]) -> dict[str, Any]:
+    """MCP 2026 MRTR envelope. Does not include requestState authority."""
+    key = input_request_key(str(interaction.get("id") or ""))
+    return {
+        "resultType": "input_required",
+        "inputRequests": {
+            key: {
+                "method": "elicitation/create",
+                "params": elicitation_create_params(interaction),
+            }
+        },
+        "_meta": result_meta(protocol=PROTOCOL_2026),
+    }

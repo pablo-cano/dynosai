@@ -16,7 +16,8 @@ from unittest.mock import patch
 from dynosai_flow.cli import demo_plan, demo_spec
 from dynosai_flow.db import Database
 from dynosai_flow.engine import DynosAI
-from dynosai_flow.mcp import CURRENT_PROTOCOL, MCPServer
+from dynosai_flow.mcp import MCPServer
+from dynosai_flow.mcp_protocol import PROTOCOL_2025_11
 
 
 class HardeningV05Tests(unittest.TestCase):
@@ -156,7 +157,9 @@ sys.exit(0)
         try:
             server=MCPServer(self.tmp)
             hello=server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2099-01-01"}})
-            self.assertEqual(hello["result"]["protocolVersion"],CURRENT_PROTOCOL)
+            self.assertEqual(hello["error"]["code"], -32022)
+            hello=server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":PROTOCOL_2025_11}})
+            self.assertEqual(hello["result"]["protocolVersion"], PROTOCOL_2025_11)
             with self.assertRaises(PermissionError): server.call_tool("dynosai_submit_spec",{"work_id":"OTHER","spec":{}})
         finally:
             if old is None: os.environ.pop("DYNOSAI_SESSION_TOKEN",None)
@@ -169,7 +172,7 @@ sys.exit(0)
         old=os.environ.get("DYNOSAI_SESSION_TOKEN"); os.environ["DYNOSAI_SESSION_TOKEN"]=session["token"]
         try:
             server=MCPServer(self.tmp)
-            server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":CURRENT_PROTOCOL}})
+            server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":PROTOCOL_2025_11}})
             bad=demo_plan(); bad["files"][-1]["action"]="test"
             response=server.handle({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"dynosai_submit_plan","arguments":{"work_id":wid,"plan":bad}}})
             self.assertFalse(response["result"]["isError"],response)
@@ -474,7 +477,7 @@ sys.exit(0)
         (self.tmp/"sample.py").write_text("def alpha():\n    return 1\n",encoding="utf-8")
         e=self.init()
         server=MCPServer(self.tmp)
-        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":CURRENT_PROTOCOL}})
+        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":PROTOCOL_2025_11}})
         response=server.handle({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"dynosai_get_symbol","arguments":{"path":"sample.py","start_line":1,"end_line":2}}})
         self.assertFalse(response["result"]["isError"],response)
         payload=response["result"]["structuredContent"]
@@ -485,7 +488,7 @@ sys.exit(0)
 
     def test_mcp_invalid_tool_shape_is_structured_rejection_not_internal_failure(self):
         e=self.init(); server=MCPServer(self.tmp)
-        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":CURRENT_PROTOCOL}})
+        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":PROTOCOL_2025_11}})
         response=server.handle({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"dynosai_get_symbol","arguments":{"include_body":True}}})
         self.assertFalse(response["result"]["isError"],response)
         payload=response["result"]["structuredContent"]
@@ -498,7 +501,7 @@ sys.exit(0)
         (self.tmp/"sample.py").write_text("def alpha():\n    return 1\n",encoding="utf-8")
         e=self.init()
         server=MCPServer(self.tmp)
-        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":CURRENT_PROTOCOL}})
+        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":PROTOCOL_2025_11}})
         found=server.handle({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"dynosai_find_symbol","arguments":{"query":"alpha","limit":5}}})
         self.assertFalse(found["result"]["isError"],found)
         self.assertIsInstance(found["result"]["structuredContent"],dict)
@@ -510,7 +513,7 @@ sys.exit(0)
     def test_mcp_unified_read_supports_symbol_and_file_modes_without_normalization(self):
         (self.tmp/"sample.py").write_text("def alpha():\n    return 1\n",encoding="utf-8")
         e=self.init(); server=MCPServer(self.tmp)
-        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":CURRENT_PROTOCOL}})
+        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":PROTOCOL_2025_11}})
         listed=server.handle({"jsonrpc":"2.0","id":2,"method":"tools/list"})
         names={item["name"] for item in listed["result"]["tools"]}
         self.assertIn("dynosai_read",names); self.assertNotIn("dynosai_get_symbol",names); self.assertNotIn("dynosai_get_file_slice",names)
@@ -524,7 +527,7 @@ sys.exit(0)
 
     def test_mcp_unified_read_rejects_ambiguous_or_incomplete_modes(self):
         e=self.init(); server=MCPServer(self.tmp)
-        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":CURRENT_PROTOCOL}})
+        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":PROTOCOL_2025_11}})
         ambiguous=server.handle({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"dynosai_read","arguments":{"symbol_id":"x","path":"a.py","start_line":1,"end_line":2}}})
         self.assertFalse(ambiguous["result"]["isError"],ambiguous); self.assertEqual(ambiguous["result"]["structuredContent"]["error_type"],"tool_input_validation")
         incomplete=server.handle({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"dynosai_read","arguments":{"path":"a.py","start_line":1}}})

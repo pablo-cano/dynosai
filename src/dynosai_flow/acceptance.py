@@ -1081,6 +1081,14 @@ class RealProviderAcceptanceCase:
             same_workspace=str(Path(work.get("worktree") or self.project).resolve())==str(self.project.resolve())
             session_ok=len(sessions)==1 and str(sessions[0].get("state"))=="completed"
             mcp_fail=int(audit.get("MCPToolFailed",0)); mcp_rej=int(audit.get("MCPToolRejected",0)); mcp_norm=int(audit.get("MCPToolNormalized",0))
+            mcp_payloads=[]
+            for row in app.engine.db.query("SELECT payload FROM audit WHERE event_type='MCPToolCalled' ORDER BY created_at"):
+                try:
+                    mcp_payloads.append(json.loads(row.get("payload") or "{}"))
+                except Exception:
+                    continue
+            from .certification_matrix import collapse_observed_mcp_protocols, observed_mcp_protocols_from_payloads
+            result.update(collapse_observed_mcp_protocols(observed_mcp_protocols_from_payloads(mcp_payloads)))
             rejection_rows=app.engine.db.query("SELECT entity_id,created_at FROM audit WHERE event_type='MCPToolRejected' ORDER BY created_at")
             call_rows=app.engine.db.query("SELECT entity_id,created_at FROM audit WHERE event_type='MCPToolCalled' ORDER BY created_at")
             unrecovered_rejections=[]
@@ -1136,6 +1144,18 @@ class RealProviderAcceptanceCase:
         return result
 
 
+def certification_infrastructure_retry_allowed(
+    max_infrastructure_attempts: int,
+    attempt: int,
+    child: dict[str, Any],
+    worker_failure: dict[str, Any] | None,
+) -> bool:
+    """MATRIX certification uses max_infrastructure_attempts=1 (one provider execution)."""
+    if int(attempt) >= max(1, int(max_infrastructure_attempts)):
+        return False
+    return _retryable_acceptance_infrastructure_failure(child, worker_failure, attempt)
+
+
 def _retryable_acceptance_infrastructure_failure(child:dict[str,Any], worker_failure:dict[str,Any]|None, attempt:int)->bool:
     """Allow one transparent retry for a safe pre-implementation infrastructure timeout.
 
@@ -1169,13 +1189,14 @@ def _retryable_acceptance_infrastructure_failure(child:dict[str,Any], worker_fai
 
 class RealProviderAcceptanceSuite:
     """Acceptance bundle intended to run on the user's own machine."""
-    def __init__(self,providers:Iterable[str]=ACCEPTANCE_PROVIDERS,scenario:str="green-brown",output:str|Path|None=None,workspace:str|Path|None=None,*,interaction_mode:str="auto",timeout:int|None=None,max_runtime:int=1800,idle_timeout:int=180,slow_progress:int=60,configure:bool=True,keep:bool=True,log_dir:str|Path|None=None,heartbeat:int=10,model_profile:str="economy"):
+    def __init__(self,providers:Iterable[str]=ACCEPTANCE_PROVIDERS,scenario:str="green-brown",output:str|Path|None=None,workspace:str|Path|None=None,*,interaction_mode:str="auto",timeout:int|None=None,max_runtime:int=1800,idle_timeout:int=180,slow_progress:int=60,configure:bool=True,keep:bool=True,log_dir:str|Path|None=None,heartbeat:int=10,model_profile:str="economy",max_infrastructure_attempts:int=2,certification_mode:bool=False):
         self.providers=tuple(dict.fromkeys(providers)); self.scenario=scenario; self.interaction_mode=interaction_mode
         self.max_runtime=int(timeout) if timeout is not None else int(max_runtime)
         self.idle_timeout=int(idle_timeout); self.slow_progress=int(slow_progress); self.timeout=self.max_runtime
         self.configure=configure; self.keep=keep; self.heartbeat=max(1,int(heartbeat))
         self.model_profile=str(model_profile or "economy").lower()
         if self.model_profile not in ACCEPTANCE_MODEL_PROFILES: raise ValueError(f"Unknown acceptance model profile: {self.model_profile}")
+        self.max_infrastructure_attempts=1 if certification_mode else max(1,int(max_infrastructure_attempts))
         for p in self.providers:
             if p not in ACCEPTANCE_PROVIDERS: raise ValueError(p)
         scenarios=ACCEPTANCE_SCENARIOS if scenario=="green-brown" else (scenario,)
@@ -1225,7 +1246,7 @@ class RealProviderAcceptanceSuite:
         for provider,scenario in case_order:
             retry_history=[]
             final_child=None
-            for attempt in (1,2):
+            for attempt in range(1, self.max_infrastructure_attempts + 1):
                 case_dir=self.base/provider/scenario
                 case_progress=self.log_dir/"cases"/provider/scenario
                 if attempt>1:
@@ -1322,7 +1343,7 @@ class RealProviderAcceptanceSuite:
                 }
                 case_attempts.append(attempt_record)
                 _write_json(summary_path,child)
-                retryable=_retryable_acceptance_infrastructure_failure(child,worker_failure,attempt)
+                retryable=certification_infrastructure_retry_allowed(self.max_infrastructure_attempts,attempt,child,worker_failure)
                 if retryable:
                     retry_history.append(attempt_record)
                     logger.emit("case_infrastructure_retry",phase="case",provider=provider,scenario=scenario,message="retrying clean case after safe pre-implementation infrastructure idle timeout",status="retrying",attempt=attempt,next_attempt=attempt+1,termination_reason=attempt_record.get("termination_reason"),path=str(case_progress))

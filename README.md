@@ -8,7 +8,7 @@ DynosAI is a local-first orchestration and governance layer for AI coding agents
 
 > The agent writes code. DynosAI governs what may change, what must be proven, and when the work is actually done.
 
-**Current release:** `1.0.0-rc.6` (`1.0.0rc6`) · **Public RC · Standards & Release Evidence**
+**Current release:** `1.0.0-rc.7` (`1.0.0rc7`) · **Public RC · Certification Integrity & Protocol Correctness**
 **License:** MIT
 **Author and maintainer:** [Pablo Cano](https://www.linkedin.com/in/pablo-cano-galan/)
 **Website:** [https://www.dynosai.com/](https://www.dynosai.com/)
@@ -51,11 +51,11 @@ The authoritative state lives in `.dynosai/knowledge.db` and Git, not in the pro
 - **Governed teams** — approved task DAGs become serial or parallel waves with file-disjoint leases. DynosAI does not spawn extra agents; a second worker exists only if the host opens another governed session.
 - **Eval intelligence** — local failures are attributed and mined into bounded eval cases. Improvement work stays in inbox until a human starts it. Live-provider leaderboards are not claimed.
 - **Execution profiles** — Strict, Balanced and Autonomous set host-owned network, dependency and secret policy. Human gates stay required. Docker/VM runtimes and OS-level network interception are not shipped.
-- **Certified providers** — Cursor ACP and Codex app-server are the shipped Studio transports. Additional clients are not assumed certified.
+- **Supported 1.0 target providers** — Cursor ACP and Codex app-server are the shipped Studio transports. 1.0 live certification is pending MATRIX_1.0. Additional clients are not assumed certified.
 - **Local semantic memory** — local embeddings, symbols, tests, decisions, features, and evidence can be retrieved in bounded context.
 - **Session recovery** — active work can be resumed from durable state after a provider restart.
 - **Model control** — phase-aware budgets, complexity, failures, and routing evidence are tracked while expensive escalation remains conservative.
-- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but `1.0.0-rc.6` still does not let the predictor autonomously change model tiers.
+- **Predictive routing in shadow mode** — historical recommendations are replayed offline, but `1.0.0-rc.7` still does not let the predictor autonomously change model tiers.
 - **Observability** — MCP calls, token usage, context strategies, validation results, route decisions, retries, and acceptance evidence are persisted.
 - **Real-provider acceptance harness** — greenfield and brownfield scenarios can be executed against Codex and Cursor and packaged into one auditable bundle.
 
@@ -89,7 +89,7 @@ There are two layers:
 1. **Deterministic Core verification:** Git diff, scope, planned actions, requirements, evidence, validations, and state transitions are checked independently of the agent's claim.
 2. **Semantic review:** the managed agent is instructed to inspect the diff against requirements and regressions, followed by a human code-review gate.
 
-Version `1.0.0-rc.6` still does **not** spawn a second independent LLM reviewer. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. Eval intelligence does not auto-start a provider. Autonomous is an execution profile, not a skipped-gate mode. Additional IDE clients are not certified.
+Version `1.0.0-rc.7` still does **not** spawn a second independent LLM reviewer. Reviewer work is the human code-review gate; tester work is the governed validation contract on the same lease. Eval intelligence does not auto-start a provider. Autonomous is an execution profile, not a skipped-gate mode. Additional IDE clients are not 1.0 live-certified.
 
 ## Quick start
 
@@ -145,6 +145,7 @@ dynosai studio
 | [Compatibility](docs/COMPATIBILITY.md) | Frozen 1.0 MCP, CLI, schema, App Server and human-gate contracts |
 | [Threat model](docs/THREAT_MODEL.md) | Enforced vs not-enforced 1.0 controls, including loopback honesty |
 | [Contributing](CONTRIBUTING.md) | Maintainer development, release gate and certified-provider process. External PRs are closed |
+| [1.0.0-rc.7 release notes](docs/RELEASE_1.0.0-rc.7.md) | Certification integrity: archive safety, MCP 2026 strictness/MRTR, MATRIX runner honesty |
 | [1.0.0-rc.6 release notes](docs/RELEASE_1.0.0-rc.6.md) | Standards & release evidence: MCP 2026, unified gate, eval corpus, distribution ADR |
 | [1.0.0-rc.5 release notes](docs/RELEASE_1.0.0-rc.5.md) | Freeze: threat model, contribution/certification process, loopback honesty |
 | [1.0.0-rc.4 release notes](docs/RELEASE_1.0.0-rc.4.md) | Installation: Studio doctor, verified local wheel, installed-package CI |
@@ -179,7 +180,7 @@ Across that matrix: 63 MCP calls, 0 MCP failures, 0 MCP rejections, 0 scope requ
 
 ## Public RC status
 
-DynosAI `1.0.0-rc.6` keeps the frozen 1.0 compatibility contract (schema v6, 31 MCP names) and adds MCP `2026-07-28` compatibility without dropping `2025-11-25` / `2025-06-18`. Cursor ACP and Codex app-server remain the certified Studio transports. `MATRIX_1.0` live cells are recorded only from real trials; they are not copied from 0.13. The public distribution name will be `dynosai` when published; this RC is not on PyPI. This candidate is not production-ready 1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
+DynosAI `1.0.0-rc.7` keeps the frozen 1.0 compatibility contract (schema v6, 31 MCP names). It **supports** MCP revisions `2026-07-28`, `2025-11-25` and `2025-06-18`. Cursor ACP and Codex app-server remain the **supported 1.0 target providers**; 1.0 live certification is **pending `MATRIX_1.0`**. `MATRIX_1.0` live cells are recorded only from real trials; they are not copied from 0.13. The public distribution name will be `dynosai` when published; this RC is not on PyPI. This candidate is not production-ready 1.0 and should be adopted with normal engineering review, repository backups, and project-specific validation profiles.
 
 External pull requests are **not currently accepted** while the public API, packaging, and contribution model settle. Bug reports and practical feedback are welcome through [GitHub Issues](https://github.com/pablo-cano/dynosai/issues). Opening contributions is planned for a later beta phase and is not ruled out in the near term.
 

@@ -251,8 +251,8 @@ class DynosAI210Rc1ContractTests(unittest.TestCase):
         api = StudioAPI(self.tmp)
         health_status, health = api.get("/api/health")
         self.assertEqual(health_status, 200)
-        self.assertEqual(health["version"], "1.0.0rc6")
-        self.assertEqual(health["display_version"], "1.0.0-rc.6")
+        self.assertEqual(health["version"], "1.0.0rc7")
+        self.assertEqual(health["display_version"], "1.0.0-rc.7")
         status, payload = api.get("/api/project-settings")
         self.assertEqual(status, 200)
         self.assertIn("harness", payload)
@@ -288,7 +288,7 @@ class DynosAI210Rc1ContractTests(unittest.TestCase):
             if "DYNOSAI_DISABLE_" in text:
                 hits.append(path.name)
         self.assertEqual(hits, [])
-        self.assertEqual(__version__, "1.0.0rc6")
+        self.assertEqual(__version__, "1.0.0rc7")
 
 
 if __name__ == "__main__":

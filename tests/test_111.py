@@ -6,7 +6,8 @@ from pathlib import Path
 
 from dynosai_flow.acceptance import _context_optimization_metrics
 from dynosai_flow.db import Database
-from dynosai_flow.mcp import ToolInputError, _validate_tool_arguments, advertised_tools, MCPServer, CURRENT_PROTOCOL
+from dynosai_flow.mcp import ToolInputError, _validate_tool_arguments, advertised_tools, MCPServer
+from dynosai_flow.mcp_protocol import PROTOCOL_2025_11
 from dynosai_flow.engine import DynosAI
 from dynosai_flow.agent_config import AgentConfiguration
 from dynosai_flow.managed_runtime import ManagedProviderRuntime
@@ -35,7 +36,7 @@ class DynosAI111HardeningTests(unittest.TestCase):
     def test_scope_add_is_mcp_rejection_never_server_failure(self):
         root=self.tmp/"scope"; engine=DynosAI(root); engine.initialize("Scope","python","python -m unittest","all")
         server=MCPServer(root)
-        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":CURRENT_PROTOCOL}})
+        server.handle({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":PROTOCOL_2025_11}})
         response=server.handle({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"dynosai_request_scope_extension","arguments":{"work_id":"DYN-X","path":"tests/test_cli.py","action":"add","reason":"test"}}})
         self.assertFalse(response["result"]["isError"],response)
         self.assertEqual(response["result"]["structuredContent"]["error_type"],"tool_input_validation")

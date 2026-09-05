@@ -9,14 +9,17 @@ import json
 import shutil
 import subprocess
 import sys
-import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
+
+from dynosai_flow.release_manifest import write_source_zip  # noqa: E402
+
 DIST = ROOT / "dist"
-EXCLUDED_DIRS = {".git", ".pytest_cache", "__pycache__", ".venv", "venv", "node_modules", ".next", "out", "dist", "build", "dynosai_flow.egg-info"}
-EXCLUDED_SUFFIXES = {".pyc", ".pyo", ".tsbuildinfo"}
 
 
 def run(*args: str, cwd: Path = ROOT) -> None:
@@ -32,12 +35,7 @@ def version() -> str:
 
 def source_zip(target: Path) -> None:
     prefix = f"dynosai-{version()}"
-    with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
-        for path in sorted(ROOT.rglob("*")):
-            rel = path.relative_to(ROOT)
-            if path.is_dir() or any(part in EXCLUDED_DIRS for part in rel.parts) or path.suffix in EXCLUDED_SUFFIXES:
-                continue
-            archive.write(path, Path(prefix) / rel)
+    write_source_zip(ROOT, target, prefix=prefix)
 
 
 def sha256(path: Path) -> str:
