@@ -11,7 +11,7 @@ after the RC7 certification-integrity work:
 - 64 Python modules in `src/dynosai_flow`.
 - 23,327 source lines.
 - 71 test modules and 11,487 test lines.
-- Stable suite: 552 passed (`python scripts/release_gate.py`).
+- Stable suite: 563 passed (`python scripts/release_gate.py`).
 - SQLite schema v6.
 - Frozen unique MCP names: 31.
 - Supported MCP revisions: `2026-07-28`, `2025-11-25`, `2025-06-18`.

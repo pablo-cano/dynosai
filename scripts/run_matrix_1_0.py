@@ -22,10 +22,12 @@ if str(SRC) not in sys.path:
 from dynosai_flow.certification_matrix import (  # noqa: E402
     CELL_KEYS,
     SCENARIO_FOR_MODE,
+    CertificationAborted,
     append_trial,
     collapse_observed_mcp_protocols,
     default_matrix_workspace,
     empty_trial,
+    guard_live_certification,
     load_live_matrix,
     observed_mcp_protocols_from_payloads,
     probe_environment,
@@ -215,6 +217,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--cells", help="Comma-separated provider.mode list")
     parser.add_argument("--workspace", default=None, help="Override workspace. Default: <TEMP>/dynosai-matrix-1.0/")
     parser.add_argument("--matrix", default=str(ROOT / "docs" / "validation" / "matrix-1.0.json"))
+    parser.add_argument(
+        "--expected-subject-sha256",
+        default=None,
+        help="Required for --live. Abort before launching a provider if certification_subject_sha256 differs.",
+    )
     args = parser.parse_args(argv)
 
     matrix_path = Path(args.matrix)
@@ -227,14 +234,34 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"mode": "probe", "environment": env, "cells": {f"{p}.{m}": "not_run" for p, m in CELL_KEYS}}, indent=2, default=str))
         return 0
 
+    expected = str(args.expected_subject_sha256 or "").strip()
+    if not expected:
+        print(
+            "Certification live runs require --expected-subject-sha256.\nProvider execution was not started.",
+            file=sys.stderr,
+        )
+        return 2
+
     workspace = Path(args.workspace).expanduser().resolve() if args.workspace else default_matrix_workspace(ROOT)
     for provider, mode in _select_cells(args.cells):
+        try:
+            env = guard_live_certification(ROOT, expected_subject_sha256=expected)
+        except CertificationAborted as exc:
+            print(str(exc), file=sys.stderr)
+            print(str(exc))
+            return 2
+        matrix["environment"] = {
+            key: value for key, value in env.items()
+            if key not in {"certification_dirty_paths", "unexpected_dirty_paths"}
+        }
         cell = next(item for item in matrix["cells"] if item["provider"] == provider and item["mode"] == mode)
         attempt = len(cell.get("trials") or []) + 1
         trial = empty_trial(provider=provider, mode=mode, attempt=attempt, environment=env)
         trial["started_at"] = _now()
         trial["execution_profile"] = "unknown"
         trial["harness_feature_state"] = "unknown"
+        trial["certification_dirty_paths"] = list(env.get("certification_dirty_paths") or [])
+        trial["unexpected_dirty_paths"] = list(env.get("unexpected_dirty_paths") or [])
         try:
             live = _run_live_cell(provider, mode, workspace, attempt)
         except Exception as exc:

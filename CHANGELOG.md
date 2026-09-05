@@ -9,6 +9,7 @@ All notable public changes to DynosAI are documented here. The project uses sema
 - Shared releasable-file manifest for source ZIPs and certification fingerprints (`git ls-files --cached --others --exclude-standard` with a deny overlay).
 - MCP 2026-07-28 per-request `_meta` validation (protocolVersion + clientCapabilities), era-specific initialize/ping rejection, and `input_required` MRTR for human gates.
 - MATRIX runner certification semantics: temp-dir workspace, one provider execution per trial, observed MCP protocols, source identity (`git_commit`, `git_dirty`, `source_tree_sha256`, `source_file_count`).
+- Certification subject identity (`certification_subject_sha256`) distinct from the full release-tree fingerprint, plus live guards (`--expected-subject-sha256`, matrix-only dirty allowed).
 - Public MATRIX_1.0 artifact refs without machine-local absolute paths.
 
 ### Changed

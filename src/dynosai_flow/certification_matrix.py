@@ -25,7 +25,11 @@ from pathlib import Path
 from typing import Any
 
 from .mcp_protocol import CURRENT_PROTOCOL, SUPPORTED_PROTOCOLS
-from .release_manifest import source_tree_identity
+from .release_manifest import (
+    _posix,
+    certification_subject_identity,
+    source_tree_identity,
+)
 from .version import DISPLAY_VERSION, __version__
 
 MATRIX_SCHEMA = "MATRIX_1.0"
@@ -42,6 +46,7 @@ SCENARIO_FOR_MODE = {
 }
 HISTORICAL_MATRIX_PATH = "docs/validation/final-matrix-0.13.0.json"
 LIVE_MATRIX_PATH = "docs/validation/matrix-1.0.json"
+CERTIFICATION_ALLOWED_DIRTY_PATHS = frozenset({LIVE_MATRIX_PATH})
 TRIAL_FIELD_NAMES = (
     "provider",
     "provider_client_version",
@@ -51,6 +56,10 @@ TRIAL_FIELD_NAMES = (
     "git_dirty",
     "source_tree_sha256",
     "source_file_count",
+    "certification_subject_sha256",
+    "certification_subject_file_count",
+    "certification_dirty_paths",
+    "unexpected_dirty_paths",
     "os",
     "python_version",
     "scenario",
@@ -89,6 +98,159 @@ TRIAL_FIELD_NAMES = (
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
+
+
+class CertificationAborted(RuntimeError):
+    """Live MATRIX aborted before any provider process started."""
+
+    def __init__(self, message: str, *, reason: str):
+        super().__init__(message)
+        self.reason = reason
+
+
+def _git_dirty_paths(root: Path) -> list[str]:
+    """Repo-relative dirty paths from `git status --porcelain -z`."""
+    if not (root / ".git").exists():
+        return []
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "-z"],
+            cwd=root,
+            check=False,
+            capture_output=True,
+        )
+    except OSError:
+        return []
+    if result.returncode != 0:
+        return []
+    paths: list[str] = []
+    chunks = result.stdout.split(b"\0")
+    index = 0
+    while index < len(chunks):
+        raw = chunks[index]
+        index += 1
+        if not raw:
+            continue
+        text = raw.decode("utf-8", errors="surrogateescape")
+        if len(text) < 4:
+            continue
+        status = text[:2]
+        path = text[3:]
+        if "R" in status or "C" in status:
+            if index < len(chunks) and chunks[index]:
+                path = chunks[index].decode("utf-8", errors="surrogateescape")
+                index += 1
+        posix = _posix(path)
+        if posix:
+            paths.append(posix)
+    return paths
+
+
+def classify_certification_dirty(root: Path | None = None) -> dict[str, list[str]]:
+    """Split dirty paths into allowed MATRIX evidence vs unexpected product changes."""
+    target = (root or _repo_root()).resolve()
+    allowed: list[str] = []
+    unexpected: list[str] = []
+    for path in _git_dirty_paths(target):
+        if path in CERTIFICATION_ALLOWED_DIRTY_PATHS:
+            allowed.append(path)
+        else:
+            unexpected.append(path)
+    return {
+        "certification_dirty_paths": allowed,
+        "unexpected_dirty_paths": unexpected,
+    }
+
+
+def certification_subject_mismatch_message(expected: str, current: str) -> str:
+    return (
+        "Certification subject changed.\n"
+        f"Expected: {expected}\n"
+        f"Current: {current}\n"
+        "Provider execution was not started."
+    )
+
+
+def unexpected_dirty_abort_message(paths: list[str]) -> str:
+    listed = ", ".join(paths) if paths else "(none)"
+    return (
+        "ABORT CERTIFICATION\n"
+        f"unexpected_dirty_paths: {listed}\n"
+        "Provider execution was not started."
+    )
+
+
+def guard_live_certification(
+    root: Path | None = None,
+    *,
+    expected_subject_sha256: str,
+) -> dict[str, Any]:
+    """Validate candidate identity and dirty policy before launching a provider."""
+    target = (root or _repo_root()).resolve()
+    env = probe_environment(target)
+    dirty = classify_certification_dirty(target)
+    current = str(env.get("certification_subject_sha256") or "")
+    expected = str(expected_subject_sha256 or "").strip().lower()
+    if current.lower() != expected:
+        raise CertificationAborted(
+            certification_subject_mismatch_message(expected_subject_sha256, current),
+            reason="subject_mismatch",
+        )
+    if dirty["unexpected_dirty_paths"]:
+        raise CertificationAborted(
+            unexpected_dirty_abort_message(dirty["unexpected_dirty_paths"]),
+            reason="unexpected_dirty",
+        )
+    return {**env, **dirty}
+
+
+def trial_candidate_identity(trial: dict[str, Any] | None) -> tuple[str | None, str | None]:
+    """Canonical candidate identity: git commit + certification subject, not the source ZIP hash."""
+    payload = trial or {}
+    commit = payload.get("dynosai_git_commit")
+    subject = payload.get("certification_subject_sha256")
+    return (
+        str(commit) if commit else None,
+        str(subject) if subject else None,
+    )
+
+
+def attempt_n_same_candidate(matrix: dict[str, Any], attempt: int = 3) -> dict[str, Any]:
+    """True only when every cell has that attempt and all share commit + subject SHA."""
+    identities: list[tuple[str | None, str | None]] = []
+    missing: list[str] = []
+    for provider, mode in CELL_KEYS:
+        cell = next(
+            (item for item in (matrix.get("cells") or []) if item.get("provider") == provider and item.get("mode") == mode),
+            None,
+        )
+        trial = None
+        for item in (cell or {}).get("trials") or []:
+            if isinstance(item, dict) and int(item.get("attempt") or 0) == int(attempt):
+                trial = item
+                break
+        key = f"{provider}.{mode}"
+        if trial is None:
+            missing.append(key)
+            continue
+        identities.append(trial_candidate_identity(trial))
+    unique = {item for item in identities}
+    all_same = (
+        len(missing) == 0
+        and len(identities) == len(CELL_KEYS)
+        and len(unique) == 1
+        and unique != {(None, None)}
+        and all(commit and subject for commit, subject in unique)
+    )
+    result_key = f"all_attempt{attempt}_same_candidate"
+    return {
+        "attempt": int(attempt),
+        "trial_count": len(identities),
+        "missing_cells": missing,
+        "identities": [{"dynosai_git_commit": commit, "certification_subject_sha256": subject} for commit, subject in identities],
+        result_key: all_same,
+        "all_attempt3_same_candidate": all_same if int(attempt) == 3 else None,
+    }
 
 
 def _git_commit(root: Path | None = None) -> str | None:
@@ -282,6 +444,7 @@ def probe_environment(root: Path | None = None) -> dict[str, Any]:
     """Record host facts. Missing values stay null/unknown; nothing is invented."""
     target = root or _repo_root()
     identity = source_tree_identity(target)
+    subject = certification_subject_identity(target)
     detected = {
         "codex": shutil.which("codex"),
         "cursor-agent": shutil.which("cursor-agent"),
@@ -294,6 +457,8 @@ def probe_environment(root: Path | None = None) -> dict[str, Any]:
         "git_dirty": _git_dirty(target),
         "source_tree_sha256": identity["source_tree_sha256"],
         "source_file_count": identity["source_file_count"],
+        "certification_subject_sha256": subject["certification_subject_sha256"],
+        "certification_subject_file_count": subject["certification_subject_file_count"],
         "os": platform.platform(),
         "python_version": sys.version.split()[0],
         "mcp_protocols_supported": list(SUPPORTED_PROTOCOLS),
@@ -326,6 +491,10 @@ def empty_trial(
         "git_dirty": env.get("git_dirty"),
         "source_tree_sha256": env.get("source_tree_sha256"),
         "source_file_count": env.get("source_file_count"),
+        "certification_subject_sha256": env.get("certification_subject_sha256"),
+        "certification_subject_file_count": env.get("certification_subject_file_count"),
+        "certification_dirty_paths": env.get("certification_dirty_paths"),
+        "unexpected_dirty_paths": env.get("unexpected_dirty_paths"),
         "os": env.get("os"),
         "python_version": env.get("python_version"),
         "mcp_protocol_version": None,

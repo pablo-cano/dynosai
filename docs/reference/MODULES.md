@@ -23,7 +23,7 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `prompt_prefix.py` | Deterministic MCP authority prefix hash; cacheable structure, not a cache-hit claim |
 | `execution_profiles.py` | Strict/Balanced/Autonomous host policy, local runtime bind and unsupported-runtime refusal |
 | `capability_manifests.py` | Cursor ACP / Codex app-server contracts and refusal of uncertified clients/packs |
-| `certification_matrix.py` | MATRIX_1.0 live Codex/Cursor × greenfield/brownfield cells; historical 0.13 evidence stays separate |
+| `certification_matrix.py` | MATRIX_1.0 live cells, candidate identity (`git commit` + `certification_subject_sha256`), dirty-tree guards |
 | `execution_runtime.py` | Provider-neutral ExecutionRuntime and local hands implementation |
 | `harness_contracts.py` | Typed execution/recovery/handle contracts and optional harness feature flags |
 | `secrets.py` | Credential redaction and secret broker (model refuse-closed; optional local runtime vault) |
@@ -44,7 +44,7 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `mcp_protocol_legacy.py` | 2025-11-25 / 2025-06-18 initialize and list/call shaping |
 | `mcp_protocol_2026.py` | 2026-07-28 discover, stateless list/call and `input_required` envelopes |
 | `mcp_human_gates.py` | Stable human-gate input-request keys shared by legacy elicitation and 2026 MRTR |
-| `release_manifest.py` | Git-aware releasable file list, source ZIP members and source-tree fingerprint |
+| `release_manifest.py` | Git-aware releasable file list, source ZIP, `source_tree_sha256` and `certification_subject_sha256` |
 | `model_benchmark.py` | Offline provider/model benchmark ranking |
 | `model_control.py` | Phase budgets, adaptive control decisions and transition evidence |
 | `model_routing.py` | Provider/activity routing profiles |

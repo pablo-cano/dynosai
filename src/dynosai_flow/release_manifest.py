@@ -6,6 +6,10 @@ Git is preferred when a `.git` directory exists: tracked files plus untracked,
 non-ignored files (`git ls-files --cached --others --exclude-standard`). A
 conservative deny overlay still drops secrets and runtime trees even if they
 were tracked by mistake. Trees without Git use an explicit deny-list walk.
+
+Release archive identity (`source_tree_sha256`) fingerprints every releasable
+file, including MATRIX evidence. Certification subject identity excludes only
+mutable certification outputs such as `docs/validation/matrix-1.0.json`.
 """
 
 from __future__ import annotations
@@ -31,6 +35,11 @@ DENY_DIR_NAMES = {
     "__pycache__",
 }
 DENY_SUFFIXES = {".pyc", ".pyo", ".log", ".tmp"}
+# Mutable certification evidence. Still packed in the source ZIP; excluded only
+# from certification_subject_sha256 so live MATRIX writes do not retarget the candidate.
+CERTIFICATION_SUBJECT_EXCLUDES = frozenset({
+    "docs/validation/matrix-1.0.json",
+})
 
 
 def _posix(rel: str | Path) -> str:
@@ -104,6 +113,16 @@ def list_release_files(root: str | Path) -> list[str]:
     return files
 
 
+def is_certification_subject_excluded(relative: str | Path) -> bool:
+    """Return True for mutable certification evidence that is not the candidate."""
+    return _posix(relative) in CERTIFICATION_SUBJECT_EXCLUDES
+
+
+def list_certification_subject_files(root: str | Path) -> list[str]:
+    """Releasable files that define the certified candidate, excluding MATRIX output."""
+    return [item for item in list_release_files(root) if not is_certification_subject_excluded(item)]
+
+
 def file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -112,21 +131,40 @@ def file_sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def source_tree_identity(root: str | Path) -> dict[str, str | int]:
-    """Fingerprint the releasable tree: relative path + file hash, deterministic order."""
-    target = Path(root).resolve()
-    files = list_release_files(target)
+def _fingerprint_files(root: Path, files: list[str]) -> str:
     digest = hashlib.sha256()
     for rel in files:
-        path = target / Path(*rel.split("/"))
+        path = root / Path(*rel.split("/"))
         payload_hash = file_sha256(path) if path.is_file() else hashlib.sha256().hexdigest()
         digest.update(rel.encode("utf-8"))
         digest.update(b"\0")
         digest.update(payload_hash.encode("ascii"))
         digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def source_tree_identity(root: str | Path) -> dict[str, str | int]:
+    """Fingerprint the full releasable tree, including MATRIX evidence."""
+    target = Path(root).resolve()
+    files = list_release_files(target)
     return {
         "source_file_count": len(files),
-        "source_tree_sha256": digest.hexdigest(),
+        "source_tree_sha256": _fingerprint_files(target, files),
+    }
+
+
+def certification_subject_identity(root: str | Path) -> dict[str, str | int]:
+    """Fingerprint the candidate under certification.
+
+    Same releasable universe as the source ZIP, minus mutable MATRIX output.
+    Changing product/harness/config changes this hash. Appending a MATRIX trial
+    does not.
+    """
+    target = Path(root).resolve()
+    files = list_certification_subject_files(target)
+    return {
+        "certification_subject_file_count": len(files),
+        "certification_subject_sha256": _fingerprint_files(target, files),
     }
 
 

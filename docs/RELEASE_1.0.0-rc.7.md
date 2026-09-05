@@ -26,6 +26,7 @@ RC6 live certification recorded eight explicit trials (two per cell). All four c
 - `server/discover` instructions are provider-neutral with `cacheScope=public`
 - stdio newline JSON-RPC smoke for 2026 and 2025
 - MATRIX runner: temp workspace, certification-mode `max_infrastructure_attempts=1`, observed MCP protocols, source identity fields
+- Candidate identity (`git commit` + `certification_subject_sha256`) is separate from the full release-tree fingerprint (`source_tree_sha256`). MATRIX evidence is in the source ZIP but excluded from the certification subject so sequential live cells can share one candidate.
 
 ## What this RC does not claim
 
@@ -42,3 +43,35 @@ RC6 live certification recorded eight explicit trials (two per cell). All four c
 - Git source authority, `knowledge.db` workflow authority, human gates
 - Predictive Router remains shadow-only
 - No fake OS sandbox
+
+## Candidate identity vs release archive identity
+
+Live `MATRIX_1.0` writes `docs/validation/matrix-1.0.json`. That file remains in
+the **release archive** (`source_tree_sha256`, source ZIP) because it is
+packed evidence.
+
+It is excluded from the **certification subject**. The canonical candidate is:
+
+```text
+dynosai_git_commit
++
+certification_subject_sha256
+```
+
+Changing product, harness, tests, Studio, website or `pyproject.toml` changes
+the subject. Appending a MATRIX trial does not. Sequential attempt-3 cells
+share a candidate only when commit and subject SHA match
+(`all_attempt3_same_candidate`). Do not use `source_tree_sha256`, observed MCP
+protocol, or provider version for that comparison.
+
+Live runs require `--expected-subject-sha256` and abort before Codex/Cursor if
+the subject changed or unexpected paths are dirty. A matrix-only dirty tree is
+allowed between cell invocations.
+
+The final source artifact identity after certification remains:
+
+```text
+source_tree_sha256
+source_zip_sha256
+wheel_sha256
+```
