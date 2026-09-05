@@ -68,6 +68,10 @@ Overview and Diagnostics show doctor / deep-doctor results from the existing eng
 
 Help states that loopback Studio is not a full security boundary. External pull requests remain closed. The threat model lives in `docs/THREAT_MODEL.md`.
 
+## 1.0.0-rc.8 integrity
+
+Overview still shows MATRIX_1.0 from real trials (currently explicit fails, not PASS). MCP `serverInfo.name` remains `dynosai-flow`. Protocol **support** is `2026-07-28`, `2025-11-25` and `2025-06-18`. That is not a claim that Cursor/Codex negotiated 2026. No plugin marketplace.
+
 ## 1.0.0-rc.7 integrity
 
 Overview still shows MATRIX_1.0 from real trials (currently explicit fails, not PASS). MCP `serverInfo.name` remains `dynosai-flow`. Protocol **support** is `2026-07-28`, `2025-11-25` and `2025-06-18`. That is not a claim that Cursor/Codex negotiated 2026. No plugin marketplace.

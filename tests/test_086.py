@@ -1,11 +1,14 @@
 import json
+import shutil
 import stat
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 
 from dynosai_flow.acceptance import CodexAppServerDriver, RealProviderAcceptanceSuite
 from dynosai_flow.mcp import TOOLS
+from dynosai_flow.runtime_paths import user_local_scratch
 from dynosai_flow.version import __version__
 
 
@@ -14,6 +17,9 @@ class Acceptance086Tests(unittest.TestCase):
         self.td = tempfile.TemporaryDirectory()
         self.addCleanup(self.td.cleanup)
         self.tmp = Path(self.td.name)
+        self.safe = user_local_scratch("unit-tests", uuid.uuid4().hex)
+        self.safe.mkdir(parents=True, exist_ok=True)
+        self.addCleanup(lambda: shutil.rmtree(self.safe, ignore_errors=True))
 
     def _fake_codex(self) -> Path:
         fake = self.tmp / "codex"
@@ -50,7 +56,7 @@ send({"method":"turn/completed","params":{"threadId":"thr","turn":{"id":"turn","
 
     def test_codex_wire_elicitation_is_normalized_into_acceptance_trace(self):
         fake = self._fake_codex()
-        project = self.tmp / "project"; project.mkdir()
+        project = self.safe / "project"; project.mkdir()
         logs = self.tmp / "logs"
         result = CodexAppServerDriver(str(fake), 20).run(project, "prompt", logs, interaction_mode="auto")
         self.assertEqual(result["exit_code"], 0, result)
@@ -70,7 +76,7 @@ send({"method":"turn/completed","params":{"threadId":"thr","turn":{"id":"turn","
 
     def test_acceptance_artifact_version_is_not_hardcoded(self):
         suite = RealProviderAcceptanceSuite(providers=("cursor",), scenario="fibonacci", configure=False)
-        self.assertEqual(__version__, "1.0.0rc7")
+        self.assertEqual(__version__, "1.0.0rc8")
         self.assertIn(__version__.replace(".", ""), suite.output.name)
 
 

@@ -17,7 +17,7 @@ class DynosAI101Tests(unittest.TestCase):
         self.tmp = Path(self.td.name)
 
     def test_version_is_0101(self):
-        self.assertEqual(__version__, "1.0.0rc7")
+        self.assertEqual(__version__, "1.0.0rc8")
 
     def test_unknown_provider_counters_stay_null(self):
         usage = normalize_usage("cursor", {"inputTokens": 100, "outputTokens": 10, "cacheReadTokens": 50})

@@ -1,6 +1,6 @@
 # Code Quality Review
 
-Metrics below were generated from the `1.0.0-rc.7` source tree. Do not treat
+Metrics below were generated from the `1.0.0-rc.8` source tree. Do not treat
 0.13/0.14 historical counts as current.
 
 ## Current scale

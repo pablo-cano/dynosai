@@ -29,9 +29,17 @@ from dynosai_flow.certification_matrix import (  # noqa: E402
     empty_trial,
     guard_live_certification,
     load_live_matrix,
+    matrix_all_passed_for_environment,
     observed_mcp_protocols_from_payloads,
     probe_environment,
     save_live_matrix,
+)
+from dynosai_flow.runtime_paths import (  # noqa: E402
+    UnsafeCodexRuntime,
+    acceptance_project_dir,
+    assert_codex_home_safe,
+    managed_codex_home,
+    portable_codex_preflight,
 )
 from dynosai_flow.util import utc_now  # noqa: E402
 
@@ -63,7 +71,7 @@ def live_exit_code(matrix: dict, selected_cells: list[tuple[str, str]], *, cells
             if str(latest.get("final_status") or "") != "pass":
                 return 1
         return 0
-    return 0 if all(cell.get("status") == "pass" for cell in matrix["cells"]) else 1
+    return 0 if matrix_all_passed_for_environment(matrix) else 1
 
 
 def _run_live_cell(provider: str, mode: str, workspace: Path, attempt: int) -> dict:
@@ -228,7 +236,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="MATRIX_1.0 probe and one-shot live trials")
     parser.add_argument("--live", action="store_true", help="Run one new live trial per selected cell")
     parser.add_argument("--cells", help="Comma-separated provider.mode list")
-    parser.add_argument("--workspace", default=None, help="Override workspace. Default: <TEMP>/dynosai-matrix-1.0/")
+    parser.add_argument("--workspace", default=None, help="Override workspace. Default: <user-local>/certification/matrix-1.0/")
     parser.add_argument("--matrix", default=str(ROOT / "docs" / "validation" / "matrix-1.0.json"))
     parser.add_argument(
         "--expected-subject-sha256",
@@ -277,6 +285,24 @@ def main(argv: list[str] | None = None) -> int:
         trial["harness_feature_state"] = "unknown"
         trial["certification_dirty_paths"] = list(env.get("certification_dirty_paths") or [])
         trial["unexpected_dirty_paths"] = list(env.get("unexpected_dirty_paths") or [])
+        if provider == "codex":
+            tag = f"{provider}-{mode}-attempt{attempt}"
+            project = acceptance_project_dir(workspace / f"{tag}-ws", provider, SCENARIO_FOR_MODE[mode])
+            try:
+                assert_codex_home_safe(managed_codex_home(project))
+            except UnsafeCodexRuntime as exc:
+                print(str(exc), file=sys.stderr)
+                print(str(exc))
+                return 2
+            from dynosai_flow.managed_runtime import run_codex_version_preflight
+            preflight = run_codex_version_preflight(project)
+            trial["codex_runtime_preflight"] = portable_codex_preflight(preflight)
+            if preflight.get("status") != "pass" or preflight.get("helper_binary_refusal_detected"):
+                print(
+                    "Codex runtime preflight failed.\nProvider execution was not started.",
+                    file=sys.stderr,
+                )
+                return 2
         try:
             live = _run_live_cell(provider, mode, workspace, attempt)
         except Exception as exc:

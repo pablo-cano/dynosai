@@ -1,10 +1,12 @@
 import json
 import os
+import shutil
 import stat
 import subprocess
 import sys
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 from unittest.mock import patch
 
@@ -20,12 +22,16 @@ from dynosai_flow.agents import AgentConfigurator
 from dynosai_flow.application import DynosAIApplication, ProjectDetector
 from dynosai_flow.db import Database
 from dynosai_flow.debug import SCENARIOS
+from dynosai_flow.runtime_paths import user_local_scratch
 
 
 class Acceptance083Tests(unittest.TestCase):
     def setUp(self):
         self.td=tempfile.TemporaryDirectory(); self.addCleanup(self.td.cleanup)
         self.tmp=Path(self.td.name)
+        self.safe=user_local_scratch("unit-tests", uuid.uuid4().hex)
+        self.safe.mkdir(parents=True, exist_ok=True)
+        self.addCleanup(lambda: shutil.rmtree(self.safe, ignore_errors=True))
         self.old_runtime=os.environ.get("DYNOSAI_RUNTIME_HOME")
         os.environ["DYNOSAI_RUNTIME_HOME"]=str(self.tmp/"runtime")
         self.addCleanup(self._restore)
@@ -105,7 +111,7 @@ for line in sys.stdin:
         send({'id':rid,'result':{'turn':{'id':'turn','status':'inProgress','items':[]}}})
         send({'method':'turn/completed','params':{'threadId':'thr','turn':{'id':'turn','status':'completed'}}}); break
 ''',encoding="utf-8"); fake.chmod(fake.stat().st_mode|stat.S_IXUSR)
-        root=self.tmp/"codex-project"; root.mkdir(); logs=self.tmp/"codex-logs"
+        root=self.safe/"codex-project"; root.mkdir(); logs=self.tmp/"codex-logs"
         # CodexAppServerDriver passes the executable only; we use a wrapper that
         # strips the extra path argument to keep the fixture simple.
         wrapper=self.tmp/"codex-wrap.py"
@@ -141,7 +147,7 @@ for line in sys.stdin:
         send({'id':rid,'result':{'turn':{'id':'turn','status':'inProgress','items':[]}}})
         send({'method':'turn/completed','params':{'threadId':'thr','turn':{'id':'turn','status':'completed'}}}); break
 ''',encoding="utf-8"); fake.chmod(fake.stat().st_mode|stat.S_IXUSR)
-        root=self.tmp/"camel-project"; root.mkdir(); logs=self.tmp/"camel-logs"
+        root=self.safe/"camel-project"; root.mkdir(); logs=self.tmp/"camel-logs"
         result=CodexAppServerDriver(str(fake),20).run(root,"prompt",logs,interaction_mode="auto")
         self.assertEqual(result["exit_code"],0,result)
         self.assertEqual(result["sandbox_mode"],"workspaceWrite")

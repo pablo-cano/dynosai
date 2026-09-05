@@ -174,23 +174,26 @@ compatibility for `2025-11-25` and `2025-06-18`, unified release gate, live
 Schema remains v6; 31 frozen MCP names; Predictive Router stays shadow-only.
 MATRIX_1.0 was not PASS.
 
-### 1.0.0-rc.7 — Certification Integrity & Protocol Correctness (this candidate)
+### 1.0.0-rc.7 — Certification Integrity & Protocol Correctness
 
-Must-have before spending tokens on MATRIX attempt 3. No 1.1–1.5 features.
+Delivered in `1.0.0-rc.7`: archive safety, MCP 2026 strictness/MRTR, MATRIX
+runner honesty, candidate subject identity. Live `codex.greenfield` attempt 3
+failed because managed `CODEX_HOME` sat under the OS temp directory.
 
-- release archive safety (gitignore-aware source manifest)
-- MCP 2026 strict per-request metadata and capability replacement
-- MCP lifecycle by era (2026 does not use legacy initialize/ping)
-- MCP 2026 MRTR `input_required` for DynosAI human gates
-- MATRIX workspace outside the repo; one provider execution per trial
-- observed MCP protocol vs supported revisions
-- source identity fingerprint for dirty candidates
-- public MATRIX path privacy
+### 1.0.0-rc.8 — Provider Runtime Portability (this candidate)
 
-### 1.0.0-rc.8 — Contingency only
+No 1.1–1.5 features. RC8 exists because RC7 live certification discovered a
+deterministic Codex runtime-layout defect.
 
-No features are planned. RC8 exists only if RC7 live certification discovers
-defects that require another candidate. Do not lower the gate to avoid RC8.
+- user-local persistent workspaces for MATRIX and acceptance
+- abort before Codex when `CODEX_HOME` would be under OS temp
+- `codex --version` preflight without a model turn
+- candidate identity gate instead of synchronized attempt numbers
+
+### 1.0.0-rc.9 — Contingency only
+
+No features are planned. RC9 exists only if RC8 live certification discovers
+defects that require another candidate. Do not lower the gate to avoid RC9.
 
 ### 1.0.0 — Stable Governance Core
 

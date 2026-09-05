@@ -2,6 +2,23 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 1.0.0-rc.8 - 2026-09-05
+
+### Added
+
+- User-local persistent state root and certification/acceptance workspaces outside the OS temp directory.
+- Codex managed-runtime safety abort and `codex --version` preflight (no model turn) before live trials.
+- Candidate certification status keyed by `dynosai_git_commit` + `certification_subject_sha256`, with per-cell attempt counters.
+
+### Changed
+
+- Package version is `1.0.0rc8`. Display surfaces may show `1.0.0-rc.8`. Public status is **RC8 · certification pending**, not stable 1.0.
+- `matrix["all_passed"]` follows the current candidate identity, not a synchronized attempt wave.
+
+### Fixed
+
+- Managed Codex `CODEX_HOME` no longer defaults under `%TEMP%`, which current Codex rejects for helper binaries.
+
 ## 1.0.0-rc.7 - 2026-09-04
 
 ### Added

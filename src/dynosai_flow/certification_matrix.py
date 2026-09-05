@@ -20,7 +20,6 @@ import platform
 import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +29,7 @@ from .release_manifest import (
     certification_subject_identity,
     source_tree_identity,
 )
+from .runtime_paths import default_matrix_workspace
 from .version import DISPLAY_VERSION, __version__
 
 MATRIX_SCHEMA = "MATRIX_1.0"
@@ -52,6 +52,7 @@ TRIAL_FIELD_NAMES = (
     "provider_client_version",
     "model",
     "dynosai_version",
+    "candidate_version",
     "dynosai_git_commit",
     "git_dirty",
     "source_tree_sha256",
@@ -69,12 +70,6 @@ TRIAL_FIELD_NAMES = (
     "mcp_protocol_version",
     "mcp_protocols_observed",
     "mcp_protocol_note",
-    "python_version",
-    "scenario",
-    "mode",
-    "started_at",
-    "finished_at",
-    "mcp_protocol_version",
     "acp_app_server_capabilities",
     "execution_profile",
     "harness_feature_state",
@@ -88,6 +83,7 @@ TRIAL_FIELD_NAMES = (
     "scope_result",
     "git_evidence",
     "human_gate_evidence",
+    "codex_runtime_preflight",
     "final_status",
     "failure_attribution",
     "artifact_paths",
@@ -215,8 +211,96 @@ def trial_candidate_identity(trial: dict[str, Any] | None) -> tuple[str | None, 
     )
 
 
+def latest_trial_for_candidate(
+    cell: dict[str, Any] | None,
+    git_commit: str | None,
+    certification_subject_sha256: str | None,
+) -> dict[str, Any] | None:
+    commit = str(git_commit or "").strip()
+    subject = str(certification_subject_sha256 or "").strip()
+    if not commit or not subject:
+        return None
+    matches: list[dict[str, Any]] = []
+    for trial in (cell or {}).get("trials") or []:
+        if not isinstance(trial, dict):
+            continue
+        trial_commit, trial_subject = trial_candidate_identity(trial)
+        if trial_commit == commit and trial_subject == subject:
+            matches.append(trial)
+    return matches[-1] if matches else None
+
+
+def candidate_certification_status(
+    git_commit: str | None,
+    certification_subject_sha256: str | None,
+    matrix: dict[str, Any] | None = None,
+    *,
+    candidate_version: str | None = None,
+) -> dict[str, Any]:
+    """Latest matching trial per cell for one immutable candidate identity.
+
+    Attempt numbers may differ across cells. Historical PASS from another
+    commit or subject SHA does not certify this candidate.
+    """
+    payload = matrix or load_live_matrix()
+    cells: dict[str, dict[str, Any]] = {}
+    present = True
+    passed = True
+    for provider, mode in CELL_KEYS:
+        key = f"{provider}.{mode}"
+        cell = next(
+            (item for item in (payload.get("cells") or []) if item.get("provider") == provider and item.get("mode") == mode),
+            None,
+        )
+        trial = latest_trial_for_candidate(cell, git_commit, certification_subject_sha256)
+        if trial is None:
+            cells[key] = {"attempt": None, "status": None}
+            present = False
+            passed = False
+            continue
+        status = str(trial.get("final_status") or "")
+        cells[key] = {"attempt": int(trial.get("attempt") or 0), "status": status}
+        if status != "pass":
+            passed = False
+    return {
+        "candidate_version": candidate_version or DISPLAY_VERSION,
+        "dynosai_git_commit": git_commit,
+        "certification_subject_sha256": certification_subject_sha256,
+        "cells": cells,
+        "all_cells_present": present,
+        "all_passed": bool(present and passed),
+    }
+
+
+def matrix_all_passed_for_environment(matrix: dict[str, Any]) -> bool:
+    env = matrix.get("environment") or {}
+    return bool(
+        candidate_certification_status(
+            env.get("dynosai_git_commit"),
+            env.get("certification_subject_sha256"),
+            matrix,
+            candidate_version=env.get("dynosai_display_version") or env.get("candidate_version"),
+        )["all_passed"]
+    )
+
+
+def classify_matrix_failure(trial: dict[str, Any] | None) -> str | None:
+    """Diagnostic class. Does not rewrite stored trials."""
+    payload = trial or {}
+    attribution = str(payload.get("failure_attribution") or "")
+    note = str(payload.get("mcp_protocol_note") or "")
+    observed = payload.get("mcp_protocols_observed") or []
+    blob = json.dumps(payload, default=str)
+    refusal = "Refusing to create helper binaries under temporary dir"
+    if refusal in blob or refusal in attribution:
+        return "provider_runtime_layout"
+    if "governed DYN work item" in attribution and (not observed or "no MCP" in note.lower()):
+        return "provider_runtime_layout"
+    return None
+
+
 def attempt_n_same_candidate(matrix: dict[str, Any], attempt: int = 3) -> dict[str, Any]:
-    """True only when every cell has that attempt and all share commit + subject SHA."""
+    """Historical diagnostic. Release gates use candidate_certification_status instead."""
     identities: list[tuple[str | None, str | None]] = []
     missing: list[str] = []
     for provider, mode in CELL_KEYS:
@@ -305,17 +389,6 @@ def _git_dirty(root: Path | None = None) -> bool | None:
     if result.returncode != 0:
         return None
     return bool((result.stdout or "").strip())
-
-
-def default_matrix_workspace(repo_root: Path | None = None) -> Path:
-    """Certification workspace lives in the OS temp dir, never inside the repo."""
-    repo = (repo_root or _repo_root()).resolve()
-    workspace = (Path(tempfile.gettempdir()) / "dynosai-matrix-1.0").resolve()
-    try:
-        workspace.relative_to(repo)
-    except ValueError:
-        return workspace
-    raise RuntimeError("MATRIX default workspace resolved inside the repository")
 
 
 def observed_mcp_protocols_from_payloads(payloads: list[Any]) -> list[str]:
@@ -487,6 +560,7 @@ def empty_trial(
         "scenario": SCENARIO_FOR_MODE.get(mode),
         "attempt": int(attempt),
         "dynosai_version": env.get("dynosai_version"),
+        "candidate_version": env.get("dynosai_display_version") or env.get("candidate_version") or DISPLAY_VERSION,
         "dynosai_git_commit": env.get("dynosai_git_commit"),
         "git_dirty": env.get("git_dirty"),
         "source_tree_sha256": env.get("source_tree_sha256"),
@@ -623,9 +697,9 @@ def validate_live_matrix(matrix: dict[str, Any]) -> dict[str, Any]:
         attempts = [int(trial.get("attempt") or 0) for trial in trials]
         if attempts != sorted(attempts):
             raise ValueError("MATRIX_1.0 trial attempts must be recorded in order")
-    passed = all(str(cell.get("status")) == "pass" for cell in cells)
+    passed = matrix_all_passed_for_environment(matrix)
     if bool(matrix.get("all_passed")) != passed:
-        raise ValueError("all_passed must match the four provider-aware cells")
+        raise ValueError("all_passed must match current-candidate PASS across the four provider-aware cells")
     return matrix
 
 
@@ -689,5 +763,5 @@ def append_trial(matrix: dict[str, Any], provider: str, mode: str, trial: dict[s
                 "artifact_paths": recorded.get("artifact_paths"),
                 "artifact_hashes": recorded.get("artifact_hashes"),
             }
-    matrix["all_passed"] = all(str(cell.get("status")) == "pass" for cell in matrix.get("cells") or [])
+    matrix["all_passed"] = matrix_all_passed_for_environment(matrix)
     return validate_live_matrix(matrix)

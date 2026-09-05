@@ -1,13 +1,16 @@
 import json
 import os
+import shutil
 import stat
 import subprocess
 import sys
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 
 from dynosai_flow.acceptance import CodexAppServerDriver, CursorAcceptanceDriver, probe_provider
+from dynosai_flow.runtime_paths import user_local_scratch
 from dynosai_flow.acceptance_policy import automated_elicitation_content
 from dynosai_flow.application import DynosAIApplication
 from dynosai_flow.cli import demo_spec, parser
@@ -16,6 +19,8 @@ from dynosai_flow.cli import demo_spec, parser
 class Acceptance081Tests(unittest.TestCase):
     def setUp(self):
         self.td=tempfile.TemporaryDirectory(); self.addCleanup(self.td.cleanup); self.tmp=Path(self.td.name)
+        self.safe=user_local_scratch("unit-tests", uuid.uuid4().hex); self.safe.mkdir(parents=True, exist_ok=True)
+        self.addCleanup(lambda: shutil.rmtree(self.safe, ignore_errors=True))
         self.old_runtime=os.environ.get("DYNOSAI_RUNTIME_HOME"); os.environ["DYNOSAI_RUNTIME_HOME"]=str(self.tmp/"runtime")
         self.addCleanup(self._restore_env)
     def _restore_env(self):
@@ -95,7 +100,7 @@ for line in sys.stdin:
         send({'method':'turn/completed','params':{'threadId':'thr-test','turn':{'id':'turn-test','status':'completed'}}})
         break
 ''',encoding='utf-8'); fake.chmod(fake.stat().st_mode|stat.S_IXUSR)
-        project=self.tmp/"codex-project"; project.mkdir(); logs=self.tmp/"codex-logs"
+        project=self.safe/"codex-project"; project.mkdir(); logs=self.tmp/"codex-logs"
         result=CodexAppServerDriver(str(fake),30).run(project,"test prompt",logs,interaction_mode="auto")
         self.assertEqual(result["exit_code"],0,result); self.assertTrue(result["wire_elicitation"]); self.assertTrue(result["automated_responses"]); self.assertEqual(result["elicitation_auto_responses"],1)
         trace=(logs/"codex-app-server.jsonl").read_text(encoding="utf-8")

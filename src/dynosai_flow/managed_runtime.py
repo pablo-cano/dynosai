@@ -390,3 +390,64 @@ class ManagedProviderRuntime:
             [str(skill.get("id")) for skill in skill_catalog if skill.get("id")],
             [str(skill.get("id")) for skill in (effective.get("skills") or []) if skill.get("id")],
         )
+
+
+def run_codex_version_preflight(project: str | Path, *, timeout: int = 30) -> dict[str, Any]:
+    """Build the managed Codex home and run `codex --version`. No model turn."""
+    import subprocess
+
+    from .runtime_paths import (
+        assert_codex_home_safe,
+        helper_binary_refusal_detected,
+        managed_codex_home,
+        path_is_under_temp,
+        UnsafeCodexRuntime,
+    )
+
+    project_path = Path(project).expanduser()
+    home = managed_codex_home(project_path)
+    report: dict[str, Any] = {
+        "status": "fail",
+        "codex_version": None,
+        "codex_home_safe": not path_is_under_temp(home),
+        "helper_binary_refusal_detected": False,
+        "exit_code": None,
+        "provider_started": False,
+    }
+    try:
+        assert_codex_home_safe(home)
+    except UnsafeCodexRuntime:
+        report["status"] = "unsafe"
+        report["codex_home_safe"] = False
+        return report
+    project_path.mkdir(parents=True, exist_ok=True)
+    prepared = ManagedProviderRuntime(project_path).prepare("codex", activity="discovery", clean=True)
+    executable = shutil.which("codex")
+    if not executable:
+        report["status"] = "missing_cli"
+        return report
+    env = os.environ.copy()
+    env.update(prepared.env)
+    try:
+        result = subprocess.run(
+            [executable, "--version"],
+            cwd=project_path,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        report["status"] = "error"
+        report["codex_version"] = str(exc)
+        return report
+    text = f"{result.stdout or ''}{result.stderr or ''}"
+    report["exit_code"] = result.returncode
+    report["helper_binary_refusal_detected"] = helper_binary_refusal_detected(text)
+    line = (result.stdout or result.stderr or "").strip().splitlines()
+    report["codex_version"] = line[0] if line else None
+    if result.returncode == 0 and not report["helper_binary_refusal_detected"]:
+        report["status"] = "pass"
+    return report
+

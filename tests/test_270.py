@@ -79,9 +79,9 @@ class DynosAI270Rc7IntegrityTests(unittest.TestCase):
         app.engine.continue_work(wid)
         return root, app, wid
 
-    def test_version_is_rc7(self):
-        self.assertEqual(__version__, "1.0.0rc7")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.7")
+    def test_version_is_rc8(self):
+        self.assertEqual(__version__, "1.0.0rc8")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.8")
 
     def test_release_manifest_excludes_secrets_and_keeps_source(self):
         tree = self.tmp / "git-tree"
@@ -465,7 +465,9 @@ class DynosAI270Rc7IntegrityTests(unittest.TestCase):
         workspace = default_matrix_workspace(ROOT)
         with self.assertRaises(ValueError):
             workspace.resolve().relative_to(ROOT.resolve())
-        self.assertEqual(workspace.name, "dynosai-matrix-1.0")
+        self.assertEqual(workspace.name, "matrix-1.0")
+        from dynosai_flow.runtime_paths import path_is_under_temp
+        self.assertFalse(path_is_under_temp(workspace))
 
     def test_matrix_certification_has_no_infrastructure_retry(self):
         child = {
