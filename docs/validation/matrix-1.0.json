@@ -42,12 +42,25 @@
         "attempt": 2,
         "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=1)",
         "artifact_paths": [
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-greenfield-attempt2.zip",
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-greenfield-attempt2-logs"
+          "codex-greenfield-attempt2.zip",
+          "codex-greenfield-attempt2-logs"
         ],
         "artifact_hashes": {
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-greenfield-attempt2.zip": "f47313bb40e394081578bf7fab0a95f65a22796f2e8d2e7d806b92a14c769096"
-        }
+          "codex-greenfield-attempt2.zip": "f47313bb40e394081578bf7fab0a95f65a22796f2e8d2e7d806b92a14c769096",
+          "codex-greenfield-attempt2-logs": null
+        },
+        "artifact_refs": [
+          {
+            "name": "codex-greenfield-attempt2.zip",
+            "sha256": "f47313bb40e394081578bf7fab0a95f65a22796f2e8d2e7d806b92a14c769096",
+            "local_only": true
+          },
+          {
+            "name": "codex-greenfield-attempt2-logs",
+            "sha256": null,
+            "local_only": true
+          }
+        ]
       },
       "trials": [
         {
@@ -313,12 +326,25 @@
           "final_status": "fail",
           "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
           "artifact_paths": [
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-greenfield-attempt1.zip",
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-greenfield-attempt1-logs"
+            "codex-greenfield-attempt1.zip",
+            "codex-greenfield-attempt1-logs"
           ],
           "artifact_hashes": {
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-greenfield-attempt1.zip": "79096a2f33d7eefd3accc9d0c0bfda90f03187189c10f537bfebb454f90b5c67"
-          }
+            "codex-greenfield-attempt1.zip": "79096a2f33d7eefd3accc9d0c0bfda90f03187189c10f537bfebb454f90b5c67",
+            "codex-greenfield-attempt1-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "codex-greenfield-attempt1.zip",
+              "sha256": "79096a2f33d7eefd3accc9d0c0bfda90f03187189c10f537bfebb454f90b5c67",
+              "local_only": true
+            },
+            {
+              "name": "codex-greenfield-attempt1-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         },
         {
           "provider": "codex",
@@ -658,12 +684,25 @@
           "final_status": "fail",
           "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=1)",
           "artifact_paths": [
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-greenfield-attempt2.zip",
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-greenfield-attempt2-logs"
+            "codex-greenfield-attempt2.zip",
+            "codex-greenfield-attempt2-logs"
           ],
           "artifact_hashes": {
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-greenfield-attempt2.zip": "f47313bb40e394081578bf7fab0a95f65a22796f2e8d2e7d806b92a14c769096"
-          }
+            "codex-greenfield-attempt2.zip": "f47313bb40e394081578bf7fab0a95f65a22796f2e8d2e7d806b92a14c769096",
+            "codex-greenfield-attempt2-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "codex-greenfield-attempt2.zip",
+              "sha256": "f47313bb40e394081578bf7fab0a95f65a22796f2e8d2e7d806b92a14c769096",
+              "local_only": true
+            },
+            {
+              "name": "codex-greenfield-attempt2-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         }
       ]
     },
@@ -699,12 +738,25 @@
         "attempt": 2,
         "failure_attribution": "oracle: work_not_done",
         "artifact_paths": [
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-brownfield-attempt2.zip",
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-brownfield-attempt2-logs"
+          "codex-brownfield-attempt2.zip",
+          "codex-brownfield-attempt2-logs"
         ],
         "artifact_hashes": {
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-brownfield-attempt2.zip": "2968a44fa9ebdadf89a3e6f25bff6cd0631aaa86abb0805e80bd65452d875f07"
-        }
+          "codex-brownfield-attempt2.zip": "2968a44fa9ebdadf89a3e6f25bff6cd0631aaa86abb0805e80bd65452d875f07",
+          "codex-brownfield-attempt2-logs": null
+        },
+        "artifact_refs": [
+          {
+            "name": "codex-brownfield-attempt2.zip",
+            "sha256": "2968a44fa9ebdadf89a3e6f25bff6cd0631aaa86abb0805e80bd65452d875f07",
+            "local_only": true
+          },
+          {
+            "name": "codex-brownfield-attempt2-logs",
+            "sha256": null,
+            "local_only": true
+          }
+        ]
       },
       "trials": [
         {
@@ -831,12 +883,25 @@
           "final_status": "fail",
           "failure_attribution": "WorkerFailed: acceptance worker exited 1 without summary",
           "artifact_paths": [
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-brownfield-attempt1.zip",
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-brownfield-attempt1-logs"
+            "codex-brownfield-attempt1.zip",
+            "codex-brownfield-attempt1-logs"
           ],
           "artifact_hashes": {
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-brownfield-attempt1.zip": "a26d0ac77e823a81073d4467edc5ffa6405904715d0daca4fb069d4bca71cef8"
-          }
+            "codex-brownfield-attempt1.zip": "a26d0ac77e823a81073d4467edc5ffa6405904715d0daca4fb069d4bca71cef8",
+            "codex-brownfield-attempt1-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "codex-brownfield-attempt1.zip",
+              "sha256": "a26d0ac77e823a81073d4467edc5ffa6405904715d0daca4fb069d4bca71cef8",
+              "local_only": true
+            },
+            {
+              "name": "codex-brownfield-attempt1-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         },
         {
           "provider": "codex",
@@ -1239,12 +1304,25 @@
           "final_status": "fail",
           "failure_attribution": "oracle: work_not_done",
           "artifact_paths": [
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-brownfield-attempt2.zip",
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-brownfield-attempt2-logs"
+            "codex-brownfield-attempt2.zip",
+            "codex-brownfield-attempt2-logs"
           ],
           "artifact_hashes": {
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\codex-brownfield-attempt2.zip": "2968a44fa9ebdadf89a3e6f25bff6cd0631aaa86abb0805e80bd65452d875f07"
-          }
+            "codex-brownfield-attempt2.zip": "2968a44fa9ebdadf89a3e6f25bff6cd0631aaa86abb0805e80bd65452d875f07",
+            "codex-brownfield-attempt2-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "codex-brownfield-attempt2.zip",
+              "sha256": "2968a44fa9ebdadf89a3e6f25bff6cd0631aaa86abb0805e80bd65452d875f07",
+              "local_only": true
+            },
+            {
+              "name": "codex-brownfield-attempt2-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         }
       ]
     },
@@ -1280,12 +1358,25 @@
         "attempt": 2,
         "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
         "artifact_paths": [
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-greenfield-attempt2.zip",
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-greenfield-attempt2-logs"
+          "cursor-greenfield-attempt2.zip",
+          "cursor-greenfield-attempt2-logs"
         ],
         "artifact_hashes": {
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-greenfield-attempt2.zip": "ee64dcd368bd32dc71a72c10b8b331a94e2611d436c2564fcbc5233521a0c0f3"
-        }
+          "cursor-greenfield-attempt2.zip": "ee64dcd368bd32dc71a72c10b8b331a94e2611d436c2564fcbc5233521a0c0f3",
+          "cursor-greenfield-attempt2-logs": null
+        },
+        "artifact_refs": [
+          {
+            "name": "cursor-greenfield-attempt2.zip",
+            "sha256": "ee64dcd368bd32dc71a72c10b8b331a94e2611d436c2564fcbc5233521a0c0f3",
+            "local_only": true
+          },
+          {
+            "name": "cursor-greenfield-attempt2-logs",
+            "sha256": null,
+            "local_only": true
+          }
+        ]
       },
       "trials": [
         {
@@ -1603,12 +1694,25 @@
           "final_status": "fail",
           "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
           "artifact_paths": [
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-greenfield-attempt1.zip",
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-greenfield-attempt1-logs"
+            "cursor-greenfield-attempt1.zip",
+            "cursor-greenfield-attempt1-logs"
           ],
           "artifact_hashes": {
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-greenfield-attempt1.zip": "330bcc332b154fde98b36e4271dc4ca477876efcffd245151e2faf2460465b70"
-          }
+            "cursor-greenfield-attempt1.zip": "330bcc332b154fde98b36e4271dc4ca477876efcffd245151e2faf2460465b70",
+            "cursor-greenfield-attempt1-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "cursor-greenfield-attempt1.zip",
+              "sha256": "330bcc332b154fde98b36e4271dc4ca477876efcffd245151e2faf2460465b70",
+              "local_only": true
+            },
+            {
+              "name": "cursor-greenfield-attempt1-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         },
         {
           "provider": "cursor",
@@ -1857,12 +1961,25 @@
           "final_status": "fail",
           "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
           "artifact_paths": [
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-greenfield-attempt2.zip",
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-greenfield-attempt2-logs"
+            "cursor-greenfield-attempt2.zip",
+            "cursor-greenfield-attempt2-logs"
           ],
           "artifact_hashes": {
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-greenfield-attempt2.zip": "ee64dcd368bd32dc71a72c10b8b331a94e2611d436c2564fcbc5233521a0c0f3"
-          }
+            "cursor-greenfield-attempt2.zip": "ee64dcd368bd32dc71a72c10b8b331a94e2611d436c2564fcbc5233521a0c0f3",
+            "cursor-greenfield-attempt2-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "cursor-greenfield-attempt2.zip",
+              "sha256": "ee64dcd368bd32dc71a72c10b8b331a94e2611d436c2564fcbc5233521a0c0f3",
+              "local_only": true
+            },
+            {
+              "name": "cursor-greenfield-attempt2-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         }
       ]
     },
@@ -1898,12 +2015,25 @@
         "attempt": 2,
         "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
         "artifact_paths": [
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-brownfield-attempt2.zip",
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-brownfield-attempt2-logs"
+          "cursor-brownfield-attempt2.zip",
+          "cursor-brownfield-attempt2-logs"
         ],
         "artifact_hashes": {
-          "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-brownfield-attempt2.zip": "44b77ff99d41a43b7f9432e079e02f8f07e9fe0383b49ebf7840349d87783aec"
-        }
+          "cursor-brownfield-attempt2.zip": "44b77ff99d41a43b7f9432e079e02f8f07e9fe0383b49ebf7840349d87783aec",
+          "cursor-brownfield-attempt2-logs": null
+        },
+        "artifact_refs": [
+          {
+            "name": "cursor-brownfield-attempt2.zip",
+            "sha256": "44b77ff99d41a43b7f9432e079e02f8f07e9fe0383b49ebf7840349d87783aec",
+            "local_only": true
+          },
+          {
+            "name": "cursor-brownfield-attempt2-logs",
+            "sha256": null,
+            "local_only": true
+          }
+        ]
       },
       "trials": [
         {
@@ -2030,12 +2160,25 @@
           "final_status": "fail",
           "failure_attribution": "WorkerFailed: acceptance worker exited 1 without summary",
           "artifact_paths": [
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-brownfield-attempt1.zip",
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-brownfield-attempt1-logs"
+            "cursor-brownfield-attempt1.zip",
+            "cursor-brownfield-attempt1-logs"
           ],
           "artifact_hashes": {
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-brownfield-attempt1.zip": "a9c7a50aac0c71f55a95e44772f937284731419ca305d98b11a9a7d146969f6b"
-          }
+            "cursor-brownfield-attempt1.zip": "a9c7a50aac0c71f55a95e44772f937284731419ca305d98b11a9a7d146969f6b",
+            "cursor-brownfield-attempt1-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "cursor-brownfield-attempt1.zip",
+              "sha256": "a9c7a50aac0c71f55a95e44772f937284731419ca305d98b11a9a7d146969f6b",
+              "local_only": true
+            },
+            {
+              "name": "cursor-brownfield-attempt1-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         },
         {
           "provider": "cursor",
@@ -2284,12 +2427,25 @@
           "final_status": "fail",
           "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
           "artifact_paths": [
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-brownfield-attempt2.zip",
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-brownfield-attempt2-logs"
+            "cursor-brownfield-attempt2.zip",
+            "cursor-brownfield-attempt2-logs"
           ],
           "artifact_hashes": {
-            "C:\\Users\\pcano\\OneDrive\\Documentos\\git\\dynosai\\.dynosai\\runtime\\matrix-1.0\\cursor-brownfield-attempt2.zip": "44b77ff99d41a43b7f9432e079e02f8f07e9fe0383b49ebf7840349d87783aec"
-          }
+            "cursor-brownfield-attempt2.zip": "44b77ff99d41a43b7f9432e079e02f8f07e9fe0383b49ebf7840349d87783aec",
+            "cursor-brownfield-attempt2-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "cursor-brownfield-attempt2.zip",
+              "sha256": "44b77ff99d41a43b7f9432e079e02f8f07e9fe0383b49ebf7840349d87783aec",
+              "local_only": true
+            },
+            {
+              "name": "cursor-brownfield-attempt2-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         }
       ]
     }
@@ -2307,9 +2463,9 @@
     ],
     "mcp_protocol_current": "2026-07-28",
     "providers_detected": {
-      "codex": "C:\\nvm4w\\nodejs\\codex.CMD",
-      "cursor-agent": "C:\\Users\\pcano\\AppData\\Local\\cursor-agent\\cursor-agent.CMD",
-      "cursor": "C:\\Users\\pcano\\AppData\\Local\\Programs\\cursor\\resources\\app\\bin\\cursor.CMD"
+      "codex": true,
+      "cursor-agent": true,
+      "cursor": true
     },
     "provider_client_versions": {
       "codex": "codex-cli 0.150.1",

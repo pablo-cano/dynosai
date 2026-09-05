@@ -19,7 +19,7 @@ const capabilities = [
   ["Governed teams", "Approved plans become serial or parallel leases only when files do not overlap. Extra coding agents are not spawned."],
   ["Eval intelligence", "Local failures become bounded eval cases. Improvement work stays in inbox. Predictive routing stays in shadow mode."],
   ["Execution profiles", "Strict, Balanced and Autonomous are host-owned. Human gates stay required. OS-level network interception is not shipped."],
-  ["Certified providers", "Cursor ACP and Codex app-server are the shipped Studio transports. Additional clients are not assumed certified."],
+  ["Supported 1.0 target providers", "Cursor ACP and Codex app-server are the shipped Studio transports. 1.0 live certification is pending MATRIX_1.0. Additional clients are not assumed certified."],
   ["Model control", "Track phase budgets, complexity, failures, context pressure, route candidates, and historical recommendations without reckless escalation."],
 ];
 

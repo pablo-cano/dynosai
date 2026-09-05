@@ -20,7 +20,7 @@ plus earlier harness/profile tests.
 | path roots / escape | `PathPolicyEngine` denies reads/writes that escape the project root. |
 | symlink escape | Symlinks that resolve outside the root are denied when the platform supports them. |
 | secret / context boundaries | Sensitive paths such as `.env` are denied. Secret brokers refuse model materialization. Vault materialization is runtime-only when configured. |
-| certified-client refusal | Host/Studio/setup refuse uncertified adapters and project extension packs. Cursor ACP and Codex app-server remain the certified transports. |
+| certified-client refusal | Host/Studio/setup refuse uncertified adapters and project extension packs. Cursor ACP and Codex app-server remain the supported 1.0 target provider transports. 1.0 live certification is pending MATRIX_1.0. |
 | Git / governance authority | Git is source truth. `.dynosai/knowledge.db` is workflow truth. Agent Git is wrapped by `GitCommandPolicy` (write/complex forms blocked). |
 | human gates | Spec, plan, code and merge gates stay required, including execution profile Autonomous. |
 | host-owned execution profile | Strict / Balanced / Autonomous are selected by the host. MCP agents cannot change them. |

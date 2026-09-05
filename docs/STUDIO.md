@@ -84,7 +84,7 @@ When local traces contain failures, Overview also shows **eval cases**. Creating
 
 Overview shows **doctor** results from the same checks as `dynosai doctor`. Deep doctor is opt-in and reuses existing MCP/provider probes. Diagnostics repeats those controls.
 
-Overview lists **certified providers**: Cursor ACP and Codex app-server. Additional clients are not shipped.
+Overview lists **supported 1.0 target providers**: Cursor ACP and Codex app-server. 1.0 live certification is pending MATRIX_1.0. Additional clients are not shipped.
 
 ### Project → New change
 

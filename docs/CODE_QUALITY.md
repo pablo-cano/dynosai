@@ -1,17 +1,17 @@
 # Code Quality Review
 
-Metrics below were generated from the `1.0.0-rc.6` source tree. Do not treat
+Metrics below were generated from the `1.0.0-rc.7` source tree. Do not treat
 0.13/0.14 historical counts as current.
 
 ## Current scale
 
 Generated from `src/dynosai_flow/*.py` and `tests/test_*.py` on 2026-09-04
-after the RC6 protocol-era split:
+after the RC7 certification-integrity work:
 
-- 62 Python modules in `src/dynosai_flow`.
-- 22,662 source lines.
-- 70 test modules and 10,880 test lines.
-- Stable suite: 537 tests, `python -m pytest` (historical aggregate suites excluded).
+- 64 Python modules in `src/dynosai_flow`.
+- 23,327 source lines.
+- 71 test modules and 11,487 test lines.
+- Stable suite: 552 passed (`python scripts/release_gate.py`).
 - SQLite schema v6.
 - Frozen unique MCP names: 31.
 - Supported MCP revisions: `2026-07-28`, `2025-11-25`, `2025-06-18`.
@@ -54,8 +54,8 @@ stdio server and tool dispatcher.
 ## Maintainability hotspots
 
 These modules accumulated stable orchestration behaviour. They are tested.
-They are **not** being split in RC6 except for the MCP protocol-era extraction
-required by the current spec.
+They are **not** being split in RC7 except for the MCP protocol-era and
+human-gate transport extraction required by the current spec.
 
 Future modularization, only after characterization tests exist for the
 boundary being extracted:

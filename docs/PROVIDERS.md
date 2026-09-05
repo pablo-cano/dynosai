@@ -2,6 +2,8 @@
 
 DynosAI keeps provider-specific behavior at the integration boundary while preserving one Core workflow.
 
+Cursor ACP and Codex app-server are **supported 1.0 target providers**. Historical 0.13 matrix evidence is not 1.0 live certification. MATRIX_1.0 is still pending.
+
 ## Codex
 
 Codex is supported by the managed MCP/runtime path and was part of the final 0.13.0 greenfield and brownfield acceptance matrix.

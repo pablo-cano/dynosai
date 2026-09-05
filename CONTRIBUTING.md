@@ -45,7 +45,7 @@ certification or path security. Predictive routing stays shadow-only.
 
 ## Certified-provider process
 
-Cursor ACP and Codex app-server are the certified Studio transports.
+Cursor ACP and Codex app-server are the supported 1.0 target Studio transports. 1.0 live certification is pending MATRIX_1.0.
 
 A later client is **not** certified by shipping an adapter sketch or by
 passing checkout fixtures. Certification requires:
@@ -59,7 +59,7 @@ passing checkout fixtures. Certification requires:
 
 Until those cells are real `pass` evidence, `MATRIX_1.0` stays `not_run` (or
 records an explicit fail with attribution) and `1.0.0` stays reserved.
-Remaining on `1.0.0rc6` is an honest successful outcome.
+Remaining on `1.0.0rc7` is an honest successful outcome.
 
 ## Issues
 

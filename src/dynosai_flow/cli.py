@@ -138,6 +138,8 @@ def parser() -> argparse.ArgumentParser:
     acc.add_argument("--log-dir",help="Persistent telemetry directory. Default: ~/.dynosai/logs/acceptance/<run-id>")
     acc.add_argument("--heartbeat",type=int,default=10,help="Progress heartbeat interval in seconds")
     acc.add_argument("--model-profile",choices=["economy","baseline"],default="economy",help="Acceptance model budget profile; economy uses GPT-5.6 Luna / medium on both providers")
+    acc.add_argument("--max-infrastructure-attempts",type=int,default=2,help="Provider executions per case. Debug default is 2 (one safe infrastructure retry). MATRIX certification uses 1.")
+    acc.add_argument("--certification-mode",action="store_true",help="Exactly one provider execution per trial; no infrastructure retry")
     acc.add_argument("--configure-machine",action="store_true",help="Also refresh user-level provider MCP configuration (not required for managed acceptance)")
     acc.add_argument("--no-configure",action="store_true",help=argparse.SUPPRESS)
     acc.add_argument("--cleanup",action="store_true")
@@ -366,7 +368,7 @@ def main(argv:list[str]|None=None)->int:
             if args.debug_command=="acceptance":
                 providers=[x.strip().lower() for x in args.providers.split(",") if x.strip()]
                 if not providers: raise ValueError("--providers must include cursor and/or codex")
-                result=RealProviderAcceptanceSuite(providers=providers,scenario=args.scenario,output=args.output,workspace=args.workspace,interaction_mode=args.interaction_mode,timeout=args.timeout,max_runtime=args.max_runtime,idle_timeout=args.idle_timeout,slow_progress=args.slow_progress,configure=bool(args.configure_machine and not args.no_configure),keep=not args.cleanup,log_dir=args.log_dir,heartbeat=args.heartbeat,model_profile=args.model_profile).run()
+                result=RealProviderAcceptanceSuite(providers=providers,scenario=args.scenario,output=args.output,workspace=args.workspace,interaction_mode=args.interaction_mode,timeout=args.timeout,max_runtime=args.max_runtime,idle_timeout=args.idle_timeout,slow_progress=args.slow_progress,configure=bool(args.configure_machine and not args.no_configure),keep=not args.cleanup,log_dir=args.log_dir,heartbeat=args.heartbeat,model_profile=args.model_profile,max_infrastructure_attempts=args.max_infrastructure_attempts,certification_mode=bool(args.certification_mode)).run()
             elif args.debug_command=="acceptance-status":
                 result=acceptance_status(args.log_dir)
             elif args.debug_command=="acceptance-logs":

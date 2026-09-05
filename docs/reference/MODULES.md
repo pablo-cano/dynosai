@@ -39,10 +39,12 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `indexer.py` | Files/symbols/tests/code relationship indexing |
 | `interactions.py` | Human gate and elicitation lifecycle |
 | `managed_runtime.py` | Strict provider runtime isolation |
-| `mcp.py` | MCP server, 31 frozen tool contracts, elicitation and stdio serve |
-| `mcp_protocol.py` | Shared MCP revision constants, `_meta` keys and protocol errors |
+| `mcp.py` | MCP server, 31 frozen tool contracts, elicitation, 2026 MRTR and stdio serve |
+| `mcp_protocol.py` | Shared MCP revision constants, `_meta` keys, protocol errors and 2026 metadata validation |
 | `mcp_protocol_legacy.py` | 2025-11-25 / 2025-06-18 initialize and list/call shaping |
-| `mcp_protocol_2026.py` | 2026-07-28 discover, stateless list/call envelopes |
+| `mcp_protocol_2026.py` | 2026-07-28 discover, stateless list/call and `input_required` envelopes |
+| `mcp_human_gates.py` | Stable human-gate input-request keys shared by legacy elicitation and 2026 MRTR |
+| `release_manifest.py` | Git-aware releasable file list, source ZIP members and source-tree fingerprint |
 | `model_benchmark.py` | Offline provider/model benchmark ranking |
 | `model_control.py` | Phase budgets, adaptive control decisions and transition evidence |
 | `model_routing.py` | Provider/activity routing profiles |

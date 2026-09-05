@@ -149,8 +149,8 @@ class DynosAI250Rc5ThreatModelFreezeTests(unittest.TestCase):
         names = {str(item["name"]) for item in [*TOOLS, *LEGACY_TOOLS]}
         self.assertEqual(len(names), 31)
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
-        self.assertEqual(__version__, "1.0.0rc6")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.6")
+        self.assertEqual(__version__, "1.0.0rc7")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.7")
         report = summarize_live_matrix()
         self.assertFalse(report["copied_from_historical"] if "copied_from_historical" in report else False)
         self.assertFalse(report["all_passed"])

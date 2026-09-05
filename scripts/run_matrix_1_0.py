@@ -23,8 +23,11 @@ from dynosai_flow.certification_matrix import (  # noqa: E402
     CELL_KEYS,
     SCENARIO_FOR_MODE,
     append_trial,
+    collapse_observed_mcp_protocols,
+    default_matrix_workspace,
     empty_trial,
     load_live_matrix,
+    observed_mcp_protocols_from_payloads,
     probe_environment,
     save_live_matrix,
 )
@@ -65,6 +68,8 @@ def _run_live_cell(provider: str, mode: str, workspace: Path, attempt: int) -> d
         "--workspace", str(workspace / f"{tag}-ws"),
         "--log-dir", str(log_dir),
         "--max-runtime", "1800",
+        "--certification-mode",
+        "--max-infrastructure-attempts", "1",
     ]
     started = utc_now()
     code = main(argv)
@@ -98,34 +103,72 @@ def _failure_from_payload(payload: dict) -> str | None:
 
 
 def _summarize_bundle(path: str | None) -> dict:
+    empty = {
+        "oracle_result": None,
+        "token_usage": None,
+        "final_status": "fail",
+        "failure_attribution": "missing_acceptance_bundle",
+        "model": None,
+        "mcp_protocol_version": None,
+        "mcp_protocols_observed": [],
+        "mcp_protocol_note": "no MCP tool calls observed",
+        "validation_commands": None,
+        "validation_results": None,
+        "scope_result": None,
+        "git_evidence": None,
+        "human_gate_evidence": None,
+        "execution_profile": None,
+        "harness_feature_state": None,
+        "acp_app_server_capabilities": None,
+        "retry_history": None,
+    }
     if not path or not Path(path).is_file():
-        return {"oracle_result": None, "token_usage": None, "final_status": "fail", "failure_attribution": "missing_acceptance_bundle", "model": None}
+        return empty
     import zipfile
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
         summary_name = next((name for name in names if name.endswith("summary-final.json")), None)
         if summary_name is None:
-            return {"oracle_result": None, "token_usage": None, "final_status": "fail", "failure_attribution": "missing_summary", "model": None}
+            missing = dict(empty)
+            missing["failure_attribution"] = "missing_summary"
+            return missing
         summary = json.loads(archive.read(summary_name).decode("utf-8"))
         case_failure = None
         model = None
-        protocol = None
+        observed: list[str] = []
         oracle_failures: list[str] = []
+        first_case: dict | None = None
+        retry_history = None
         for name in names:
             if not name.endswith("/logs/summary.json"):
                 continue
             case = json.loads(archive.read(name).decode("utf-8"))
+            if first_case is None:
+                first_case = case
             if case_failure is None:
                 case_failure = _failure_from_payload(case)
             oracle = case.get("oracle") if isinstance(case.get("oracle"), dict) else {}
             oracle_failures.extend(str(item) for item in (oracle.get("failures") or []) if item)
             run = case.get("provider_run") if isinstance(case.get("provider_run"), dict) else {}
-            observed = run.get("model_observed") or run.get("model_selector")
-            if observed and model is None:
-                model = str(observed)
+            observed_model = run.get("model_observed") or run.get("model_selector")
+            if observed_model and model is None:
+                model = str(observed_model)
             usage_model = ((case.get("token_usage") or {}).get("model") if isinstance(case.get("token_usage"), dict) else None)
             if usage_model and (not model or model == "unknown"):
                 model = str(usage_model)
+            case_observed = case.get("mcp_protocols_observed")
+            if isinstance(case_observed, list):
+                for item in case_observed:
+                    if item and str(item) not in observed:
+                        observed.append(str(item))
+            payloads = []
+            if isinstance(case.get("mcp_calls"), list):
+                payloads.extend(item for item in case["mcp_calls"] if isinstance(item, dict))
+            for extra in observed_mcp_protocols_from_payloads(payloads):
+                if extra not in observed:
+                    observed.append(extra)
+            if retry_history is None and isinstance(case.get("retry_history"), list):
+                retry_history = case.get("retry_history")
     status = str(summary.get("status") or "").lower()
     passed = status in {"passed", "pass", "ok"}
     attribution = None if passed else (
@@ -136,13 +179,32 @@ def _summarize_bundle(path: str | None) -> dict:
         or summary.get("status")
         or "acceptance_failed"
     )
+    collapsed = collapse_observed_mcp_protocols(observed)
+    case = first_case or {}
+    capabilities = (
+        case.get("acp_app_server_capabilities")
+        or case.get("provider_capabilities")
+        or (case.get("provider_run") or {}).get("capabilities")
+        or summary.get("acp_app_server_capabilities")
+    )
     return {
         "oracle_result": summary.get("gates") or summary.get("acceptance_levels") or summary.get("status"),
-        "token_usage": summary.get("token_usage"),
+        "token_usage": summary.get("token_usage") or case.get("token_usage"),
         "final_status": "pass" if passed else "fail",
         "failure_attribution": attribution,
         "model": model,
-        "mcp_protocol_version": protocol,
+        "mcp_protocol_version": collapsed["mcp_protocol_version"],
+        "mcp_protocols_observed": collapsed["mcp_protocols_observed"],
+        "mcp_protocol_note": collapsed["mcp_protocol_note"],
+        "validation_commands": case.get("validation_commands") or case.get("validation_command") or summary.get("validation_commands"),
+        "validation_results": case.get("validation_results") or summary.get("validation_results"),
+        "scope_result": case.get("scope_result") or case.get("scope_requests") or summary.get("scope_result"),
+        "git_evidence": case.get("git_evidence") or case.get("runtime_bin_integrity") or summary.get("git_evidence"),
+        "human_gate_evidence": case.get("human_gate_evidence") or case.get("elicitations") or summary.get("human_gate_evidence"),
+        "execution_profile": case.get("execution_profile") or summary.get("execution_profile"),
+        "harness_feature_state": case.get("harness_feature_state") or summary.get("harness_feature_state"),
+        "acp_app_server_capabilities": capabilities,
+        "retry_history": retry_history if retry_history is not None else case.get("retry_history"),
         "summary": {"status": summary.get("status"), "dynosai_version": summary.get("dynosai_version")},
     }
 
@@ -151,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="MATRIX_1.0 probe and one-shot live trials")
     parser.add_argument("--live", action="store_true", help="Run one new live trial per selected cell")
     parser.add_argument("--cells", help="Comma-separated provider.mode list")
-    parser.add_argument("--workspace", default=str(ROOT / ".dynosai" / "runtime" / "matrix-1.0"))
+    parser.add_argument("--workspace", default=None, help="Override workspace. Default: <TEMP>/dynosai-matrix-1.0/")
     parser.add_argument("--matrix", default=str(ROOT / "docs" / "validation" / "matrix-1.0.json"))
     args = parser.parse_args(argv)
 
@@ -162,10 +224,10 @@ def main(argv: list[str] | None = None) -> int:
     matrix["copied_from_historical"] = False
     if not args.live:
         save_live_matrix(matrix, matrix_path)
-        print(json.dumps({"mode": "probe", "environment": env, "cells": {f"{p}.{m}": "not_run" for p, m in CELL_KEYS}}, indent=2))
+        print(json.dumps({"mode": "probe", "environment": env, "cells": {f"{p}.{m}": "not_run" for p, m in CELL_KEYS}}, indent=2, default=str))
         return 0
 
-    workspace = Path(args.workspace)
+    workspace = Path(args.workspace).expanduser().resolve() if args.workspace else default_matrix_workspace(ROOT)
     for provider, mode in _select_cells(args.cells):
         cell = next(item for item in matrix["cells"] if item["provider"] == provider and item["mode"] == mode)
         attempt = len(cell.get("trials") or []) + 1
@@ -194,6 +256,18 @@ def main(argv: list[str] | None = None) -> int:
             "token_usage": summary.get("token_usage"),
             "model": summary.get("model") or trial.get("model"),
             "estimated_cost": ((summary.get("token_usage") or {}).get("totals") or {}).get("estimated_list_price_usd"),
+            "mcp_protocol_version": summary.get("mcp_protocol_version"),
+            "mcp_protocols_observed": summary.get("mcp_protocols_observed") or [],
+            "mcp_protocol_note": summary.get("mcp_protocol_note"),
+            "validation_commands": summary.get("validation_commands"),
+            "validation_results": summary.get("validation_results"),
+            "scope_result": summary.get("scope_result"),
+            "git_evidence": summary.get("git_evidence"),
+            "human_gate_evidence": summary.get("human_gate_evidence"),
+            "execution_profile": summary.get("execution_profile") or trial.get("execution_profile"),
+            "harness_feature_state": summary.get("harness_feature_state") or trial.get("harness_feature_state"),
+            "acp_app_server_capabilities": summary.get("acp_app_server_capabilities"),
+            "retry_history": summary.get("retry_history") if summary.get("retry_history") is not None else [],
             "artifact_paths": [path for path in (live.get("output"), live.get("log_dir")) if path],
             "artifact_hashes": {},
         })

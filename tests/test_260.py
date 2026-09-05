@@ -44,8 +44,8 @@ class DynosAI260Rc6ReleaseHardeningTests(unittest.TestCase):
         self.addCleanup(lambda: shutil.rmtree(self.tmp, ignore_errors=True))
 
     def test_version_and_schema_and_mcp_names(self):
-        self.assertEqual(__version__, "1.0.0rc6")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.6")
+        self.assertEqual(__version__, "1.0.0rc7")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.7")
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
         names = {str(item["name"]) for item in [*TOOLS, *LEGACY_TOOLS]}
         self.assertEqual(len(names), FROZEN_MCP_COUNT)
@@ -263,6 +263,7 @@ class DynosAI260Rc6ReleaseHardeningTests(unittest.TestCase):
         roadmap = (ROOT / "ROADMAP.md").read_text(encoding="utf-8")
         self.assertIn("1.0.0-rc.6", roadmap)
         self.assertIn("1.0.0-rc.7", roadmap)
+        self.assertIn("1.0.0-rc.8", roadmap)
         self.assertIn("Contingency", roadmap)
         self.assertIn("1.1", roadmap)
         self.assertIn("Enforced Secure Runtimes", roadmap)

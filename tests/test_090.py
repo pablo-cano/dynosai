@@ -144,7 +144,7 @@ class AgentConfiguration091Tests(unittest.TestCase):
         self.assertNotIn("dynosai", remaining["mcpServers"])
 
     def test_version_is_091(self):
-        self.assertEqual(__version__, "1.0.0rc6")
+        self.assertEqual(__version__, "1.0.0rc7")
 
 
 if __name__ == "__main__":

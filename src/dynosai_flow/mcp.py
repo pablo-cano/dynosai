@@ -30,14 +30,22 @@ from .context_handles import ContextHandleStore
 from .secrets import redact_value
 from .mcp_protocol import (
     CURRENT_PROTOCOL,
+    METHOD_NOT_FOUND_CODE,
     NOT_INITIALIZED_CODE,
+    PROTOCOL_2025_11,
     PROTOCOL_2026,
     SUPPORTED_PROTOCOLS,
     client_identity_from_params,
+    extract_params_meta,
+    invalid_params_error,
+    is_legacy_protocol,
     is_stateless_protocol,
+    protocol_from_meta,
     resolve_protocol_version,
     unsupported_protocol_error,
+    validate_stateless_request_meta,
 )
+from .mcp_human_gates import normalize_elicitation_action, parse_input_request_key
 from . import mcp_protocol_2026 as protocol_2026
 from . import mcp_protocol_legacy as protocol_legacy
 
@@ -482,19 +490,42 @@ class MCPServer:
             pass
         return f"DynosAI is provider-native. Start/adopt/attach with dynosai_project and start/resume a feature with dynosai_work/dynosai_resume. Keep one provider session for the feature. {gate_instruction} {transport_instruction} Use dynosai_read for concrete reads, dynosai_ask for SQL/text and dynosai_find_symbol for code identifiers.{prefix_note}"
 
-    def _bind_request_identity(self, params: dict[str, Any], *, protocol: str | None = None) -> None:
+    def _public_discover_instructions(self) -> str:
+        prefix_note = " Discover remaining tools via tools/list."
+        try:
+            from .prompt_prefix import build_authority_prefix, persist_prefix
+            prefix = build_authority_prefix(protocol=PROTOCOL_2026)
+            if (self.engine.root / ".dynosai" / "knowledge.db").exists():
+                prefix = persist_prefix(self.engine.root, prefix)
+                try:
+                    self.engine.db.audit("PromptPrefixRecorded", prefix.get("hash"), {"claims_cache_hit": False, "schema": "PROMPT_PREFIX_1.0", "mcp_protocol": prefix.get("mcp_protocol")})
+                except Exception:
+                    pass
+            prefix_note = f" Stable authority prefix {str(prefix.get('hash') or '')[:12]}. Discover remaining tools via tools/list. Prefix hash is cacheable structure, not provider cache telemetry."
+        except Exception:
+            pass
+        return f"{protocol_2026.PUBLIC_DISCOVER_INSTRUCTIONS}{prefix_note}"
+
+    def _bind_request_identity(
+        self,
+        params: dict[str, Any],
+        *,
+        protocol: str | None = None,
+        persist_negotiation: bool = False,
+        replace_capabilities: bool = False,
+    ) -> None:
         identity = client_identity_from_params(params)
-        selected = protocol or identity.get("protocolVersion") or self.negotiated
-        if selected:
+        selected = protocol or identity.get("protocolVersion") or None
+        if persist_negotiation and selected and is_legacy_protocol(str(selected)):
             self.negotiated = str(selected)
         info = identity.get("clientInfo") or {}
-        caps = identity.get("capabilities") or {}
+        caps = identity.get("capabilities") if isinstance(identity.get("capabilities"), dict) else {}
         if info:
             self.provider = self._infer_provider({"clientInfo": info})
-        if not info and not caps:
+        if not replace_capabilities and not info and not caps:
             return
         payload = {
-            "protocolVersion": self.negotiated or "",
+            "protocolVersion": str(selected or (self.negotiated if persist_negotiation else "") or ""),
             "clientInfo": info,
             "capabilities": caps,
         }
@@ -524,21 +555,90 @@ class MCPServer:
         return protocol_legacy.tools_list_result(tools, meta)
 
     def _handle_initialize(self, rid: Any, params: dict[str, Any]) -> dict[str, Any]:
-        requested = str(params.get("protocolVersion") or CURRENT_PROTOCOL)
+        requested = str(params.get("protocolVersion") or PROTOCOL_2025_11)
+        if is_stateless_protocol(requested):
+            return self._error(rid, METHOD_NOT_FOUND_CODE, "Method not found: initialize")
         if requested not in SUPPORTED_PROTOCOLS:
             code, message, data = unsupported_protocol_error(requested)
             return self._error(rid, code, message, data)
-        self._bind_request_identity(params, protocol=requested)
+        if not is_legacy_protocol(requested):
+            return self._error(rid, METHOD_NOT_FOUND_CODE, "Method not found: initialize")
+        self._bind_request_identity(params, protocol=requested, persist_negotiation=True, replace_capabilities=True)
         return self._response(rid, protocol_legacy.initialize_result(protocol=requested, instructions=self._authority_instructions()))
 
     def _handle_discover(self, rid: Any, params: dict[str, Any]) -> dict[str, Any]:
+        meta_error = validate_stateless_request_meta(params)
+        if meta_error is not None:
+            return self._error(rid, *meta_error)
         identity = client_identity_from_params(params)
         requested = str(identity.get("protocolVersion") or PROTOCOL_2026)
-        if requested not in SUPPORTED_PROTOCOLS:
-            code, message, data = unsupported_protocol_error(requested)
-            return self._error(rid, code, message, data)
-        self._bind_request_identity(params, protocol=requested)
-        return self._response(rid, protocol_2026.discover_result(instructions=self._authority_instructions()))
+        self._bind_request_identity(params, protocol=requested, persist_negotiation=False, replace_capabilities=True)
+        return self._response(rid, protocol_2026.discover_result(instructions=self._public_discover_instructions()))
+
+    def _handle_ping(self, rid: Any, params: dict[str, Any]) -> dict[str, Any]:
+        requested = protocol_from_meta(extract_params_meta(params))
+        if requested:
+            if requested not in SUPPORTED_PROTOCOLS:
+                code, message, data = unsupported_protocol_error(requested)
+                return self._error(rid, code, message, data)
+            if is_stateless_protocol(requested):
+                return self._error(rid, METHOD_NOT_FOUND_CODE, "Method not found: ping")
+        if params:
+            self._bind_request_identity(params, persist_negotiation=False, replace_capabilities=False)
+        return self._response(rid, {})
+
+    def _resolve_request_protocol(self, rid: Any, params: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None]:
+        """2026 protocol comes only from the current request; 2025 may reuse initialize."""
+        meta = extract_params_meta(params)
+        requested = protocol_from_meta(meta)
+        if meta and not (requested and is_legacy_protocol(requested)):
+            meta_error = validate_stateless_request_meta(params)
+            if meta_error is not None:
+                return None, self._error(rid, *meta_error)
+            self._bind_request_identity(params, protocol=PROTOCOL_2026, persist_negotiation=False, replace_capabilities=True)
+            return PROTOCOL_2026, None
+        if requested and is_legacy_protocol(requested):
+            self._bind_request_identity(params, protocol=requested, persist_negotiation=False, replace_capabilities=False)
+            return requested, None
+        protocol = resolve_protocol_version(params, self.negotiated)
+        if protocol is None:
+            return None, self._error(rid, NOT_INITIALIZED_CODE, "Server not initialized")
+        if protocol not in SUPPORTED_PROTOCOLS:
+            code, message, data = unsupported_protocol_error(protocol)
+            return None, self._error(rid, code, message, data)
+        if is_stateless_protocol(protocol):
+            return None, self._error(rid, NOT_INITIALIZED_CODE, "Server not initialized")
+        self._bind_request_identity(params, protocol=protocol, persist_negotiation=False, replace_capabilities=False)
+        return protocol, None
+
+    def _apply_mrtr_input_responses(self, rid: Any, params: dict[str, Any], tool_args: dict[str, Any]) -> dict[str, Any] | None:
+        """Resolve 2026 inputResponses against pending DB gates. requestState is ignored."""
+        if "inputResponses" not in params:
+            return None
+        responses = params.get("inputResponses")
+        if not isinstance(responses, dict) or not responses:
+            return self._error(rid, *invalid_params_error("input_responses_must_be_object"))
+        expected_work = str(tool_args.get("work_id") or self._session_work_id() or "") or None
+        for key, payload in responses.items():
+            iid = parse_input_request_key(str(key))
+            if not iid:
+                return self._error(rid, *invalid_params_error("invalid_input_request_key", {"key": str(key)}))
+            try:
+                interaction = self.app.interactions.get(iid)
+            except KeyError:
+                return self._error(rid, *invalid_params_error("unknown_interaction", {"interaction_id": iid}))
+            if interaction.status != "pending":
+                return self._error(rid, *invalid_params_error("interaction_not_pending", {"interaction_id": iid, "status": interaction.status}))
+            if expected_work and interaction.work_id and str(interaction.work_id) != expected_work:
+                return self._error(rid, *invalid_params_error("interaction_work_mismatch", {"interaction_id": iid}))
+            if interaction.provider and self.provider not in {None, "", "unknown", "generic", interaction.provider}:
+                return self._error(rid, *invalid_params_error("interaction_provider_mismatch", {"interaction_id": iid}))
+            action, content = normalize_elicitation_action(payload if isinstance(payload, dict) else {})
+            try:
+                self.app.resolve_interaction(iid, action, content)
+            except ValueError as exc:
+                return self._error(rid, *invalid_params_error("invalid_interaction_content", {"message": str(exc)}))
+        return None
 
     def _tool_call_response(self,rid:Any,result:Any,*,tool_name:str,protocol:str)->dict[str,Any]:
         payload=_tool_result_payload(result,provider=self.provider,tool_name=tool_name)
@@ -558,19 +658,18 @@ class MCPServer:
         if method=="notifications/initialized": self.initialized=True; return None
         if method=="notifications/cancelled": return None
         if method=="ping":
-            if params: self._bind_request_identity(params)
-            return self._response(rid,{})
-        protocol=resolve_protocol_version(params, self.negotiated)
-        if protocol is None:
-            return self._error(rid, NOT_INITIALIZED_CODE, "Server not initialized")
-        if protocol not in SUPPORTED_PROTOCOLS:
-            code, message, data = unsupported_protocol_error(protocol)
-            return self._error(rid, code, message, data)
-        self._bind_request_identity(params, protocol=protocol)
+            return self._handle_ping(rid, params)
+        protocol, protocol_error = self._resolve_request_protocol(rid, params)
+        if protocol_error is not None:
+            return protocol_error
         if method=="tools/list":
             return self._response(rid, self._tools_list_payload(protocol))
         if method=="tools/call":
             params=message.get("params",{}); requested_name=params.get("name"); raw_args=params.get("arguments") or {}
+            if is_stateless_protocol(protocol):
+                mrtr_error=self._apply_mrtr_input_responses(rid, params, raw_args if isinstance(raw_args, dict) else {})
+                if mrtr_error is not None:
+                    return mrtr_error
             try:
                 name,args,normalization=_normalize_read_only_call(str(requested_name or ""),raw_args)
                 _validate_tool_arguments(name,args)
@@ -606,8 +705,13 @@ class MCPServer:
                 except Exception:
                     pass
                 studio_gates=os.environ.get("DYNOSAI_HUMAN_GATE_TRANSPORT","").lower()=="studio"
-                if isinstance(result,dict) and result.get("human_interaction") and self.client_capabilities.elicitation_form and not studio_gates:
-                    return ElicitationExchange(rid,dict(result["human_interaction"]),result,bool(args.get("execute",False)))
+                interaction=result.get("human_interaction") if isinstance(result, dict) else None
+                if interaction and self.client_capabilities.elicitation_form and not studio_gates:
+                    if is_stateless_protocol(protocol):
+                        if interaction.get("ephemeral"):
+                            return self._tool_call_response(rid,result,tool_name=name,protocol=protocol)
+                        return self._response(rid, protocol_2026.wrap_input_required(dict(interaction)))
+                    return ElicitationExchange(rid,dict(interaction),result,bool(args.get("execute",False)))
                 return self._tool_call_response(rid,result,tool_name=name,protocol=protocol)
             except ToolInputError as exc:
                 rejection={"accepted":False,"error_type":"tool_input_validation","message":str(exc),"repair_required":True,"requested_tool":requested_name}
@@ -1117,48 +1221,56 @@ def _acceptance_process_trace(event: dict[str, Any]) -> None:
             # Diagnostic tracing must never change MCP behavior.
             pass
 
-def _resolve_exchange(server:MCPServer,response:ElicitationExchange,action:str,content:dict[str,Any])->dict[str,Any]:
-    interaction=response.interaction
-    if interaction.get("ephemeral") and interaction.get("kind")=="project_bootstrap":
-        decision=str(content.get("decision") or ("cancel" if action!="accept" else "")).lower()
-        bootstrap=interaction.get("bootstrap") or {}
-        if action!="accept" or decision=="cancel":
-            refreshed={"action":"cancel","detection":response.base_result.get("detection"),"cancelled":True}
-        elif decision=="analysis_only":
-            refreshed={"action":"analysis_only","detection":response.base_result.get("detection"),"message":"No project files were mutated. Resolve Git/bootstrap requirements before governed implementation."}
-        elif decision=="initialize_git":
-            refreshed=server.call_tool("dynosai_project",{"action":"initialize","root":bootstrap.get("root"),"name":bootstrap.get("name"),"language":bootstrap.get("language"),"test_command":bootstrap.get("test_command"),"allow_git_init":True})
-        elif decision=="whole_repository":
-            refreshed=server.call_tool("dynosai_project",{"action":"initialize","root":bootstrap.get("root"),"name":bootstrap.get("name"),"language":bootstrap.get("language"),"test_command":bootstrap.get("test_command"),"confirm_monorepo":True})
+def apply_human_resolution(
+    server: MCPServer,
+    interaction: dict[str, Any],
+    action: str,
+    content: dict[str, Any],
+    base_result: dict[str, Any] | None = None,
+    requested_execute: bool = False,
+) -> dict[str, Any]:
+    """Normalize a human decision onto DynosAI DB authority. Transport-agnostic."""
+    if interaction.get("ephemeral") and interaction.get("kind") == "project_bootstrap":
+        decision = str(content.get("decision") or ("cancel" if action != "accept" else "")).lower()
+        bootstrap = interaction.get("bootstrap") or {}
+        if action != "accept" or decision == "cancel":
+            refreshed = {"action": "cancel", "detection": (base_result or {}).get("detection"), "cancelled": True}
+        elif decision == "analysis_only":
+            refreshed = {"action": "analysis_only", "detection": (base_result or {}).get("detection"), "message": "No project files were mutated. Resolve Git/bootstrap requirements before governed implementation."}
+        elif decision == "initialize_git":
+            refreshed = server.call_tool("dynosai_project", {"action": "initialize", "root": bootstrap.get("root"), "name": bootstrap.get("name"), "language": bootstrap.get("language"), "test_command": bootstrap.get("test_command"), "allow_git_init": True})
+        elif decision == "whole_repository":
+            refreshed = server.call_tool("dynosai_project", {"action": "initialize", "root": bootstrap.get("root"), "name": bootstrap.get("name"), "language": bootstrap.get("language"), "test_command": bootstrap.get("test_command"), "confirm_monorepo": True})
         else:
             raise ValueError(f"Unsupported project bootstrap decision: {decision}")
-        refreshed["elicitation"]={"id":interaction["id"],"action":action,"content":content,"resolved":True,"ephemeral":True}
+        refreshed["elicitation"] = {"id": interaction["id"], "action": action, "content": content, "resolved": True, "ephemeral": True}
         return refreshed
-    resolution=server.app.resolve_interaction(interaction["id"],action,content)
-    wid=(resolution.get("work") or {}).get("id") or interaction.get("work_id")
-    execute_after_gate=False
-    if wid and action=="accept" and response.requested_execute and interaction.get("kind")=="gate_approval" and interaction.get("gate")=="plan":
-        decision=str(content.get("decision") or "approve").lower()
-        resolved_state=str((resolution.get("work") or {}).get("state") or "")
-        execute_after_gate=(decision=="approve" and resolved_state=="ready")
-    refreshed=server.app.next_action(server.provider,wid,execute_after_gate) if wid and action=="accept" else response.base_result
-    if execute_after_gate and isinstance(refreshed,dict):
-        refreshed["ready_to_implementation_collapsed"]=True
+    resolution = server.app.resolve_interaction(interaction["id"], action, content)
+    wid = (resolution.get("work") or {}).get("id") or interaction.get("work_id")
+    execute_after_gate = False
+    if wid and action == "accept" and requested_execute and interaction.get("kind") == "gate_approval" and interaction.get("gate") == "plan":
+        decision = str(content.get("decision") or "approve").lower()
+        resolved_state = str((resolution.get("work") or {}).get("state") or "")
+        execute_after_gate = (decision == "approve" and resolved_state == "ready")
+    refreshed = server.app.next_action(server.provider, wid, execute_after_gate) if wid and action == "accept" else (base_result or resolution)
+    if execute_after_gate and isinstance(refreshed, dict):
+        refreshed["ready_to_implementation_collapsed"] = True
         try:
-            server.engine.db.audit("ReadyImplementationCollapsed",wid,{"gate":interaction.get("gate"),"requested_execute":True,"to_state":((refreshed.get("work") or {}).get("state"))})
+            server.engine.db.audit("ReadyImplementationCollapsed", wid, {"gate": interaction.get("gate"), "requested_execute": True, "to_state": ((refreshed.get("work") or {}).get("state"))})
         except Exception:
             pass
-    if wid and action=="accept" and isinstance(refreshed,dict):
-        # The suspended tool call resumes with a fresh authoritative action. Route
-        # it through the same managed delta compressor as an ordinary
-        # dynosai_get_next_action call; replaying the full
-        # post-gate contracts/checkpoints here.
-        activity=activity_for_state(((refreshed.get("work") or {}).get("state")))
-        refreshed["tool_surface"]=phase_tool_surface(activity)
-        refreshed["tool_surface"]["dynamic_refresh_requested"]=os.environ.get("DYNOSAI_PHASE_TOOL_DISCLOSURE") in {"dynamic","adaptive"}
-        refreshed=server._compact_managed_result("dynosai_get_next_action",refreshed)
-    refreshed["elicitation"]={"id":interaction["id"],"action":action,"content":content,"resolved":True}
+    if wid and action == "accept" and isinstance(refreshed, dict):
+        activity = activity_for_state(((refreshed.get("work") or {}).get("state")))
+        refreshed["tool_surface"] = phase_tool_surface(activity)
+        refreshed["tool_surface"]["dynamic_refresh_requested"] = os.environ.get("DYNOSAI_PHASE_TOOL_DISCLOSURE") in {"dynamic", "adaptive"}
+        refreshed = server._compact_managed_result("dynosai_get_next_action", refreshed)
+    if isinstance(refreshed, dict):
+        refreshed["elicitation"] = {"id": interaction["id"], "action": action, "content": content, "resolved": True}
     return refreshed
+
+
+def _resolve_exchange(server: MCPServer, response: ElicitationExchange, action: str, content: dict[str, Any]) -> dict[str, Any]:
+    return apply_human_resolution(server, response.interaction, action, content, response.base_result, response.requested_execute)
 
 
 def _workflow_state_from_result(value: Any) -> str | None:

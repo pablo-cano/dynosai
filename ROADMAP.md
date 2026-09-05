@@ -166,29 +166,31 @@ installed-package CI, 0.19.0 schema-v6 upgrade preservation.
 Delivered in `1.0.0-rc.5`: threat model, contribution/certification process,
 loopback honesty. External PRs remain closed.
 
-### 1.0.0-rc.6 — Standards & Release Evidence (this candidate)
+### 1.0.0-rc.6 — Standards & Release Evidence
 
-Must-have before stable. No new autonomous authority.
+Delivered in `1.0.0-rc.6`: MCP `2026-07-28` compatibility with backwards
+compatibility for `2025-11-25` and `2025-06-18`, unified release gate, live
+`MATRIX_1.0` runner with explicit trials, eval corpus, distribution ADR.
+Schema remains v6; 31 frozen MCP names; Predictive Router stays shadow-only.
+MATRIX_1.0 was not PASS.
 
-- MCP `2026-07-28` compatibility with backwards compatibility for
-  `2025-11-25` and `2025-06-18`
-- unified executable release gate (`scripts/release_gate.py`) shared by CI,
-  `scripts/build_release.py` and local preparation
-- live `MATRIX_1.0` runner with explicit trials (no silent retry-to-pass)
-- release eval corpus (Tier A provider certification + Tier B quality cases)
-- distribution-name decision (`dynosai` on PyPI when published; import stays
-  `dynosai_flow`)
-- supported install contract: at least one zero-source production path with
-  clean install, upgrade, rollback/uninstall and integrity evidence
-- documentation accuracy (`docs/CODE_QUALITY.md` generated from the tree)
-- Agent Plugins ADR (no marketplace, no DynosAI Pack format)
-- schema remains v6; 31 frozen MCP names; Predictive Router stays shadow-only
+### 1.0.0-rc.7 — Certification Integrity & Protocol Correctness (this candidate)
 
-### 1.0.0-rc.7 — Contingency only
+Must-have before spending tokens on MATRIX attempt 3. No 1.1–1.5 features.
 
-No features are planned. RC7 exists only if RC6 live certification discovers
-defects that require a second candidate. If RC6 is completely green, skip
-directly to stable.
+- release archive safety (gitignore-aware source manifest)
+- MCP 2026 strict per-request metadata and capability replacement
+- MCP lifecycle by era (2026 does not use legacy initialize/ping)
+- MCP 2026 MRTR `input_required` for DynosAI human gates
+- MATRIX workspace outside the repo; one provider execution per trial
+- observed MCP protocol vs supported revisions
+- source identity fingerprint for dirty candidates
+- public MATRIX path privacy
+
+### 1.0.0-rc.8 — Contingency only
+
+No features are planned. RC8 exists only if RC7 live certification discovers
+defects that require another candidate. Do not lower the gate to avoid RC8.
 
 ### 1.0.0 — Stable Governance Core
 

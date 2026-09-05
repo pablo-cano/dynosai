@@ -30,7 +30,8 @@ CERTIFICATION = "0.13.0-matrix"
 
 POLICY = (
     "Provider capability is a host contract, not a model claim. "
-    "Cursor ACP and Codex app-server are the certified Studio transports. "
+    "Cursor ACP and Codex app-server are the supported 1.0 target Studio transports. "
+    "1.0 live certification is pending MATRIX_1.0. "
     "Additional clients, uncertified runtimes and project extension packs are not shipped."
 )
 
@@ -78,7 +79,7 @@ def provider_manifest(name: str | None) -> dict[str, Any]:
     chosen = normalize_provider_name(name)
     if chosen in UNSUPPORTED_CLIENTS:
         raise ValueError(
-            f"{chosen} adapter is not shipped in 0.19; cursor ACP and Codex app-server remain the certified transports"
+            f"{chosen} adapter is not shipped in 0.19; cursor ACP and Codex app-server remain the supported 1.0 target transports"
         )
     if chosen not in MANIFESTS:
         raise ValueError(f"unknown provider: {chosen or '(empty)'}")
@@ -91,7 +92,7 @@ def require_adapter(kind: str | None) -> str:
     if adapter in SHIPPED_ADAPTERS:
         return adapter
     raise ValueError(
-        f"{adapter or 'unknown'} adapter is not shipped in 0.19; cursor ACP and Codex app-server remain the certified transports"
+        f"{adapter or 'unknown'} adapter is not shipped in 0.19; cursor ACP and Codex app-server remain the supported 1.0 target transports"
     )
 
 

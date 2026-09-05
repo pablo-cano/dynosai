@@ -20,10 +20,12 @@ import platform
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from .mcp_protocol import CURRENT_PROTOCOL, SUPPORTED_PROTOCOLS
+from .release_manifest import source_tree_identity
 from .version import DISPLAY_VERSION, __version__
 
 MATRIX_SCHEMA = "MATRIX_1.0"
@@ -46,7 +48,18 @@ TRIAL_FIELD_NAMES = (
     "model",
     "dynosai_version",
     "dynosai_git_commit",
+    "git_dirty",
+    "source_tree_sha256",
+    "source_file_count",
     "os",
+    "python_version",
+    "scenario",
+    "mode",
+    "started_at",
+    "finished_at",
+    "mcp_protocol_version",
+    "mcp_protocols_observed",
+    "mcp_protocol_note",
     "python_version",
     "scenario",
     "mode",
@@ -56,6 +69,7 @@ TRIAL_FIELD_NAMES = (
     "acp_app_server_capabilities",
     "execution_profile",
     "harness_feature_state",
+    "retry_history",
     "attempt",
     "token_usage",
     "estimated_cost",
@@ -69,6 +83,7 @@ TRIAL_FIELD_NAMES = (
     "failure_attribution",
     "artifact_paths",
     "artifact_hashes",
+    "artifact_refs",
 )
 
 
@@ -111,9 +126,162 @@ def _cli_version(command: str | None) -> str | None:
     return text.splitlines()[0].strip() if text else None
 
 
+def _git_dirty(root: Path | None = None) -> bool | None:
+    target = root or _repo_root()
+    if not (target / ".git").exists():
+        return None
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=target,
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
+    if result.returncode != 0:
+        return None
+    return bool((result.stdout or "").strip())
+
+
+def default_matrix_workspace(repo_root: Path | None = None) -> Path:
+    """Certification workspace lives in the OS temp dir, never inside the repo."""
+    repo = (repo_root or _repo_root()).resolve()
+    workspace = (Path(tempfile.gettempdir()) / "dynosai-matrix-1.0").resolve()
+    try:
+        workspace.relative_to(repo)
+    except ValueError:
+        return workspace
+    raise RuntimeError("MATRIX default workspace resolved inside the repository")
+
+
+def observed_mcp_protocols_from_payloads(payloads: list[Any]) -> list[str]:
+    seen: list[str] = []
+    for payload in payloads:
+        if not isinstance(payload, dict):
+            continue
+        proto = payload.get("mcp_protocol")
+        if proto:
+            text = str(proto)
+            if text not in seen:
+                seen.append(text)
+    return seen
+
+
+def collapse_observed_mcp_protocols(observed: list[str] | None) -> dict[str, Any]:
+    values = [str(item) for item in (observed or []) if item]
+    unique: list[str] = []
+    for item in values:
+        if item not in unique:
+            unique.append(item)
+    if len(unique) == 1:
+        return {"mcp_protocol_version": unique[0], "mcp_protocols_observed": unique, "mcp_protocol_note": None}
+    if not unique:
+        return {
+            "mcp_protocol_version": None,
+            "mcp_protocols_observed": [],
+            "mcp_protocol_note": "no MCP tool calls observed",
+        }
+    return {
+        "mcp_protocol_version": None,
+        "mcp_protocols_observed": unique,
+        "mcp_protocol_note": "multiple MCP protocols observed; not collapsing to a single mcp_protocol_version",
+    }
+
+
+def _portable_artifact_name(path: str | Path) -> str:
+    return Path(str(path).replace("\\", "/")).name
+
+
+def _lookup_hash(hashes: dict[str, Any], path: str) -> str | None:
+    if path in hashes:
+        value = hashes.get(path)
+        return str(value) if value else None
+    name = _portable_artifact_name(path)
+    if name in hashes:
+        value = hashes.get(name)
+        return str(value) if value else None
+    for key, value in hashes.items():
+        if _portable_artifact_name(key) == name:
+            return str(value) if value else None
+    return None
+
+
+def publicize_artifact_fields(payload: dict[str, Any]) -> dict[str, Any]:
+    """Replace machine-local paths with portable names + SHA256 refs."""
+    out = dict(payload)
+    paths = [str(item) for item in (out.get("artifact_paths") or [])]
+    hashes = dict(out.get("artifact_hashes") or {}) if isinstance(out.get("artifact_hashes"), dict) else {}
+    existing_refs = list(out.get("artifact_refs") or []) if isinstance(out.get("artifact_refs"), list) else []
+    if not paths and not hashes and not existing_refs:
+        return out
+    names: list[str] = []
+    portable_hashes: dict[str, Any] = {}
+    refs: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for path in paths or list(hashes.keys()):
+        name = _portable_artifact_name(path)
+        if name in seen:
+            continue
+        seen.add(name)
+        names.append(name)
+        sha = _lookup_hash(hashes, path)
+        portable_hashes[name] = sha
+        refs.append({"name": name, "sha256": sha, "local_only": True})
+    for ref in existing_refs:
+        if not isinstance(ref, dict):
+            continue
+        name = str(ref.get("name") or "")
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        names.append(name)
+        sha = ref.get("sha256")
+        portable_hashes[name] = sha
+        refs.append({"name": name, "sha256": sha, "local_only": True})
+    if names:
+        out["artifact_paths"] = names
+        out["artifact_hashes"] = portable_hashes
+        out["artifact_refs"] = refs
+    return out
+
+
+def publicize_environment(environment: dict[str, Any] | None) -> dict[str, Any]:
+    env = dict(environment or {})
+    detected = env.get("providers_detected")
+    if isinstance(detected, dict):
+        env["providers_detected"] = {str(key): bool(value) for key, value in detected.items()}
+    return env
+
+
+def publicize_matrix(matrix: dict[str, Any]) -> dict[str, Any]:
+    """Public MATRIX_1.0 JSON must not embed machine-local absolute paths."""
+    payload = json.loads(json.dumps(matrix))
+    payload["environment"] = publicize_environment(payload.get("environment") if isinstance(payload.get("environment"), dict) else {})
+    cells = []
+    for cell in payload.get("cells") or []:
+        if not isinstance(cell, dict):
+            continue
+        item = publicize_artifact_fields(cell)
+        if isinstance(item.get("evidence"), dict):
+            item["evidence"] = publicize_artifact_fields(item["evidence"])
+        trials = []
+        for trial in item.get("trials") or []:
+            if isinstance(trial, dict):
+                trials.append(publicize_artifact_fields(trial))
+            else:
+                trials.append(trial)
+        item["trials"] = trials
+        cells.append(item)
+    payload["cells"] = cells
+    return payload
+
+
 def probe_environment(root: Path | None = None) -> dict[str, Any]:
     """Record host facts. Missing values stay null/unknown; nothing is invented."""
     target = root or _repo_root()
+    identity = source_tree_identity(target)
     detected = {
         "codex": shutil.which("codex"),
         "cursor-agent": shutil.which("cursor-agent"),
@@ -123,6 +291,9 @@ def probe_environment(root: Path | None = None) -> dict[str, Any]:
         "dynosai_version": __version__,
         "dynosai_display_version": DISPLAY_VERSION,
         "dynosai_git_commit": _git_commit(target),
+        "git_dirty": _git_dirty(target),
+        "source_tree_sha256": identity["source_tree_sha256"],
+        "source_file_count": identity["source_file_count"],
         "os": platform.platform(),
         "python_version": sys.version.split()[0],
         "mcp_protocols_supported": list(SUPPORTED_PROTOCOLS),
@@ -152,9 +323,14 @@ def empty_trial(
         "attempt": int(attempt),
         "dynosai_version": env.get("dynosai_version"),
         "dynosai_git_commit": env.get("dynosai_git_commit"),
+        "git_dirty": env.get("git_dirty"),
+        "source_tree_sha256": env.get("source_tree_sha256"),
+        "source_file_count": env.get("source_file_count"),
         "os": env.get("os"),
         "python_version": env.get("python_version"),
-        "mcp_protocol_version": env.get("mcp_protocol_current"),
+        "mcp_protocol_version": None,
+        "mcp_protocols_observed": [],
+        "mcp_protocol_note": None,
         "provider_client_version": (env.get("provider_client_versions") or {}).get(
             "cursor-agent" if provider == "cursor" else provider
         ) or "unknown",
@@ -236,7 +412,9 @@ def _cell_has_real_pass_evidence(cell: dict[str, Any]) -> bool:
     if cell.get("evidence"):
         return True
     for trial in cell.get("trials") or []:
-        if str((trial or {}).get("final_status") or "") == "pass" and (trial.get("artifact_paths") or trial.get("artifact_hashes")):
+        if str((trial or {}).get("final_status") or "") == "pass" and (
+            trial.get("artifact_paths") or trial.get("artifact_hashes") or trial.get("artifact_refs")
+        ):
             return True
     return False
 
@@ -295,6 +473,9 @@ def save_live_matrix(matrix: dict[str, Any], path: str | Path | None = None) -> 
     payload = validate_live_matrix(matrix)
     target = Path(path) if path else _repo_root() / LIVE_MATRIX_PATH
     target.parent.mkdir(parents=True, exist_ok=True)
+    posix = target.as_posix().replace("\\", "/")
+    if posix.endswith("docs/validation/matrix-1.0.json"):
+        payload = validate_live_matrix(publicize_matrix(payload))
     target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return target
 
