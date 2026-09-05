@@ -45,6 +45,7 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `mcp_protocol_2026.py` | 2026-07-28 discover, stateless list/call and `input_required` envelopes |
 | `mcp_human_gates.py` | Stable human-gate input-request keys shared by legacy elicitation and 2026 MRTR |
 | `release_manifest.py` | Git-aware releasable file list, source ZIP, `source_tree_sha256` and `certification_subject_sha256` |
+| `runtime_paths.py` | User-local persistent state, certification/acceptance workspaces, Codex CODEX_HOME safety |
 | `model_benchmark.py` | Offline provider/model benchmark ranking |
 | `model_control.py` | Phase budgets, adaptive control decisions and transition evidence |
 | `model_routing.py` | Provider/activity routing profiles |

@@ -68,7 +68,7 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
         (tree / "docs" / "validation").mkdir(parents=True)
         (tree / "docs" / "validation" / "matrix-1.0.json").write_text('{"schema":"MATRIX_1.0"}\n', encoding="utf-8")
         (tree / "docs" / "RELEASE_PROCESS.md").write_text("policy\n", encoding="utf-8")
-        (tree / "pyproject.toml").write_text('version = "1.0.0rc7"\n', encoding="utf-8")
+        (tree / "pyproject.toml").write_text('version = "1.0.0rc8"\n', encoding="utf-8")
         (tree / "README.md").write_text("DynosAI\n", encoding="utf-8")
         (tree / ".gitignore").write_text(".env\n.dynosai/\ndist/\n", encoding="utf-8")
         if git:
@@ -80,8 +80,8 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
         return tree
 
     def test_version_unchanged(self):
-        self.assertEqual(__version__, "1.0.0rc7")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.7")
+        self.assertEqual(__version__, "1.0.0rc8")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.8")
 
     def test_matrix_mutation_does_not_change_certification_subject(self):
         tree = self._product_tree("matrix-only")
@@ -112,7 +112,7 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
         self.assertNotEqual(baseline, certification_subject_identity(tree)["certification_subject_sha256"])
         (tree / "scripts" / "run_matrix_1_0.py").write_text("print('matrix-runner')\n", encoding="utf-8")
         self.assertEqual(baseline, certification_subject_identity(tree)["certification_subject_sha256"])
-        (tree / "pyproject.toml").write_text('version = "1.0.0rc7"\nname = "dynosai"\n', encoding="utf-8")
+        (tree / "pyproject.toml").write_text('version = "1.0.0rc8"\nname = "dynosai"\n', encoding="utf-8")
         self.assertNotEqual(baseline, certification_subject_identity(tree)["certification_subject_sha256"])
 
     def test_matrix_only_dirty_tree_is_allowed_between_trials(self):
@@ -164,7 +164,19 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
         if cells is not None:
             argv.extend(["--cells", cells])
         try:
-            with patch.object(runner, "_run_live_cell", live_impl):
+            with patch.object(runner, "_run_live_cell", live_impl), patch.object(
+                runner, "assert_codex_home_safe", lambda home, **_kwargs: Path(home)
+            ), patch(
+                "dynosai_flow.managed_runtime.run_codex_version_preflight",
+                lambda *_args, **_kwargs: {
+                    "status": "pass",
+                    "codex_version": "codex-cli test",
+                    "codex_home_safe": True,
+                    "helper_binary_refusal_detected": False,
+                    "exit_code": 0,
+                    "provider_started": False,
+                },
+            ):
                 return runner.main(argv), matrix_path
         finally:
             runner.ROOT = original

@@ -59,7 +59,7 @@ passing checkout fixtures. Certification requires:
 
 Until those cells are real `pass` evidence, `MATRIX_1.0` stays `not_run` (or
 records an explicit fail with attribution) and `1.0.0` stays reserved.
-Remaining on `1.0.0rc7` is an honest successful outcome.
+Remaining on `1.0.0rc8` is an honest successful outcome.
 
 ## Issues
 

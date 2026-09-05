@@ -1,10 +1,13 @@
 import json
+import shutil
 import stat
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 
 from dynosai_flow.acceptance import CodexAppServerDriver
+from dynosai_flow.runtime_paths import user_local_scratch
 
 
 class Acceptance085Tests(unittest.TestCase):
@@ -12,6 +15,9 @@ class Acceptance085Tests(unittest.TestCase):
         self.td = tempfile.TemporaryDirectory()
         self.addCleanup(self.td.cleanup)
         self.tmp = Path(self.td.name)
+        self.safe = user_local_scratch("unit-tests", uuid.uuid4().hex)
+        self.safe.mkdir(parents=True, exist_ok=True)
+        self.addCleanup(lambda: shutil.rmtree(self.safe, ignore_errors=True))
 
     def _fake_codex(self) -> Path:
         fake = self.tmp / "codex"
@@ -60,7 +66,7 @@ send({"method":"turn/completed","params":{"threadId":"thr","turn":{"id":"turn","
 
     def test_codex_uses_elicitation_only_granular_policy(self):
         fake = self._fake_codex()
-        project = self.tmp / "project"
+        project = self.safe / "project"
         project.mkdir()
         logs = self.tmp / "logs"
         result = CodexAppServerDriver(str(fake), 20).run(project, "prompt", logs, interaction_mode="auto")

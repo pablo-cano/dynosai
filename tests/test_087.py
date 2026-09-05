@@ -1,7 +1,9 @@
 import json
+import shutil
 import stat
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 
 from dynosai_flow.acceptance import CodexAppServerDriver, CursorAcceptanceDriver
@@ -16,6 +18,7 @@ from dynosai_flow.model_routing import (
     cursor_cli_selector,
     normalize_provider,
 )
+from dynosai_flow.runtime_paths import user_local_scratch
 from dynosai_flow.version import __version__
 
 
@@ -24,8 +27,11 @@ class ModelRouting087Tests(unittest.TestCase):
         self.td = tempfile.TemporaryDirectory()
         self.addCleanup(self.td.cleanup)
         self.tmp = Path(self.td.name)
+        self.safe = user_local_scratch("unit-tests", uuid.uuid4().hex)
+        self.safe.mkdir(parents=True, exist_ok=True)
+        self.addCleanup(lambda: shutil.rmtree(self.safe, ignore_errors=True))
         self.home = self.tmp / "home"
-        self.project = self.tmp / "project"
+        self.project = self.safe / "project"
         self.project.mkdir()
 
     def test_current_builtin_provider_defaults_and_aliases(self):
@@ -142,7 +148,7 @@ send({"method":"turn/completed","params":{"threadId":"thr","turn":{"id":"turn","
         self.assertEqual(result["model_route"]["activity"], "discovery")
 
     def test_version_is_087(self):
-        self.assertEqual(__version__, "1.0.0rc7")
+        self.assertEqual(__version__, "1.0.0rc8")
 
 
 if __name__ == "__main__":

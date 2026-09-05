@@ -10,7 +10,6 @@ import hashlib
 import queue
 import sqlite3
 import threading
-import tempfile
 import shutil
 import subprocess
 import sys
@@ -26,6 +25,7 @@ from .application import DynosAIApplication
 from .debug import DebugE2ERunner, SCENARIOS
 from .debug_fixtures import seed_orderflow_brownfield
 from .providers import MachineProviderSetup
+from .runtime_paths import UnsafeCodexRuntime, assert_codex_home_safe, default_acceptance_workspace, managed_codex_home
 from .util import executable_command, utc_now
 from .version import __version__
 from .model_routing import BUILTIN_DEFAULTS, ACCEPTANCE_MODEL_PROFILES, ModelRoute, ProviderModelRouting, cursor_cli_selector, env_override, model_observation, activity_for_state
@@ -605,6 +605,23 @@ class CodexAppServerDriver:
         return False
 
     def run(self,project:Path,prompt:str,logs:Path,*,interaction_mode:str,model_route:ModelRoute|None=None,logger:AcceptanceLogger|None=None,usage:TokenUsageRecorder|None=None)->dict[str,Any]:
+        try:
+            assert_codex_home_safe(managed_codex_home(project))
+        except UnsafeCodexRuntime as exc:
+            return {
+                "provider":"codex",
+                "driver":"codex-app-server",
+                "interaction_mode":interaction_mode,
+                "command":[self.executable,"app-server","--listen","stdio://"],
+                "exit_code":2,
+                "duration_seconds":0,
+                "real_provider":True,
+                "wire_elicitation":False,
+                "automated_responses":False,
+                "provider_started":False,
+                "error":str(exc),
+                "termination_reason":"unsafe_codex_runtime",
+            }
         if interaction_mode=="interactive":
             command=[self.executable]
             if model_route:
@@ -1011,6 +1028,14 @@ class RealProviderAcceptanceCase:
         prompt=_scenario_prompt(self.provider,self.scenario,model_route); (self.logs/"prompt.txt").write_text(prompt,encoding="utf-8")
         logger.emit("prompt_ready",phase="routing",provider=self.provider,scenario=self.scenario,message="acceptance prompt persisted",path=str(self.logs/"prompt.txt"))
         driver=(CursorAcceptanceDriver(probe.executable,self.max_runtime,self.idle_timeout,self.slow_progress) if self.provider=="cursor" else CodexAppServerDriver(probe.executable,self.max_runtime,self.idle_timeout,self.slow_progress))
+        if self.provider=="codex":
+            try:
+                assert_codex_home_safe(managed_codex_home(self.project))
+            except UnsafeCodexRuntime as exc:
+                result.update({"status":"failed","failure":{"type":"UnsafeCodexRuntime","message":str(exc)},"provider_started":False,"finished_at":utc_now()})
+                _write_json(self.logs/"summary.json",result)
+                logger.emit("case_failed",phase="setup",provider=self.provider,scenario=self.scenario,message="unsafe Codex managed runtime; provider execution was not started",status="failed")
+                return result
         runtime_before=_runtime_bin_snapshot()
         logger.emit("provider_run_start",phase="provider",provider=self.provider,scenario=self.scenario,message="real provider execution starting",path=str(self.logs))
         mcp_stop,mcp_watcher=self._start_mcp_activity_watcher(logger,progress_root/"mcp-activity.jsonl",usage)
@@ -1203,9 +1228,8 @@ class RealProviderAcceptanceSuite:
         for s in scenarios:
             if s not in ACCEPTANCE_SCENARIOS: raise ValueError(s)
         self.scenarios=tuple(scenarios)
-        stamp=utc_now().replace(":","").replace("+00:00","Z")
         self.run_id=new_run_id()
-        self.base=Path(workspace).expanduser().resolve() if workspace else Path(tempfile.gettempdir())/"dynosai-acceptance-runs"/f"ACCEPTANCE-{stamp}"
+        self.base=Path(workspace).expanduser().resolve() if workspace else default_acceptance_workspace(self.run_id)
         self.output=Path(output).expanduser().resolve() if output else self.base/f"dynosai-acceptance-{__version__.replace('.','')}-{interaction_mode}.zip"
         self.log_dir=Path(log_dir).expanduser().resolve() if log_dir else acceptance_log_home()/self.run_id
 

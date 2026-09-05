@@ -1,17 +1,22 @@
 import json
-import os
+import shutil
 import stat
 import tempfile
 import unittest
+import uuid
 from pathlib import Path
 
 from dynosai_flow.acceptance import CodexAppServerDriver, RealProviderAcceptanceSuite
+from dynosai_flow.runtime_paths import path_is_under, path_is_under_temp, user_local_scratch, user_local_state_root
 
 
 class Acceptance084Tests(unittest.TestCase):
     def setUp(self):
         self.td=tempfile.TemporaryDirectory(); self.addCleanup(self.td.cleanup)
         self.tmp=Path(self.td.name)
+        self.safe=user_local_scratch("unit-tests", uuid.uuid4().hex)
+        self.safe.mkdir(parents=True, exist_ok=True)
+        self.addCleanup(lambda: shutil.rmtree(self.safe, ignore_errors=True))
 
     def _fake_codex(self) -> Path:
         fake=self.tmp/'codex'
@@ -74,7 +79,7 @@ send({'method':'turn/completed','params':{'threadId':'thr','turn':{'id':'turn','
         return fake
 
     def test_codex_advertises_form_elicitation_and_distinguishes_tool_approval(self):
-        fake=self._fake_codex(); root=self.tmp/'project'; root.mkdir(); logs=self.tmp/'logs'
+        fake=self._fake_codex(); root=self.safe/'project'; root.mkdir(); logs=self.tmp/'logs'
         result=CodexAppServerDriver(str(fake),20).run(root,'prompt',logs,interaction_mode='auto')
         self.assertEqual(result['exit_code'],0,result)
         self.assertEqual(result['sandbox_mode'],'workspace-write')
@@ -88,7 +93,9 @@ send({'method':'turn/completed','params':{'threadId':'thr','turn':{'id':'turn','
         suite=RealProviderAcceptanceSuite(providers=('cursor',),scenario='fibonacci',configure=False,keep=True)
         parts=suite.base.parts
         self.assertNotIn('.dynosai',parts,suite.base)
-        self.assertIn('dynosai-acceptance-runs',parts,suite.base)
+        self.assertIn('acceptance', parts, suite.base)
+        self.assertFalse(path_is_under_temp(suite.base))
+        self.assertTrue(path_is_under(suite.base, user_local_state_root()))
 
 
 if __name__=='__main__': unittest.main()
