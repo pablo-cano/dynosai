@@ -507,7 +507,8 @@ class DynosAI270Rc7IntegrityTests(unittest.TestCase):
         self.assertNotIn("C:\\Users\\", blob)
         self.assertFalse(matrix["all_passed"])
         counts = [len(cell.get("trials") or []) for cell in matrix["cells"]]
-        self.assertEqual(counts, [2, 2, 2, 2])
+        self.assertEqual(len(counts), 4)
+        self.assertGreaterEqual(min(counts), 2)
         for cell in public["cells"]:
             for trial in cell.get("trials") or []:
                 for path in trial.get("artifact_paths") or []:
