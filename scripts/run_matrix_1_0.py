@@ -53,6 +53,19 @@ def _select_cells(raw: str | None) -> list[tuple[str, str]]:
     return selected
 
 
+def live_exit_code(matrix: dict, selected_cells: list[tuple[str, str]], *, cells_specified: bool) -> int:
+    """Command exit code. Subset --cells ignores historical status of other cells."""
+    if cells_specified:
+        for provider, mode in selected_cells:
+            cell = next(item for item in matrix["cells"] if item["provider"] == provider and item["mode"] == mode)
+            trials = cell.get("trials") or []
+            latest = trials[-1] if trials else {}
+            if str(latest.get("final_status") or "") != "pass":
+                return 1
+        return 0
+    return 0 if all(cell.get("status") == "pass" for cell in matrix["cells"]) else 1
+
+
 def _run_live_cell(provider: str, mode: str, workspace: Path, attempt: int) -> dict:
     from dynosai_flow.cli import main
     scenario = SCENARIO_FOR_MODE[mode]
@@ -242,8 +255,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 2
 
+    cells_specified = args.cells is not None
+    selected_cells = _select_cells(args.cells)
     workspace = Path(args.workspace).expanduser().resolve() if args.workspace else default_matrix_workspace(ROOT)
-    for provider, mode in _select_cells(args.cells):
+    for provider, mode in selected_cells:
         try:
             env = guard_live_certification(ROOT, expected_subject_sha256=expected)
         except CertificationAborted as exc:
@@ -306,7 +321,7 @@ def main(argv: list[str] | None = None) -> int:
         append_trial(matrix, provider, mode, trial)
         save_live_matrix(matrix, matrix_path)
         print(json.dumps({"cell": f"{provider}.{mode}", "attempt": attempt, "status": trial["final_status"], "attribution": trial.get("failure_attribution")}, indent=2))
-    return 0 if all(cell.get("status") == "pass" for cell in matrix["cells"]) else 1
+    return live_exit_code(matrix, selected_cells, cells_specified=cells_specified)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import tempfile
 import unittest
@@ -17,6 +18,7 @@ from dynosai_flow.certification_matrix import (
     CertificationAborted,
     attempt_n_same_candidate,
     classify_certification_dirty,
+    default_cell,
     default_live_matrix,
     empty_trial,
     guard_live_certification,
@@ -147,20 +149,23 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
         self.assertIn(f"Current: {current}", str(raised.exception))
         self.assertIn("Provider execution was not started.", str(raised.exception))
 
-    def _run_live_main(self, tree: Path, expected: str, runner, live_impl):
+    def _run_live_main(self, tree: Path, expected: str, runner, live_impl, *, cells: str | None = "codex.greenfield", matrix=None):
         matrix_path = tree / "docs" / "validation" / "matrix-1.0.json"
-        save_live_matrix(default_live_matrix(), matrix_path)
+        payload = matrix if matrix is not None else default_live_matrix()
+        save_live_matrix(payload, matrix_path)
         original = runner.ROOT
         runner.ROOT = tree
+        argv = [
+            "--live",
+            "--matrix", str(matrix_path),
+            "--workspace", str(self.tmp / "ws"),
+            "--expected-subject-sha256", expected,
+        ]
+        if cells is not None:
+            argv.extend(["--cells", cells])
         try:
             with patch.object(runner, "_run_live_cell", live_impl):
-                return runner.main([
-                    "--live",
-                    "--cells", "codex.greenfield",
-                    "--matrix", str(matrix_path),
-                    "--workspace", str(self.tmp / "ws"),
-                    "--expected-subject-sha256", expected,
-                ])
+                return runner.main(argv), matrix_path
         finally:
             runner.ROOT = original
 
@@ -173,7 +178,7 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
             started.append(True)
             raise AssertionError("provider must not start")
 
-        code = self._run_live_main(tree, "deadbeef", runner, boom)
+        code, _path = self._run_live_main(tree, "deadbeef", runner, boom)
         self.assertEqual(code, 2)
         self.assertEqual(started, [])
 
@@ -188,7 +193,7 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
             raise AssertionError("provider must not start")
 
         subject = certification_subject_identity(tree)["certification_subject_sha256"]
-        code = self._run_live_main(tree, subject, runner, boom)
+        code, _path = self._run_live_main(tree, subject, runner, boom)
         self.assertEqual(code, 2)
         self.assertEqual(started, [])
 
@@ -210,7 +215,7 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
             }
 
         subject = certification_subject_identity(tree)["certification_subject_sha256"]
-        code = self._run_live_main(tree, subject, runner, fake_live)
+        code, _path = self._run_live_main(tree, subject, runner, fake_live)
         self.assertEqual(started, [("codex", "greenfield", 1)])
         self.assertNotEqual(code, 2)
 
@@ -250,6 +255,160 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
         self.assertEqual(trial["source_file_count"], env["source_file_count"])
         self.assertEqual(trial["certification_subject_file_count"], env["certification_subject_file_count"])
         self.assertNotEqual(trial["source_tree_sha256"], trial["certification_subject_sha256"])
+
+    def _historical_fail_matrix(self):
+        matrix = {
+            "schema": "MATRIX_1.0",
+            "schema_version": 1,
+            "release_line": "1.0",
+            "copied_from_historical": False,
+            "all_passed": False,
+            "historical_baseline": {
+                "release": "0.13.0",
+                "path": "docs/validation/final-matrix-0.13.0.json",
+                "note": "Historical core evidence. Not 1.0 live certification.",
+            },
+            "environment": {},
+            "cells": [default_cell(provider, mode) for provider, mode in CELL_KEYS],
+        }
+        for cell in matrix["cells"]:
+            cell["status"] = "fail"
+            cell["trials"] = [{
+                "provider": cell["provider"],
+                "mode": cell["mode"],
+                "attempt": 1,
+                "final_status": "fail",
+                "failure_attribution": "historical",
+            }]
+            cell["evidence"] = {
+                "attempt": 1,
+                "failure_attribution": "historical",
+                "artifact_paths": [],
+                "artifact_hashes": {},
+            }
+        matrix["all_passed"] = False
+        return matrix
+
+    def _fake_outcomes(self, outcomes: dict[tuple[str, str], bool], started: list):
+        def impl(provider, mode, workspace, attempt):
+            started.append((provider, mode, attempt))
+            workspace_path = Path(workspace)
+            workspace_path.mkdir(parents=True, exist_ok=True)
+            ok = bool(outcomes[(provider, mode)])
+            output = None
+            if ok:
+                bundle = workspace_path / f"{provider}-{mode}-pass.zip"
+                with zipfile.ZipFile(bundle, "w") as archive:
+                    archive.writestr("summary-final.json", json.dumps({"status": "passed"}))
+                output = str(bundle)
+            return {
+                "exit_code": 0 if ok else 1,
+                "started_at": "2026-09-05T00:00:00+00:00",
+                "finished_at": "2026-09-05T00:00:01+00:00",
+                "output": output,
+                "log_dir": None,
+                "scenario": "fibonacci",
+            }
+        return impl
+
+    def test_selected_greenfield_pass_exit_zero_while_matrix_still_failed(self):
+        tree = self._product_tree("exit-subset-pass")
+        runner = _load_runner()
+        started = []
+        subject = certification_subject_identity(tree)["certification_subject_sha256"]
+        code, matrix_path = self._run_live_main(
+            tree, subject, runner,
+            self._fake_outcomes({("codex", "greenfield"): True}, started),
+            cells="codex.greenfield",
+            matrix=self._historical_fail_matrix(),
+        )
+        payload = json.loads(matrix_path.read_text(encoding="utf-8"))
+        self.assertEqual(started, [("codex", "greenfield", 2)])
+        self.assertEqual(code, 0)
+        self.assertFalse(payload["all_passed"])
+        by_key = {(cell["provider"], cell["mode"]): cell for cell in payload["cells"]}
+        self.assertEqual(by_key[("codex", "greenfield")]["status"], "pass")
+        self.assertEqual(by_key[("codex", "brownfield")]["status"], "fail")
+        self.assertEqual(by_key[("cursor", "greenfield")]["status"], "fail")
+        self.assertEqual(by_key[("cursor", "brownfield")]["status"], "fail")
+
+    def test_selected_cell_fail_exits_one(self):
+        tree = self._product_tree("exit-subset-fail")
+        runner = _load_runner()
+        started = []
+        subject = certification_subject_identity(tree)["certification_subject_sha256"]
+        code, _path = self._run_live_main(
+            tree, subject, runner,
+            self._fake_outcomes({("codex", "greenfield"): False}, started),
+            cells="codex.greenfield",
+            matrix=self._historical_fail_matrix(),
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual(started, [("codex", "greenfield", 2)])
+
+    def test_two_selected_cells_both_pass_exit_zero(self):
+        tree = self._product_tree("exit-two-pass")
+        runner = _load_runner()
+        started = []
+        subject = certification_subject_identity(tree)["certification_subject_sha256"]
+        code, payload_path = self._run_live_main(
+            tree, subject, runner,
+            self._fake_outcomes({("codex", "greenfield"): True, ("cursor", "greenfield"): True}, started),
+            cells="codex.greenfield,cursor.greenfield",
+            matrix=self._historical_fail_matrix(),
+        )
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+        self.assertEqual(code, 0)
+        self.assertFalse(payload["all_passed"])
+        self.assertEqual([item[:2] for item in started], [("codex", "greenfield"), ("cursor", "greenfield")])
+
+    def test_two_selected_cells_one_fail_exit_one(self):
+        tree = self._product_tree("exit-two-mixed")
+        runner = _load_runner()
+        started = []
+        subject = certification_subject_identity(tree)["certification_subject_sha256"]
+        code, _path = self._run_live_main(
+            tree, subject, runner,
+            self._fake_outcomes({("codex", "greenfield"): True, ("cursor", "greenfield"): False}, started),
+            cells="codex.greenfield,cursor.greenfield",
+            matrix=self._historical_fail_matrix(),
+        )
+        self.assertEqual(code, 1)
+        self.assertEqual([item[:2] for item in started], [("codex", "greenfield"), ("cursor", "greenfield")])
+
+    def test_all_cells_one_fail_exit_one(self):
+        tree = self._product_tree("exit-all-one-fail")
+        runner = _load_runner()
+        started = []
+        outcomes = {key: key != ("cursor", "brownfield") for key in CELL_KEYS}
+        subject = certification_subject_identity(tree)["certification_subject_sha256"]
+        code, payload_path = self._run_live_main(
+            tree, subject, runner,
+            self._fake_outcomes(outcomes, started),
+            cells=None,
+            matrix=self._historical_fail_matrix(),
+        )
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+        self.assertEqual(code, 1)
+        self.assertFalse(payload["all_passed"])
+        self.assertEqual(len(started), 4)
+
+    def test_all_cells_pass_exit_zero(self):
+        tree = self._product_tree("exit-all-pass")
+        runner = _load_runner()
+        started = []
+        outcomes = {key: True for key in CELL_KEYS}
+        subject = certification_subject_identity(tree)["certification_subject_sha256"]
+        code, payload_path = self._run_live_main(
+            tree, subject, runner,
+            self._fake_outcomes(outcomes, started),
+            cells=None,
+            matrix=self._historical_fail_matrix(),
+        )
+        payload = json.loads(payload_path.read_text(encoding="utf-8"))
+        self.assertEqual(code, 0)
+        self.assertTrue(payload["all_passed"])
+        self.assertEqual(len(started), 4)
 
 
 if __name__ == "__main__":
