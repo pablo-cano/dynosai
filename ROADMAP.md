@@ -180,20 +180,40 @@ Delivered in `1.0.0-rc.7`: archive safety, MCP 2026 strictness/MRTR, MATRIX
 runner honesty, candidate subject identity. Live `codex.greenfield` attempt 3
 failed because managed `CODEX_HOME` sat under the OS temp directory.
 
-### 1.0.0-rc.8 — Provider Runtime Portability (this candidate)
+### 1.0.0-rc.8 — Provider Runtime Portability
 
-No 1.1–1.5 features. RC8 exists because RC7 live certification discovered a
-deterministic Codex runtime-layout defect.
+Delivered in `1.0.0-rc.8`: user-local workspaces, Codex temp-home abort,
+`codex --version` preflight, candidate identity gate. Live `codex.greenfield`
+attempt 4 failed because Codex App Server started without exposing DynosAI MCP.
 
-- user-local persistent workspaces for MATRIX and acceptance
-- abort before Codex when `CODEX_HOME` would be under OS temp
-- `codex --version` preflight without a model turn
-- candidate identity gate instead of synchronized attempt numbers
+### 1.0.0-rc.9 — Codex MCP Observability & Deterministic Preflight
 
-### 1.0.0-rc.9 — Contingency only
+No 1.1–1.5 features. RC9 exists because RC8 live certification discovered that
+Codex App Server can be healthy while DynosAI MCP still fails to start.
 
-No features are planned. RC9 exists only if RC8 live certification discovers
-defects that require another candidate. Do not lower the gate to avoid RC9.
+- App Server MCP introspection without `turn/start`
+- hard preflight gate before live Codex model tokens
+- opaque Codex `_meta` must not abort a negotiated 2025 MCP session
+
+RC9 live Codex cells proved managed runtime, DynosAI MCP, Spec Review and Plan
+Review, then stopped at `implementing` when a single provider turn ended. That
+evidence is preserved. It is not 1.0 PASS.
+
+### 1.0.0-rc.10 — Governed Session Continuity (this candidate)
+
+No 1.1–1.5 features. RC10 is the last planned 1.0 release candidate.
+
+**1.0 provider policy**
+
+| Provider | Integration | Greenfield | Brownfield | 1.0 status |
+|---|---|---|---|---|
+| Codex | App Server + MCP | certification required | certification required | Certification pending until both live cells PASS |
+| Cursor | CLI/ACP + MCP | evidence retained | evidence retained | Preview / non-blocking; not 1.0 certified |
+
+Core remains STABLE. A Codex certification trial may use up to three turns
+inside one App Server session/thread. Cursor Preview FAILs do not block 1.0
+and must not be rewritten as PASS. Do not create RC11 automatically.
+This is not a lowered-gate Contingency; Done/oracle success criteria stay strict.
 
 ### 1.0.0 — Stable Governance Core
 

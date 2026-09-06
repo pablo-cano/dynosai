@@ -80,8 +80,8 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
         return tree
 
     def test_version_unchanged(self):
-        self.assertEqual(__version__, "1.0.0rc8")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.8")
+        self.assertEqual(__version__, "1.0.0rc10")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.10")
 
     def test_matrix_mutation_does_not_change_certification_subject(self):
         tree = self._product_tree("matrix-only")
@@ -175,6 +175,17 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
                     "helper_binary_refusal_detected": False,
                     "exit_code": 0,
                     "provider_started": False,
+                },
+            ), patch(
+                "dynosai_flow.codex_mcp_preflight.run_codex_mcp_preflight",
+                lambda *_args, **_kwargs: {
+                    "status": "pass",
+                    "classification": None,
+                    "model_turn_started": False,
+                    "codex_home_verified": True,
+                    "mcp_activity_present": True,
+                    "mcp_calls": 1,
+                    "model_tokens": 0,
                 },
             ):
                 return runner.main(argv), matrix_path

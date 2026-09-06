@@ -49,13 +49,15 @@ def main() -> int:
 
     subprocess.run([sys.executable, "-m", "venv", str(venv)], check=True)
     python = venv_python(venv)
-    subprocess.run([str(python), "-m", "pip", "install", "--upgrade", "pip"], check=True)
+    subprocess.run([str(python), "-m", "pip", "install", "--upgrade", "pip"], check=True, env={**os.environ, "PYTHONNOUSERSITE": "1"})
     subprocess.run(
         [sys.executable, str(INSTALLER), "--wheel", str(wheel), "--sums", str(sums), "--python", str(python)],
         check=True,
+        env={**os.environ, "PYTHONNOUSERSITE": "1"},
     )
     env = os.environ.copy()
     env["PYTHONPATH"] = ""
+    env["PYTHONNOUSERSITE"] = "1"
     result = subprocess.run(
         [str(python), str(SMOKE)],
         cwd=smoke_cwd,

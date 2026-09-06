@@ -29,10 +29,21 @@ export default function ValidationPage() {
       <div className="max-w-3xl">
         <Badge>{siteConfig.status}</Badge>
         <h1 className="mt-5 text-4xl font-bold tracking-[-0.04em] sm:text-5xl">{liveMatrixHeadline(liveCells)}</h1>
-        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI {siteConfig.version} publishes MATRIX_1.0 with four provider-aware cells. None of them copy 0.13 Quality 100 scores. A cell is pass only after a real trial. The historical table further down is the 0.13.0 core baseline, not 1.0 live proof.</p>
+        <p className="mt-6 text-lg leading-8 text-muted-foreground">DynosAI {siteConfig.version} publishes MATRIX_1.0 with four provider-aware cells. Codex greenfield and brownfield are required for 1.0. Cursor cells stay as Preview evidence and are not 1.0 certified. None of them copy 0.13 Quality 100 scores. A cell is pass only after a real trial. The historical table further down is the 0.13.0 core baseline, not 1.0 live proof.</p>
       </div>
 
-      <h2 className="mt-12 text-2xl font-bold tracking-tight">MATRIX_1.0 live certification</h2>
+      <h2 className="mt-12 text-2xl font-bold tracking-tight">1.0 eligibility vs Preview evidence</h2>
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
+        <table className="w-full min-w-[640px] text-sm">
+          <thead className="bg-muted text-left"><tr><th className="p-4">Provider</th><th className="p-4">Integration</th><th className="p-4">1.0 role</th></tr></thead>
+          <tbody>
+            <tr className="border-t border-border"><td className="p-4">Codex</td><td className="p-4">App Server + MCP</td><td className="p-4">Certification required (greenfield and brownfield)</td></tr>
+            <tr className="border-t border-border"><td className="p-4">Cursor</td><td className="p-4">CLI/ACP + MCP</td><td className="p-4">Preview / non-blocking; not 1.0 certified</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2 className="mt-16 text-2xl font-bold tracking-tight">MATRIX_1.0 live certification</h2>
       <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
         <table className="w-full min-w-[520px] text-sm">
           <thead className="bg-muted text-left"><tr><th className="p-4">Provider</th><th className="p-4">Mode</th><th className="p-4">Status</th></tr></thead>

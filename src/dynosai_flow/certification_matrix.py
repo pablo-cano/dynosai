@@ -84,11 +84,25 @@ TRIAL_FIELD_NAMES = (
     "git_evidence",
     "human_gate_evidence",
     "codex_runtime_preflight",
+    "codex_mcp_preflight",
     "final_status",
     "failure_attribution",
     "artifact_paths",
     "artifact_hashes",
     "artifact_refs",
+    "provider_session_id",
+    "thread_id",
+    "turn_count",
+    "turns",
+    "provider_session_count",
+)
+CODEX_CERTIFICATION_CELLS = (
+    ("codex", "greenfield"),
+    ("codex", "brownfield"),
+)
+CURSOR_PREVIEW_CELLS = (
+    ("cursor", "greenfield"),
+    ("cursor", "brownfield"),
 )
 
 
@@ -269,6 +283,53 @@ def candidate_certification_status(
         "cells": cells,
         "all_cells_present": present,
         "all_passed": bool(present and passed),
+    }
+
+
+def candidate_release_eligibility(
+    git_commit: str | None,
+    certification_subject_sha256: str | None,
+    matrix: dict[str, Any] | None = None,
+    *,
+    candidate_version: str | None = None,
+) -> dict[str, Any]:
+    """1.0 eligibility for one candidate identity.
+
+    Core MATRIX ``all_passed`` still requires all four cells. Release
+    eligibility requires only Codex greenfield and brownfield PASS.
+    Cursor remains Preview evidence and never converts a FAIL into PASS.
+    """
+    status = candidate_certification_status(
+        git_commit,
+        certification_subject_sha256,
+        matrix,
+        candidate_version=candidate_version,
+    )
+    cells = status["cells"]
+    certification: dict[str, dict[str, Any]] = {}
+    preview: dict[str, dict[str, Any]] = {}
+    codex_ready = True
+    for provider, mode in CODEX_CERTIFICATION_CELLS:
+        key = f"{provider}.{mode}"
+        item = cells.get(key) or {"attempt": None, "status": None}
+        certification[key] = item
+        if item.get("status") != "pass":
+            codex_ready = False
+    for provider, mode in CURSOR_PREVIEW_CELLS:
+        key = f"{provider}.{mode}"
+        preview[key] = cells.get(key) or {"attempt": None, "status": None}
+    return {
+        "candidate_version": status["candidate_version"],
+        "dynosai_git_commit": status["dynosai_git_commit"],
+        "certification_subject_sha256": status["certification_subject_sha256"],
+        "cells": cells,
+        "all_cells_present": status["all_cells_present"],
+        "all_passed": status["all_passed"],
+        "provider_certification_gates": certification,
+        "provider_preview_evidence": preview,
+        "release_1_0_eligible": bool(codex_ready),
+        "codex_status": "certified" if codex_ready else "certification_pending",
+        "cursor_status": "preview",
     }
 
 
@@ -579,6 +640,11 @@ def empty_trial(
         ) or "unknown",
         "model": "unknown",
         "estimated_cost": None,
+        "provider_session_id": None,
+        "thread_id": None,
+        "turn_count": 0,
+        "turns": [],
+        "provider_session_count": 0,
         "final_status": "not_run",
         "failure_attribution": None,
         "artifact_paths": [],

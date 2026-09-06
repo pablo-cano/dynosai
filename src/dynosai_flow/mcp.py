@@ -588,10 +588,18 @@ class MCPServer:
         return self._response(rid, {})
 
     def _resolve_request_protocol(self, rid: Any, params: dict[str, Any]) -> tuple[str | None, dict[str, Any] | None]:
-        """2026 protocol comes only from the current request; 2025 may reuse initialize."""
+        """2026 protocol comes only from the current request; 2025 may reuse initialize.
+
+        Opaque client ``_meta`` (progress tokens, vendor keys) is not a 2026
+        handshake. Codex App Server attaches ``_meta`` without
+        ``io.modelcontextprotocol/protocolVersion``; that must not abort a
+        negotiated 2025 session. 2026 validation still applies when the current
+        request actually declares the 2026 protocol key or when there is no
+        legacy session and ``_meta`` is present.
+        """
         meta = extract_params_meta(params)
         requested = protocol_from_meta(meta)
-        if meta and not (requested and is_legacy_protocol(requested)):
+        if requested and is_stateless_protocol(requested):
             meta_error = validate_stateless_request_meta(params)
             if meta_error is not None:
                 return None, self._error(rid, *meta_error)
@@ -600,6 +608,12 @@ class MCPServer:
         if requested and is_legacy_protocol(requested):
             self._bind_request_identity(params, protocol=requested, persist_negotiation=False, replace_capabilities=False)
             return requested, None
+        if meta and not is_legacy_protocol(self.negotiated):
+            meta_error = validate_stateless_request_meta(params)
+            if meta_error is not None:
+                return None, self._error(rid, *meta_error)
+            self._bind_request_identity(params, protocol=PROTOCOL_2026, persist_negotiation=False, replace_capabilities=True)
+            return PROTOCOL_2026, None
         protocol = resolve_protocol_version(params, self.negotiated)
         if protocol is None:
             return None, self._error(rid, NOT_INITIALIZED_CODE, "Server not initialized")

@@ -21,7 +21,7 @@ multi-agent swarm, and not an OS sandbox.
 | Governed workflow state | `.dynosai/knowledge.db` |
 | Human specification, plan, code-review, scope and merge gates | Human (Studio, CLI review, or MCP elicitation) |
 | Execution profile, harness optimizations, auto-approve | Host / Studio, never the MCP agent |
-| Certified provider transports | Cursor ACP and Codex app-server (supported 1.0 targets; live 1.0 certification pending MATRIX_1.0) |
+| Certified provider transports | Codex app-server is the 1.0 certification target; Cursor ACP remains Preview (supported, not 1.0 certified; live Codex certification pending MATRIX_1.0) |
 | Optional harness optimizations | Environment override → project setting → default |
 
 Schema authority remains **v6**. Telemetry, feature flags and harness settings
@@ -62,8 +62,8 @@ DynosAI 1.0 speaks these MCP revisions on **stdio**:
 `_meta`, deterministic `tools/list` ordering). Cursor ACP and Codex app-server
 are **supported 1.0 target providers** and historically speak the
 `2025-11-25` initialize handshake. DynosAI supporting 2026 is not the same
-evidence as a provider negotiating 2026. 1.0 live certification is pending
-`MATRIX_1.0`. Adding a revision must not drop a previous one in 1.0.x. Remote
+evidence as a provider negotiating 2026. Codex is the 1.0 certification
+target; Cursor is Preview. Adding a revision must not drop a previous one in 1.0.x. Remote
 Streamable HTTP, Tasks and Apps are not part of the 1.0 contract. See
 `docs/adr/0003-mcp-protocol-eras.md`.
 

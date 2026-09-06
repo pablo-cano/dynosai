@@ -69,7 +69,7 @@ def main() -> int:
 
     import subprocess
 
-    subprocess.run([args.python, "-m", "pip", "install", str(wheel)], check=True)
+    subprocess.run([args.python, "-m", "pip", "install", "--force-reinstall", str(wheel)], check=True)
     return 0
 
 

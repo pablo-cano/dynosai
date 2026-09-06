@@ -36,6 +36,7 @@ DynosAI has been developed through repeated local and real-provider acceptance l
 | 1.0.0rc6 | Standards & release evidence | MCP 2026-07-28 + legacy, unified release gate, eval corpus, distribution ADR; MATRIX_1.0 stays honest |
 | 1.0.0rc7 | Certification integrity | Release archive safety, MCP 2026 strict metadata/lifecycle/MRTR, MATRIX runner honesty; MATRIX_1.0 not PASS |
 | 1.0.0rc8 | Provider runtime portability | User-local workspaces, Codex temp-home abort, candidate identity gate; MATRIX_1.0 not PASS |
+| 1.0.0rc9 | Codex MCP observability | App Server MCP preflight without model turns; opaque `_meta` no longer aborts 2025 sessions; MATRIX_1.0 not PASS |
 
 ## How changes are recorded now
 
