@@ -80,8 +80,8 @@ class DynosAI270Rc7IntegrityTests(unittest.TestCase):
         return root, app, wid
 
     def test_version_is_rc9(self):
-        self.assertEqual(__version__, "1.0.0rc9")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.9")
+        self.assertEqual(__version__, "1.0.0rc10")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.10")
 
     def test_release_manifest_excludes_secrets_and_keeps_source(self):
         tree = self.tmp / "git-tree"

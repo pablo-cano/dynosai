@@ -76,7 +76,7 @@ send({"method":"turn/completed","params":{"threadId":"thr","turn":{"id":"turn","
 
     def test_acceptance_artifact_version_is_not_hardcoded(self):
         suite = RealProviderAcceptanceSuite(providers=("cursor",), scenario="fibonacci", configure=False)
-        self.assertEqual(__version__, "1.0.0rc9")
+        self.assertEqual(__version__, "1.0.0rc10")
         self.assertIn(__version__.replace(".", ""), suite.output.name)
 
 

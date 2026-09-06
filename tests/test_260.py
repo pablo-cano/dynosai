@@ -44,8 +44,8 @@ class DynosAI260Rc6ReleaseHardeningTests(unittest.TestCase):
         self.addCleanup(lambda: shutil.rmtree(self.tmp, ignore_errors=True))
 
     def test_version_and_schema_and_mcp_names(self):
-        self.assertEqual(__version__, "1.0.0rc9")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.9")
+        self.assertEqual(__version__, "1.0.0rc10")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.10")
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
         names = {str(item["name"]) for item in [*TOOLS, *LEGACY_TOOLS]}
         self.assertEqual(len(names), FROZEN_MCP_COUNT)

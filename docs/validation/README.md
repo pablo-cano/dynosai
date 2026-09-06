@@ -11,4 +11,8 @@ The final matrix passed 4/4 with no infrastructure retries.
 
 ## 1.0 live matrix
 
-- `matrix-1.0.json` — versioned `MATRIX_1.0` Codex/Cursor × greenfield/brownfield cells. RC2 publishes the schema with every cell `not_run`. Do not copy 0.13 Quality 100 results into these cells. Real live evidence only comes from real provider runs.
+- `matrix-1.0.json` — versioned `MATRIX_1.0` Codex/Cursor × greenfield/brownfield cells. Real live evidence only comes from real provider runs. Do not copy 0.13 Quality 100 results into these cells.
+
+1.0 eligibility uses Codex greenfield and Codex brownfield of the exact candidate identity. Cursor cells remain Preview evidence: they are not deleted, not converted to PASS, and they do not block 1.0.
+
+RC9 live FAILs are immutable history. RC10 adds bounded same-session Codex continuation; it does not rewrite RC9 trials.

@@ -186,7 +186,7 @@ Delivered in `1.0.0-rc.8`: user-local workspaces, Codex temp-home abort,
 `codex --version` preflight, candidate identity gate. Live `codex.greenfield`
 attempt 4 failed because Codex App Server started without exposing DynosAI MCP.
 
-### 1.0.0-rc.9 — Codex MCP Observability & Deterministic Preflight (this candidate)
+### 1.0.0-rc.9 — Codex MCP Observability & Deterministic Preflight
 
 No 1.1–1.5 features. RC9 exists because RC8 live certification discovered that
 Codex App Server can be healthy while DynosAI MCP still fails to start.
@@ -195,10 +195,25 @@ Codex App Server can be healthy while DynosAI MCP still fails to start.
 - hard preflight gate before live Codex model tokens
 - opaque Codex `_meta` must not abort a negotiated 2025 MCP session
 
-### 1.0.0-rc.10 — Contingency only
+RC9 live Codex cells proved managed runtime, DynosAI MCP, Spec Review and Plan
+Review, then stopped at `implementing` when a single provider turn ended. That
+evidence is preserved. It is not 1.0 PASS.
 
-No features are planned. RC10 exists only if RC9 live certification discovers
-defects that require another candidate. Do not lower the gate to avoid RC10.
+### 1.0.0-rc.10 — Governed Session Continuity (this candidate)
+
+No 1.1–1.5 features. RC10 is the last planned 1.0 release candidate.
+
+**1.0 provider policy**
+
+| Provider | Integration | Greenfield | Brownfield | 1.0 status |
+|---|---|---|---|---|
+| Codex | App Server + MCP | certification required | certification required | Certification pending until both live cells PASS |
+| Cursor | CLI/ACP + MCP | evidence retained | evidence retained | Preview / non-blocking; not 1.0 certified |
+
+Core remains STABLE. A Codex certification trial may use up to three turns
+inside one App Server session/thread. Cursor Preview FAILs do not block 1.0
+and must not be rewritten as PASS. Do not create RC11 automatically.
+This is not a lowered-gate Contingency; Done/oracle success criteria stay strict.
 
 ### 1.0.0 — Stable Governance Core
 

@@ -220,11 +220,18 @@ class DynosAI280MatrixHistoryTests(unittest.TestCase):
         self.assertNotIn("C:\\Users\\", blob)
         counts = [len(cell.get("trials") or []) for cell in matrix["cells"]]
         self.assertEqual(len(counts), 4)
-        self.assertEqual(counts[0], 4)
         self.assertGreaterEqual(min(counts), 2)
         self.assertFalse(matrix["all_passed"])
-        green = matrix["cells"][0]
+        green = next(
+            cell for cell in matrix["cells"]
+            if cell.get("provider") == "codex" and cell.get("mode") == "greenfield"
+        )
         self.assertEqual((green["provider"], green["mode"]), ("codex", "greenfield"))
+        attempts = [int(trial.get("attempt") or 0) for trial in green.get("trials") or []]
+        self.assertTrue({1, 2, 3, 4, 5}.issubset(set(attempts)))
+        self.assertEqual(attempts, sorted(attempts))
+        self.assertEqual(len(attempts), len(set(attempts)))
+        self.assertGreaterEqual(len(attempts), 5)
         attempt3 = next(item for item in green["trials"] if int(item["attempt"]) == 3)
         self.assertEqual(attempt3["final_status"], "fail")
         self.assertEqual(attempt3["dynosai_git_commit"], "f97aa356876595638745928f26aed5dd6efb4721")

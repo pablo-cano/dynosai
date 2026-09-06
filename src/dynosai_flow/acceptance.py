@@ -37,6 +37,17 @@ from .model_control import ModelControlPlane
 from .token_usage import TokenUsageRecorder, cursor_usage_from_event, cursor_estimated_output_text, codex_token_sample_from_rollout, aggregate_usage, latest_usage, runtime_metrics
 from .baselines import compare_to_baseline
 from .cost_telemetry import aggregate_cost
+from .session_continuity import (
+    MAX_PROVIDER_TURNS,
+    ContinuationDecision,
+    ContinuationError,
+    decide_continuation,
+    empty_progress_snapshot,
+    inspect_authoritative_state,
+    progress_fingerprint,
+    record_turn,
+    usage_delta,
+)
 
 
 ACCEPTANCE_SCENARIOS=("fibonacci","orderflow-contract-discounts")
@@ -543,13 +554,26 @@ class CursorAcceptanceDriver:
 
 class CodexAppServerDriver:
     """Real Codex app-server client with programmatic Elicitation responses."""
-    def __init__(self, executable:str, max_runtime:int=1800, idle_timeout:int=180, slow_progress:int=60):
+    def __init__(self, executable:str, max_runtime:int=1800, idle_timeout:int=180, slow_progress:int=60, *, inspect_state=None, max_provider_turns:int|None=None):
         self.executable=executable
         self.max_runtime=max(1,int(max_runtime))
         self.idle_timeout=max(1,int(idle_timeout))
         self.slow_progress=max(1,int(slow_progress))
         self.timeout=self.max_runtime
         self._next_id=1
+        self.inspect_state=inspect_state or inspect_authoritative_state
+        self.max_provider_turns=MAX_PROVIDER_TURNS if max_provider_turns is None else max(1,int(max_provider_turns))
+
+    @staticmethod
+    def _turn_params(thread_id:str, text:str, model_route:ModelRoute|None, sandbox_mode:str|None)->dict[str,Any]:
+        turn_params={"threadId":thread_id,"input":[{"type":"text","text":text}]}
+        if model_route:
+            turn_params["model"]=model_route.model
+            if model_route.effort: turn_params["effort"]=model_route.effort
+        if sandbox_mode=="workspace-write": turn_params["sandboxPolicy"]={"type":"workspaceWrite"}
+        elif sandbox_mode=="workspaceWrite": turn_params["sandboxPolicy"]={"type":"workspaceWrite"}
+        elif sandbox_mode=="read-only": turn_params["sandboxPolicy"]={"type":"readOnly"}
+        return turn_params
 
     def _id(self)->int:
         value=self._next_id; self._next_id+=1; return value
@@ -725,6 +749,9 @@ class CodexAppServerDriver:
         init_id=self._id(); thread_id_req=self._id(); turn_id_req=self._id(); thread_id=None; turn_completed=None; response_errors=[]; observed_settings=None; reroutes=[]
         sandbox_candidates=["workspace-write","workspaceWrite"]
         sandbox_attempt=0; sandbox_mode=None
+        turns:list[dict[str,Any]]=[]; turn_index=0; continuation_failure=None
+        fingerprint_before=empty_progress_snapshot(); turn_started_at=None; turn_state_before=None
+        thread_start_count=0; turn_usage_before=None
         # Codex rejects non-empty MCP form elicitations under approvalPolicy=never
         # before app-server can surface them. Use the narrowest policy that
         # permits only MCP elicitations while keeping sandbox/rule/skill and
@@ -805,18 +832,15 @@ class CodexAppServerDriver:
                         response_errors.append(error); break
                     thread=((msg.get("result") or {}).get("thread") or {}); thread_id=thread.get("id")
                     if not thread_id: response_errors.append({"message":"thread/start returned no thread id"}); break
+                    thread_start_count += 1
+                    if thread_start_count>1:
+                        continuation_failure="new_provider_session"; response_errors.append({"message":"continuation started a second thread/start"}); break
                     if logger: logger.emit("codex_thread_started",phase="provider",provider="codex",message="Codex thread started",thread_id=thread_id)
-                    turn_params={"threadId":thread_id,"input":[{"type":"text","text":prompt}]}
-                    if model_route:
-                        turn_params["model"]=model_route.model
-                        if model_route.effort: turn_params["effort"]=model_route.effort
-                    # Work around Codex app-server sandbox inheritance: turn/start may
-                    # need an explicit sandboxPolicy matching the thread request, or
-                    # the provider keeps a read-only policy even when thread/start
-                    # asked for workspace-write.
-                    if sandbox_mode=="workspace-write": turn_params["sandboxPolicy"]={"type":"workspaceWrite"}
-                    elif sandbox_mode=="workspaceWrite": turn_params["sandboxPolicy"]={"type":"workspaceWrite"}
-                    elif sandbox_mode=="read-only": turn_params["sandboxPolicy"]={"type":"readOnly"}
+                    fingerprint_before=self.inspect_state(project)
+                    turn_state_before=(fingerprint_before or {}).get("work_state")
+                    turn_started_at=utc_now()
+                    turn_usage_before=usage.current() if usage else None
+                    turn_params=self._turn_params(thread_id,prompt,model_route,sandbox_mode)
                     self._send(proc,{"method":"turn/start","id":turn_id_req,"params":turn_params},trace,mirror_dir); turn_sent=True
                     if logger: logger.emit("codex_turn_start_sent",phase="provider",provider="codex",message="Codex turn/start sent",thread_id=thread_id)
                     continue
@@ -828,8 +852,43 @@ class CodexAppServerDriver:
                     reroutes.append(msg.get("params") or {})
                 if msg.get("method")=="turn/completed":
                     params=msg.get("params") or {}; tid=params.get("threadId") or params.get("thread_id")
-                    if not thread_id or not tid or tid==thread_id:
-                        turn_completed=params; break
+                    turn_completed=params
+                    turn_index += 1
+                    after_snap=self.inspect_state(project)
+                    turn_status=str((params.get("turn") or {}).get("status") or params.get("status") or "")
+                    usage_snap=usage_delta(turn_usage_before, usage.current() if usage else None) if (usage or turn_usage_before) else None
+                    progress_made=progress_fingerprint(after_snap)!=progress_fingerprint(fingerprint_before)
+                    turns.append(record_turn(
+                        turn_index=turn_index,
+                        turn_id=str(((params.get("turn") or {}).get("id") or f"turn-{turn_index}")),
+                        started_at=turn_started_at,
+                        finished_at=utc_now(),
+                        status=turn_status or "completed",
+                        token_usage=usage_snap,
+                        work_state_before=turn_state_before,
+                        work_state_after=(after_snap or {}).get("work_state"),
+                        progress_made=progress_made,
+                    ))
+                    decision:ContinuationDecision=decide_continuation(
+                        turn_index=turn_index,
+                        max_turns=self.max_provider_turns,
+                        thread_id=thread_id,
+                        completed_thread_id=str(tid) if tid else thread_id,
+                        before=fingerprint_before,
+                        after=after_snap,
+                    )
+                    if decision.action!="continue":
+                        if decision.reason: continuation_failure=decision.reason
+                        break
+                    fingerprint_before=after_snap
+                    turn_state_before=(after_snap or {}).get("work_state")
+                    turn_started_at=utc_now()
+                    turn_usage_before=usage.current() if usage else None
+                    turn_id_req=self._id()
+                    cont_params=self._turn_params(thread_id,str(decision.prompt or ""),model_route,sandbox_mode)
+                    self._send(proc,{"method":"turn/start","id":turn_id_req,"params":cont_params},trace,mirror_dir)
+                    if logger: logger.emit("codex_turn_start_sent",phase="provider",provider="codex",message="Codex continuation turn/start sent",thread_id=thread_id,turn_index=turn_index+1)
+                    continue
                 if msg.get("method")=="error":
                     response_errors.append(msg.get("params") or msg)
             else:
@@ -853,7 +912,7 @@ class CodexAppServerDriver:
                     if stream: stream.close()
                 except Exception: pass
         status=str((turn_completed or {}).get("turn",{}).get("status") or (turn_completed or {}).get("status") or "")
-        ok=bool(turn_completed) and status.lower() not in {"failed","interrupted","cancelled","canceled"} and not response_errors
+        ok=bool(turn_completed) and status.lower() not in {"failed","interrupted","cancelled","canceled"} and not response_errors and not continuation_failure
         auto_count=0
         try:
             auto_count=sum(1 for line in trace.read_text(encoding="utf-8").splitlines() if '"kind": "mcp_server_elicitation"' in line or '"kind":"mcp_server_elicitation"' in line)
@@ -877,7 +936,7 @@ class CodexAppServerDriver:
         duration=round(time.monotonic()-started,3)
         if logger:
             logger.emit("provider_exit",phase="provider",provider="codex",message="Codex provider exited",exit_code=exit_code,duration_seconds=duration,stream_lines=message_count,stderr_lines=stderr_lines,status="passed" if ok else "failed")
-        return {"provider":"codex","driver":"codex-app-server","interaction_mode":"auto","exit_code":exit_code,"termination_reason":termination_reason or "provider_exit","duration_seconds":duration,"real_provider":True,"wire_elicitation":True,"automated_responses":True,"auto_response_channel":"codex-app-server-client","elicitation_auto_responses":auto_count,"thread_id":thread_id,"turn_completed":turn_completed,"errors":response_errors,"sandbox_mode":sandbox_mode,"sandbox_attempts":sandbox_attempt+1,"handshake":{"initialized":initialized_sent,"thread_started":thread_sent,"turn_started":turn_sent},"model_route_requested":requested,"model_settings_observed":observed_settings,"model_reroutes":reroutes,"model_route_verified":model_verified,"managed_runtime":managed.to_dict(),"provider_stderr":str(stderr_path),"stream_messages":message_count,"stderr_lines":stderr_lines,"token_usage":token_usage}
+        return {"provider":"codex","driver":"codex-app-server","interaction_mode":"auto","exit_code":exit_code,"termination_reason":continuation_failure or termination_reason or "provider_exit","duration_seconds":duration,"real_provider":True,"wire_elicitation":True,"automated_responses":True,"auto_response_channel":"codex-app-server-client","elicitation_auto_responses":auto_count,"thread_id":thread_id,"provider_session_id":thread_id,"provider_session_count":1 if thread_id else 0,"turn_count":len(turns),"turns":turns,"continuation_failure":continuation_failure,"turn_completed":turn_completed,"errors":response_errors,"sandbox_mode":sandbox_mode,"sandbox_attempts":sandbox_attempt+1,"handshake":{"initialized":initialized_sent,"thread_started":thread_sent,"turn_started":turn_sent},"model_route_requested":requested,"model_settings_observed":observed_settings,"model_reroutes":reroutes,"model_route_verified":model_verified,"managed_runtime":managed.to_dict(),"provider_stderr":str(stderr_path),"stream_messages":message_count,"stderr_lines":stderr_lines,"token_usage":token_usage}
 
 
 def _runtime_bin_snapshot() -> dict[str,str]:
@@ -1065,6 +1124,14 @@ class RealProviderAcceptanceCase:
             runtime_added=sorted(set(runtime_after)-set(runtime_before)); runtime_removed=sorted(set(runtime_before)-set(runtime_after))
             runtime_changed=sorted(k for k in set(runtime_before)&set(runtime_after) if runtime_before[k]!=runtime_after[k])
             result["runtime_bin_integrity"]={"unchanged":not(runtime_added or runtime_removed or runtime_changed),"added":runtime_added,"removed":runtime_removed,"changed":runtime_changed}
+            result["turns"]=list(provider_result.get("turns") or [])
+            result["turn_count"]=int(provider_result.get("turn_count") or 0)
+            result["provider_session_id"]=provider_result.get("provider_session_id")
+            result["provider_session_count"]=provider_result.get("provider_session_count")
+            result["thread_id"]=provider_result.get("thread_id")
+            result["continuation_failure"]=provider_result.get("continuation_failure")
+            if result["continuation_failure"]:
+                raise ContinuationError(str(result["continuation_failure"]))
             # The provider may exit successfully even after narrating an error; the
             # authoritative acceptance decision comes from DynosAI state + oracle.
             logger.emit("state_inspection_start",phase="verification",provider=self.provider,scenario=self.scenario,message="inspecting DynosAI authoritative state")

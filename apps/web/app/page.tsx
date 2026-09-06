@@ -19,7 +19,7 @@ const capabilities = [
   ["Governed teams", "Approved plans become serial or parallel leases only when files do not overlap. Extra coding agents are not spawned."],
   ["Eval intelligence", "Local failures become bounded eval cases. Improvement work stays in inbox. Predictive routing stays in shadow mode."],
   ["Execution profiles", "Strict, Balanced and Autonomous are host-owned. Human gates stay required. OS-level network interception is not shipped."],
-  ["Supported 1.0 target providers", "Cursor ACP and Codex app-server are the shipped Studio transports. 1.0 live certification is pending MATRIX_1.0. Additional clients are not assumed certified."],
+  ["Supported 1.0 providers", "Codex App Server is the 1.0 certification target. Cursor ACP remains Preview and is not 1.0 certified."],
   ["Model control", "Track phase budgets, complexity, failures, context pressure, route candidates, and historical recommendations without reckless escalation."],
 ];
 
@@ -120,8 +120,8 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <div>
             <Badge>New in {siteConfig.version}</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">App Server MCP preflight before provider tokens.</h2>
-            <p className="mt-5 leading-7 text-muted-foreground">RC9 adds deterministic Codex App Server introspection so DynosAI MCP configuration, startup, tool discovery and a direct read-only tool call must succeed before any model turn. RC8 live certification showed App Server can start without exposing DynosAI. Predictive routing stays in shadow mode. This is not production-ready 1.0.</p>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Bounded session continuity for Codex certification.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">RC10 lets a Codex certification trial continue for up to three turns inside one App Server session. RC9 proved DynosAI MCP connectivity, then failed because the governed workflow was still implementing when a single model turn ended. Cursor stays Preview and is not 1.0 certified. Predictive routing stays in shadow mode. This is not production-ready 1.0.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">

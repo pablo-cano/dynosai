@@ -2,7 +2,16 @@
 
 DynosAI keeps provider-specific behavior at the integration boundary while preserving one Core workflow.
 
-Cursor ACP and Codex app-server are **supported 1.0 target providers**. Historical 0.13 matrix evidence is not 1.0 live certification. MATRIX_1.0 is still pending.
+Cursor ACP and Codex app-server are **supported 1.0 target providers**. Historical 0.13 matrix evidence is not 1.0 live certification.
+
+## 1.0 support matrix
+
+| Provider | Integration | Greenfield | Brownfield | 1.0 status |
+|---|---|---|---|---|
+| Codex | App Server + MCP | certification required | certification required | Certification pending |
+| Cursor | CLI/ACP + MCP | evidence retained | evidence retained | Preview / not 1.0 certified |
+
+1.0 eligibility requires Core gates plus Codex greenfield and Codex brownfield PASS of the exact candidate. Cursor cells stay in MATRIX_1.0 as Preview evidence. Do not present Cursor as production-certified. A future release may migrate Cursor acceptance toward ACP session continuity; RC10 does not implement that.
 
 ## Codex
 
@@ -23,7 +32,13 @@ For compatible Codex tool results, DynosAI can use **structured-primary transpor
 
 ## Cursor
 
-Cursor is also supported by the managed MCP/runtime path and passed both final 0.13.0 beta scenarios.
+Cursor remains a supported integration and is **Preview for 1.0**. It is not a
+1.0 release blocker and is not production-certified. MATRIX cells are retained.
+
+Known RC9 Cursor evidence:
+
+- greenfield: provider/model stopped before governed work creation
+- brownfield: internal unable to open database file / ACP reconnects
 
 The accepted Cursor CLI behavior did not reliably expose MCP `structuredContent` to the model. DynosAI therefore uses **full-text compatibility transport** for Cursor so validation errors and complete contracts remain visible to the model.
 

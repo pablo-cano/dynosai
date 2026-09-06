@@ -80,8 +80,8 @@ class DynosAI271CertificationSubjectTests(unittest.TestCase):
         return tree
 
     def test_version_unchanged(self):
-        self.assertEqual(__version__, "1.0.0rc9")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.9")
+        self.assertEqual(__version__, "1.0.0rc10")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.10")
 
     def test_matrix_mutation_does_not_change_certification_subject(self):
         tree = self._product_tree("matrix-only")
