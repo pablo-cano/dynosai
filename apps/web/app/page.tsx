@@ -120,8 +120,8 @@ export default function HomePage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:px-8">
           <div>
             <Badge>New in {siteConfig.version}</Badge>
-            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Current MCP compatibility, one release gate, honest evidence.</h2>
-            <p className="mt-5 leading-7 text-muted-foreground">RC6 adds MCP 2026-07-28 on stdio without dropping 2025 hosts, unifies the CI/local release gate, expands the eval corpus and records MATRIX_1.0 only from real trials. Predictive routing stays in shadow mode. This is not production-ready 1.0.</p>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">App Server MCP preflight before provider tokens.</h2>
+            <p className="mt-5 leading-7 text-muted-foreground">RC9 adds deterministic Codex App Server introspection so DynosAI MCP configuration, startup, tool discovery and a direct read-only tool call must succeed before any model turn. RC8 live certification showed App Server can start without exposing DynosAI. Predictive routing stays in shadow mode. This is not production-ready 1.0.</p>
             <div className="mt-6 flex flex-wrap gap-3"><Button asChild><Link href="/studio/">Explore Local Studio</Link></Button><Button variant="outline" asChild><Link href="/roadmap/">View roadmap</Link></Button></div>
           </div>
           <div className="rounded-2xl border border-border bg-background p-6 shadow-sm">
@@ -193,7 +193,7 @@ export default function HomePage() {
             <div>
               <div className="mb-4 inline-flex rounded-full border border-background/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]">{siteConfig.status}</div>
               <h2 className="text-3xl font-bold tracking-tight">Try it on one real feature.</h2>
-              <p className="mt-4 max-w-2xl leading-7 opacity-75">DynosAI is open source under MIT. {siteConfig.version} is a standards and release-evidence candidate; it is not production-ready 1.0. Use normal engineering review and project-specific validation.</p>
+              <p className="mt-4 max-w-2xl leading-7 opacity-75">DynosAI is open source under MIT. {siteConfig.version} is a Codex MCP observability candidate; it is not production-ready 1.0. Use normal engineering review and project-specific validation.</p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button size="lg" variant="outline" className="border-background/25 bg-background text-foreground hover:bg-background/90" asChild>

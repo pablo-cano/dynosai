@@ -2,6 +2,21 @@
 
 All notable public changes to DynosAI are documented here. The project uses semantic-version-style releases and a Keep-a-Changelog-inspired structure.
 
+## 1.0.0-rc.9 - 2026-09-05
+
+### Added
+
+- Codex App Server MCP preflight (no model turn): `initialize`, `config/read`, `mcpServerStatus/list`, startup notifications, and a read-only `mcpServer/tool/call`.
+- Live MATRIX hard gate: Codex MCP preflight FAIL blocks provider/model execution, consumes 0 tokens, and does not increment the cell attempt counter.
+
+### Changed
+
+- Package version is `1.0.0rc9`. Display surfaces may show `1.0.0-rc.9`. Public status is **RC9 · certification pending**, not stable 1.0.
+
+### Fixed
+
+- Codex MCP startup no longer treats opaque request `_meta` (without `io.modelcontextprotocol/protocolVersion`) as an incomplete MCP 2026 handshake after a negotiated 2025 session.
+
 ## 1.0.0-rc.8 - 2026-09-05
 
 ### Added

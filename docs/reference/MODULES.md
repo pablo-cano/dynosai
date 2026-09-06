@@ -24,6 +24,7 @@ Every production module has an English module-level docstring and an SPDX MIT he
 | `execution_profiles.py` | Strict/Balanced/Autonomous host policy, local runtime bind and unsupported-runtime refusal |
 | `capability_manifests.py` | Cursor ACP / Codex app-server contracts and refusal of uncertified clients/packs |
 | `certification_matrix.py` | MATRIX_1.0 live cells, candidate identity (`git commit` + `certification_subject_sha256`), dirty-tree guards |
+| `codex_mcp_preflight.py` | No-model-turn Codex App Server MCP introspection (`initialize`, `config/read`, `mcpServerStatus/list`, direct `mcpServer/tool/call`) |
 | `execution_runtime.py` | Provider-neutral ExecutionRuntime and local hands implementation |
 | `harness_contracts.py` | Typed execution/recovery/handle contracts and optional harness feature flags |
 | `secrets.py` | Credential redaction and secret broker (model refuse-closed; optional local runtime vault) |

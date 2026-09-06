@@ -132,6 +132,7 @@ class DynosAI240Rc4InstallationTests(unittest.TestCase):
         self.assertNotRegex(getting_started, r"pip install dynosai-flow(?!\S)")
         self.assertIn("SHA256", installer)
         self.assertIn("pypi.org", installer.lower())
+        self.assertIn("--force-reinstall", installer)
         blob = getting_started + release + installer
         self.assertNotIn("pip install dynosai-flow==", blob)
         self.assertNotIn("https://pypi.org/project/dynosai", blob)
@@ -204,8 +205,8 @@ class DynosAI240Rc4InstallationTests(unittest.TestCase):
         names = {str(item["name"]) for item in [*TOOLS, *LEGACY_TOOLS]}
         self.assertEqual(len(names), 31)
         self.assertEqual(Database.CURRENT_SCHEMA_VERSION, 6)
-        self.assertEqual(__version__, "1.0.0rc8")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.8")
+        self.assertEqual(__version__, "1.0.0rc9")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.9")
         server = create_server(self.tmp, port=0)
         host, port = server.server_address[:2]
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -214,7 +215,7 @@ class DynosAI240Rc4InstallationTests(unittest.TestCase):
         with urllib.request.urlopen(f"http://{host}:{port}/api/health", timeout=3) as response:
             health = json.loads(response.read().decode("utf-8"))
         self.assertTrue(health["ok"])
-        self.assertEqual(health["version"], "1.0.0rc8")
+        self.assertEqual(health["version"], "1.0.0rc9")
         with urllib.request.urlopen(f"http://{host}:{port}/index.html", timeout=3) as response:
             page = response.read().decode("utf-8")
         self.assertIn('id="doctor"', page)

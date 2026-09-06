@@ -220,7 +220,7 @@ class DynosAI280MatrixHistoryTests(unittest.TestCase):
         self.assertNotIn("C:\\Users\\", blob)
         counts = [len(cell.get("trials") or []) for cell in matrix["cells"]]
         self.assertEqual(len(counts), 4)
-        self.assertEqual(counts[0], 3)
+        self.assertEqual(counts[0], 4)
         self.assertGreaterEqual(min(counts), 2)
         self.assertFalse(matrix["all_passed"])
         green = matrix["cells"][0]

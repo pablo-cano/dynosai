@@ -58,6 +58,10 @@ Installed-package CI is `scripts/ci_installed_wheel.py` → `scripts/smoke_insta
 
 `tests/test_260.py` covers MCP `2026-07-28` discover/stateless list/call plus legacy `2025-11-25` / `2025-06-18` initialize, JSON-RPC `-32022` for unsupported versions, the unified `scripts/release_gate.py` source of truth, the Tier A/B eval catalog, distribution and Agent Plugins ADRs, and honest MATRIX_1.0 rules. Official `@modelcontextprotocol/conformance` is HTTP-oriented; DynosAI remains stdio and does not pretend that runner is a stdio result.
 
+## 1.0 RC9 Codex MCP preflight
+
+`tests/test_290.py` covers Codex App Server MCP preflight parsers and evaluation (home match/mismatch, effective dynosai config, MCP status absent/starting/ready/failed, empty vs populated tools, direct tool call, startup notifications) and the MATRIX gate that a preflight failure must not start a model turn, consume tokens, create fake DYN work, or append a live attempt. `tests/test_270.py` covers opaque Codex `_meta` on a negotiated 2025 session. This is not live-provider 1.0 certification.
+
 ## 2. Migration and recovery tests
 
 Release-candidate hardening covers database migration, duplicate/pending gates, restart/resume, missing or corrupted checkpoints, corrupted telemetry/model-control state, portable snapshot integrity, and atomic restore behavior.

@@ -180,20 +180,25 @@ Delivered in `1.0.0-rc.7`: archive safety, MCP 2026 strictness/MRTR, MATRIX
 runner honesty, candidate subject identity. Live `codex.greenfield` attempt 3
 failed because managed `CODEX_HOME` sat under the OS temp directory.
 
-### 1.0.0-rc.8 — Provider Runtime Portability (this candidate)
+### 1.0.0-rc.8 — Provider Runtime Portability
 
-No 1.1–1.5 features. RC8 exists because RC7 live certification discovered a
-deterministic Codex runtime-layout defect.
+Delivered in `1.0.0-rc.8`: user-local workspaces, Codex temp-home abort,
+`codex --version` preflight, candidate identity gate. Live `codex.greenfield`
+attempt 4 failed because Codex App Server started without exposing DynosAI MCP.
 
-- user-local persistent workspaces for MATRIX and acceptance
-- abort before Codex when `CODEX_HOME` would be under OS temp
-- `codex --version` preflight without a model turn
-- candidate identity gate instead of synchronized attempt numbers
+### 1.0.0-rc.9 — Codex MCP Observability & Deterministic Preflight (this candidate)
 
-### 1.0.0-rc.9 — Contingency only
+No 1.1–1.5 features. RC9 exists because RC8 live certification discovered that
+Codex App Server can be healthy while DynosAI MCP still fails to start.
 
-No features are planned. RC9 exists only if RC8 live certification discovers
-defects that require another candidate. Do not lower the gate to avoid RC9.
+- App Server MCP introspection without `turn/start`
+- hard preflight gate before live Codex model tokens
+- opaque Codex `_meta` must not abort a negotiated 2025 MCP session
+
+### 1.0.0-rc.10 — Contingency only
+
+No features are planned. RC10 exists only if RC9 live certification discovers
+defects that require another candidate. Do not lower the gate to avoid RC10.
 
 ### 1.0.0 — Stable Governance Core
 

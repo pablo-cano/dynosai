@@ -84,6 +84,7 @@ TRIAL_FIELD_NAMES = (
     "git_evidence",
     "human_gate_evidence",
     "codex_runtime_preflight",
+    "codex_mcp_preflight",
     "final_status",
     "failure_attribution",
     "artifact_paths",

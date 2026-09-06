@@ -8,6 +8,17 @@ Cursor ACP and Codex app-server are **supported 1.0 target providers**. Historic
 
 Codex is supported by the managed MCP/runtime path and was part of the final 0.13.0 greenfield and brownfield acceptance matrix.
 
+Live Codex MATRIX cells now run a no-model-turn App Server MCP preflight first:
+`initialize` (managed `CODEX_HOME` must match), `config/read` (effective
+`mcp_servers.dynosai`), `mcpServerStatus/list` plus startup notifications, then
+a read-only `mcpServer/tool/call`. Failure is `preflight-blocked`: no
+`turn/start`, 0 model tokens, and the live attempt counter is not incremented.
+
+RC8 live evidence showed App Server can start while DynosAI MCP still fails.
+The RC9 handshake fix is: opaque Codex `_meta` without
+`io.modelcontextprotocol/protocolVersion` must not abort a negotiated 2025
+session. MCP 2026 `_meta` validation stays strict for 2026 requests.
+
 For compatible Codex tool results, DynosAI can use **structured-primary transport**: the authoritative object is returned in MCP `structuredContent` while `content.text` is kept compact. This reduces duplicate model-visible transport when the provider exposes structured content correctly.
 
 ## Cursor

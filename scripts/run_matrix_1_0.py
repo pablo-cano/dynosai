@@ -4,6 +4,10 @@
 Default mode is probe-only: cells stay not_run. --live runs exactly one new
 attempt per selected cell and keeps the full trial history. Silent retries
 that rewrite a failure into PASS are not implemented.
+
+Codex live cells run a no-model-turn App Server MCP preflight first. A
+preflight failure exits before provider/model execution and does not append a
+MATRIX trial / increment the live attempt counter.
 """
 
 from __future__ import annotations
@@ -294,6 +298,7 @@ def main(argv: list[str] | None = None) -> int:
                 print(str(exc), file=sys.stderr)
                 print(str(exc))
                 return 2
+            from dynosai_flow.codex_mcp_preflight import portable_codex_mcp_preflight, run_codex_mcp_preflight
             from dynosai_flow.managed_runtime import run_codex_version_preflight
             preflight = run_codex_version_preflight(project)
             trial["codex_runtime_preflight"] = portable_codex_preflight(preflight)
@@ -302,6 +307,18 @@ def main(argv: list[str] | None = None) -> int:
                     "Codex runtime preflight failed.\nProvider execution was not started.",
                     file=sys.stderr,
                 )
+                return 2
+            mcp_logs = workspace / f"{tag}-mcp-preflight"
+            mcp_preflight = run_codex_mcp_preflight(project, logs=mcp_logs)
+            trial["codex_mcp_preflight"] = portable_codex_mcp_preflight(mcp_preflight)
+            if mcp_preflight.get("status") != "pass":
+                print(
+                    "Codex MCP preflight failed.\n"
+                    f"classification: {mcp_preflight.get('classification')}\n"
+                    "No model turn was started. MATRIX attempt history was not incremented.",
+                    file=sys.stderr,
+                )
+                print(json.dumps(portable_codex_mcp_preflight(mcp_preflight), indent=2, default=str))
                 return 2
         try:
             live = _run_live_cell(provider, mode, workspace, attempt)

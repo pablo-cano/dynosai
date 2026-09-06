@@ -79,9 +79,9 @@ class DynosAI270Rc7IntegrityTests(unittest.TestCase):
         app.engine.continue_work(wid)
         return root, app, wid
 
-    def test_version_is_rc8(self):
-        self.assertEqual(__version__, "1.0.0rc8")
-        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.8")
+    def test_version_is_rc9(self):
+        self.assertEqual(__version__, "1.0.0rc9")
+        self.assertEqual(DISPLAY_VERSION, "1.0.0-rc.9")
 
     def test_release_manifest_excludes_secrets_and_keeps_source(self):
         tree = self.tmp / "git-tree"
@@ -216,6 +216,40 @@ class DynosAI270Rc7IntegrityTests(unittest.TestCase):
             self.assertIn("tools", listed["result"])
             ping = server.handle({"jsonrpc": "2.0", "id": 3, "method": "ping"})
             self.assertEqual(ping["result"], {})
+
+    def test_legacy_session_ignores_opaque_request_meta(self):
+        """Codex App Server attaches `_meta` without MCP 2026 protocolVersion.
+
+        RC8 live: MCP startup failed with
+        `-32602 missing_protocol_version` because any `_meta` was treated as a
+        2026 handshake. Opaque progress/vendor `_meta` must keep the negotiated
+        2025 session.
+        """
+        project = self.tmp / "codex-opaque-meta"
+        project.mkdir()
+        server = MCPServer(project)
+        init = server.handle({
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": PROTOCOL_2025_11,
+                "clientInfo": {"name": "codex_mcp_client", "version": "0.150.1"},
+                "capabilities": {},
+                "_meta": {"progressToken": "init-1"},
+            },
+        })
+        self.assertEqual(init["result"]["protocolVersion"], PROTOCOL_2025_11)
+        self.assertIsNone(server.handle({"jsonrpc": "2.0", "method": "notifications/initialized"}))
+        listed = server.handle({
+            "jsonrpc": "2.0", "id": 2, "method": "tools/list",
+            "params": {"_meta": {"progressToken": "list-1"}},
+        })
+        self.assertNotIn("error", listed)
+        self.assertGreater(len(listed["result"]["tools"]), 0)
+        ping = server.handle({
+            "jsonrpc": "2.0", "id": 3, "method": "ping",
+            "params": {"_meta": {"codex/requestId": "opaque"}},
+        })
+        self.assertEqual(ping["result"], {})
 
     def test_2026_lifecycle_rejects_initialize_and_ping(self):
         project = self.tmp / "life"
