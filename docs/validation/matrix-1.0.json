@@ -19,44 +19,44 @@
         "all_children_passed": false,
         "all_final_done": false,
         "all_oracles_passed": false,
-        "all_single_session": false,
+        "all_single_session": true,
         "all_sessions_completed": false,
-        "all_same_workspace": false,
-        "all_elicitations_observed": false,
+        "all_same_workspace": true,
+        "all_elicitations_observed": true,
         "all_expected_human_interactions_only": false,
-        "zero_scope_requests": false,
-        "all_validation_baselines_correct": false,
-        "all_runtime_bins_unchanged": false,
-        "all_provider_model_routes_verified": false,
-        "all_token_usage_exact": false,
-        "zero_mcp_failures": false,
-        "zero_mcp_rejections": false,
-        "zero_mcp_normalizations": false,
-        "all_strict_managed_runtimes_verified": false,
-        "zero_provider_extension_artifacts": false,
-        "zero_external_skill_invocations": false,
-        "zero_external_plugin_invocations": false,
-        "zero_external_mcp_invocations": false
+        "zero_scope_requests": true,
+        "all_validation_baselines_correct": true,
+        "all_runtime_bins_unchanged": true,
+        "all_provider_model_routes_verified": true,
+        "all_token_usage_exact": true,
+        "zero_mcp_failures": true,
+        "zero_mcp_rejections": true,
+        "zero_mcp_normalizations": true,
+        "all_strict_managed_runtimes_verified": true,
+        "zero_provider_extension_artifacts": true,
+        "zero_external_skill_invocations": true,
+        "zero_external_plugin_invocations": true,
+        "zero_external_mcp_invocations": true
       },
       "evidence": {
-        "attempt": 4,
-        "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
+        "attempt": 5,
+        "failure_attribution": "oracle: work_not_done",
         "artifact_paths": [
-          "codex-greenfield-attempt4.zip",
-          "codex-greenfield-attempt4-logs"
+          "codex-greenfield-attempt5.zip",
+          "codex-greenfield-attempt5-logs"
         ],
         "artifact_hashes": {
-          "codex-greenfield-attempt4.zip": "754fe294e838b8da1d719f0d55f09e59151af3d620ef752d82c0e992dc52b63e",
-          "codex-greenfield-attempt4-logs": null
+          "codex-greenfield-attempt5.zip": "eec45e9141a3ea4afdc74b679f9e91f5f399b8e80a9ec6f4d86c9fc0a4885740",
+          "codex-greenfield-attempt5-logs": null
         },
         "artifact_refs": [
           {
-            "name": "codex-greenfield-attempt4.zip",
-            "sha256": "754fe294e838b8da1d719f0d55f09e59151af3d620ef752d82c0e992dc52b63e",
+            "name": "codex-greenfield-attempt5.zip",
+            "sha256": "eec45e9141a3ea4afdc74b679f9e91f5f399b8e80a9ec6f4d86c9fc0a4885740",
             "local_only": true
           },
           {
-            "name": "codex-greenfield-attempt4-logs",
+            "name": "codex-greenfield-attempt5-logs",
             "sha256": null,
             "local_only": true
           }
@@ -1464,6 +1464,521 @@
               "local_only": true
             }
           ]
+        },
+        {
+          "provider": "codex",
+          "provider_client_version": "codex-cli 0.150.1",
+          "model": "gpt-5.6-luna",
+          "dynosai_version": "1.0.0rc9",
+          "candidate_version": "1.0.0-rc.9",
+          "dynosai_git_commit": "1ea7ef2aa95190ff207153e85ff6fdb71ec94ba7",
+          "git_dirty": false,
+          "source_tree_sha256": "290db17707662152fd05c1849ebe7736c2bb9ce2182df1d238886c47fd353711",
+          "source_file_count": 267,
+          "certification_subject_sha256": "335036ae659b7d8685d4f6560d4b34fe8ff057eef950d7af2592cd05f9d4a4c3",
+          "certification_subject_file_count": 266,
+          "certification_dirty_paths": [],
+          "unexpected_dirty_paths": [],
+          "os": "Windows-11-10.0.26200-SP0",
+          "python_version": "3.13.7",
+          "scenario": "fibonacci",
+          "mode": "greenfield",
+          "started_at": "2026-09-06T08:03:24+00:00",
+          "finished_at": "2026-09-06T08:06:49+00:00",
+          "mcp_protocol_version": "2025-06-18",
+          "mcp_protocols_observed": [
+            "2025-06-18"
+          ],
+          "mcp_protocol_note": null,
+          "acp_app_server_capabilities": null,
+          "execution_profile": "unknown",
+          "harness_feature_state": "unknown",
+          "retry_history": [],
+          "attempt": 5,
+          "token_usage": {
+            "totals": {
+              "processes": 1,
+              "exact_processes": 1,
+              "estimated_processes": 0,
+              "input_tokens": 686673,
+              "cached_input_tokens": 632576,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 8682,
+              "reasoning_output_tokens": 2352,
+              "provider_total_tokens": 695355,
+              "total_tokens": 695355,
+              "observed_token_total": 695355,
+              "context_read_tokens": 686673,
+              "generated_tokens": 8682,
+              "processed_tokens": 695355,
+              "estimated_list_price_usd": 0.03388932
+            },
+            "actual_totals_including_retries": {
+              "processes": 1,
+              "exact_processes": 1,
+              "estimated_processes": 0,
+              "input_tokens": 686673,
+              "cached_input_tokens": 632576,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 8682,
+              "reasoning_output_tokens": 2352,
+              "provider_total_tokens": 695355,
+              "total_tokens": 695355,
+              "observed_token_total": 695355,
+              "context_read_tokens": 686673,
+              "generated_tokens": 8682,
+              "processed_tokens": 695355,
+              "estimated_list_price_usd": 0.03388932
+            },
+            "by_provider": {
+              "codex": {
+                "processes": 1,
+                "exact_processes": 1,
+                "estimated_processes": 0,
+                "input_tokens": 686673,
+                "cached_input_tokens": 632576,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 8682,
+                "reasoning_output_tokens": 2352,
+                "provider_total_tokens": 695355,
+                "total_tokens": 695355,
+                "observed_token_total": 695355,
+                "context_read_tokens": 686673,
+                "generated_tokens": 8682,
+                "processed_tokens": 695355,
+                "estimated_list_price_usd": 0.03388932
+              }
+            },
+            "by_scenario": {
+              "fibonacci": {
+                "processes": 1,
+                "exact_processes": 1,
+                "estimated_processes": 0,
+                "input_tokens": 686673,
+                "cached_input_tokens": 632576,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 8682,
+                "reasoning_output_tokens": 2352,
+                "provider_total_tokens": 695355,
+                "total_tokens": 695355,
+                "observed_token_total": 695355,
+                "context_read_tokens": 686673,
+                "generated_tokens": 8682,
+                "processed_tokens": 695355,
+                "estimated_list_price_usd": 0.03388932
+              }
+            },
+            "processes": [
+              {
+                "provider": "codex",
+                "scenario": "fibonacci",
+                "schema_version": 4,
+                "process_id": "ACCEPTANCE-20260906T080324+0000-180608:codex:fibonacci",
+                "session_id": null,
+                "model": "gpt-5.6-luna",
+                "phase": "implementation",
+                "quality": "exact",
+                "source": "codex_rollout_token_count",
+                "input_tokens": 686673,
+                "cached_input_tokens": 632576,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 8682,
+                "reasoning_output_tokens": 2352,
+                "total_tokens": 695355,
+                "provider_total_tokens": 695355,
+                "observed_token_total": 695355,
+                "context_read_tokens": 686673,
+                "generated_tokens": 8682,
+                "processed_tokens": 695355,
+                "cache_semantics": "cached_subset_of_input",
+                "provider_usage": {
+                  "input_tokens": 686673,
+                  "cached_input_tokens": 632576,
+                  "cache_write_input_tokens": 0,
+                  "output_tokens": 8682,
+                  "reasoning_output_tokens": 2352,
+                  "total_tokens": 695355
+                },
+                "live_estimate": {
+                  "quality": "estimated",
+                  "source": "dynosai_stream_observation",
+                  "input_tokens": 1660,
+                  "input_semantics": "provider_input_estimate",
+                  "cached_input_tokens": 0,
+                  "output_tokens": 0,
+                  "observed_context_tokens_estimate": 1660,
+                  "observed_thinking_tokens_estimate": 0,
+                  "context_read_tokens": 1660,
+                  "generated_tokens": 0,
+                  "processed_tokens": 1660
+                },
+                "calibrated_live_estimate": {
+                  "quality": "calibrated_estimate",
+                  "context_read_tokens": 65259,
+                  "generated_tokens": 0,
+                  "processed_tokens": 65259,
+                  "calibration": {
+                    "available": true,
+                    "samples": 3,
+                    "context_factor": 39.312651,
+                    "generated_factor": 1.0,
+                    "confidence": 0.5998,
+                    "reliability": "medium",
+                    "context_relative_mad": 0.000322,
+                    "generated_relative_mad": 0.0,
+                    "key": "codex|gpt-5.6-luna|fibonacci",
+                    "updated_at": "2026-09-05T18:29:35+00:00"
+                  },
+                  "prediction_confidence": 0.5998
+                },
+                "structural_live_estimate": {
+                  "quality": "observable_structural_estimate",
+                  "basis": "prompt_plus_mcp_context_area",
+                  "prompt_tokens_estimate": 1660,
+                  "mcp_calls_observed": 8,
+                  "mcp_response_bytes": 70965,
+                  "mcp_response_tokens_estimate": 17745,
+                  "context_read_tokens": 77065,
+                  "generated_tokens": 0,
+                  "processed_tokens": 77065,
+                  "routing_authoritative": false
+                },
+                "structural_estimate_error": {
+                  "estimated": 77065,
+                  "exact": 686673,
+                  "comparable": true,
+                  "absolute_error": -609608,
+                  "error_pct": -88.78,
+                  "reason": null
+                },
+                "calibration_before_run": {
+                  "available": true,
+                  "samples": 3,
+                  "context_factor": 39.312651,
+                  "generated_factor": 1.0,
+                  "confidence": 0.5998,
+                  "reliability": "medium",
+                  "context_relative_mad": 0.000322,
+                  "generated_relative_mad": 0.0,
+                  "key": "codex|gpt-5.6-luna|fibonacci",
+                  "updated_at": "2026-09-05T18:29:35+00:00"
+                },
+                "calibration_update": {
+                  "available": true,
+                  "samples": 4,
+                  "context_factor": 76.363554,
+                  "generated_factor": 1.0,
+                  "confidence": 0.5386,
+                  "reliability": "medium",
+                  "context_relative_mad": 0.485274,
+                  "generated_relative_mad": 0.0,
+                  "key": "codex|gpt-5.6-luna|fibonacci",
+                  "updated_at": "2026-09-06T08:06:47+00:00"
+                },
+                "estimate_error": {
+                  "comparison_basis": "derived_operational_metrics",
+                  "context_read_tokens": {
+                    "estimated": 1660,
+                    "exact": 686673,
+                    "comparable": true,
+                    "absolute_error": -685013,
+                    "error_pct": -99.76,
+                    "reason": null
+                  },
+                  "generated_tokens": {
+                    "estimated": 0,
+                    "exact": 8682,
+                    "comparable": true,
+                    "absolute_error": -8682,
+                    "error_pct": -100.0,
+                    "reason": null
+                  },
+                  "processed_tokens": {
+                    "estimated": 1660,
+                    "exact": 695355,
+                    "comparable": true,
+                    "absolute_error": -693695,
+                    "error_pct": -99.76,
+                    "reason": null
+                  },
+                  "reasoning_output_tokens": {
+                    "estimated": 0,
+                    "exact": 2352,
+                    "comparable": true,
+                    "absolute_error": -2352,
+                    "error_pct": -100.0,
+                    "reason": null
+                  },
+                  "input_tokens": {
+                    "estimated": 1660,
+                    "exact": 686673,
+                    "comparable": true,
+                    "absolute_error": -685013,
+                    "error_pct": -99.76,
+                    "reason": null
+                  },
+                  "output_tokens": {
+                    "estimated": 0,
+                    "exact": 8682,
+                    "comparable": true,
+                    "absolute_error": -8682,
+                    "error_pct": -100.0,
+                    "reason": null
+                  }
+                },
+                "phase_usage": [
+                  {
+                    "phase": "discovery",
+                    "reason": "phase_exit",
+                    "quality": "exact",
+                    "source": "codex_rollout_token_count",
+                    "input_tokens": 135088,
+                    "cached_input_tokens": 115968,
+                    "output_tokens": 1654,
+                    "reasoning_output_tokens": 117,
+                    "context_read_tokens": 135088,
+                    "generated_tokens": 1654,
+                    "processed_tokens": 136742,
+                    "elapsed_seconds": 50.383,
+                    "at": "2026-09-06T08:04:17+00:00",
+                    "delta_context_read_tokens": 135088,
+                    "delta_generated_tokens": 1654,
+                    "delta_processed_tokens": 136742,
+                    "allocation_quality": "exact",
+                    "allocation_state": "closed"
+                  },
+                  {
+                    "phase": "specification",
+                    "reason": "synthetic_zero_duration_phase",
+                    "quality": "exact",
+                    "source": "codex_rollout_token_count",
+                    "input_tokens": 135088,
+                    "cached_input_tokens": 115968,
+                    "output_tokens": 1654,
+                    "reasoning_output_tokens": 117,
+                    "context_read_tokens": 135088,
+                    "generated_tokens": 1654,
+                    "processed_tokens": 136742,
+                    "elapsed_seconds": 50.383,
+                    "at": "2026-09-06T08:04:17+00:00",
+                    "delta_context_read_tokens": 0,
+                    "delta_generated_tokens": 0,
+                    "delta_processed_tokens": 0,
+                    "allocation_quality": "exact",
+                    "allocation_state": "synthetic_zero"
+                  },
+                  {
+                    "phase": "planning",
+                    "reason": "phase_exit",
+                    "quality": "exact",
+                    "source": "codex_rollout_token_count",
+                    "input_tokens": 196361,
+                    "cached_input_tokens": 169728,
+                    "output_tokens": 2531,
+                    "reasoning_output_tokens": 274,
+                    "context_read_tokens": 196361,
+                    "generated_tokens": 2531,
+                    "processed_tokens": 198892,
+                    "elapsed_seconds": 70.189,
+                    "at": "2026-09-06T08:04:36+00:00",
+                    "delta_context_read_tokens": 61273,
+                    "delta_generated_tokens": 877,
+                    "delta_processed_tokens": 62150,
+                    "allocation_quality": "exact",
+                    "allocation_state": "closed"
+                  },
+                  {
+                    "phase": "implementation",
+                    "reason": "final",
+                    "quality": "exact",
+                    "source": "codex_rollout_token_count",
+                    "input_tokens": 686673,
+                    "cached_input_tokens": 632576,
+                    "output_tokens": 8682,
+                    "reasoning_output_tokens": 2352,
+                    "context_read_tokens": 686673,
+                    "generated_tokens": 8682,
+                    "processed_tokens": 695355,
+                    "elapsed_seconds": 201.056,
+                    "at": "2026-09-06T08:06:47+00:00",
+                    "delta_context_read_tokens": 490312,
+                    "delta_generated_tokens": 6151,
+                    "delta_processed_tokens": 496463,
+                    "allocation_quality": "exact",
+                    "allocation_state": "closed"
+                  }
+                ],
+                "last_turn_usage": {
+                  "input_tokens": 50149,
+                  "cached_input_tokens": 41728,
+                  "cache_write_input_tokens": 0,
+                  "output_tokens": 273,
+                  "reasoning_output_tokens": 196,
+                  "total_tokens": 50422
+                },
+                "last_turn_observed_tokens": 50422,
+                "model_context_window": 258400,
+                "last_turn_context_utilization_pct": 19.51,
+                "tokens_per_minute": 207503.21,
+                "input_tokens_per_minute": 204912.39,
+                "output_tokens_per_minute": 2590.82,
+                "elapsed_seconds": 201.063,
+                "samples": 29,
+                "last_event": "codex_usage_final",
+                "updated_at": "2026-09-06T08:06:47+00:00",
+                "cost_estimate": {
+                  "provider": "codex",
+                  "model": "gpt-5.6-luna",
+                  "catalog_version": "2026-08-24",
+                  "pricing_source": "OpenAI public API list pricing",
+                  "quality": "exact_usage_list_price",
+                  "fresh_input_tokens": 54097,
+                  "cached_input_tokens": 632576,
+                  "cache_write_input_tokens": 0,
+                  "output_tokens": 8682,
+                  "input_usd": 0.0108194,
+                  "cache_read_usd": 0.01265152,
+                  "cache_write_usd": 0.0,
+                  "output_usd": 0.0104184,
+                  "estimated_list_price_usd": 0.03388932,
+                  "note": "Estimated public list-price equivalent, not an invoice. Subscription pools, discounts, regional uplifts and provider-specific billing can differ."
+                },
+                "final": true
+              }
+            ]
+          },
+          "estimated_cost": 0.03388932,
+          "validation_commands": "python -m unittest discover -s tests",
+          "validation_results": null,
+          "oracle_result": {
+            "all_children_passed": false,
+            "all_final_done": false,
+            "all_oracles_passed": false,
+            "all_single_session": true,
+            "all_sessions_completed": false,
+            "all_same_workspace": true,
+            "all_elicitations_observed": true,
+            "all_expected_human_interactions_only": false,
+            "zero_scope_requests": true,
+            "all_validation_baselines_correct": true,
+            "all_runtime_bins_unchanged": true,
+            "all_provider_model_routes_verified": true,
+            "all_token_usage_exact": true,
+            "zero_mcp_failures": true,
+            "zero_mcp_rejections": true,
+            "zero_mcp_normalizations": true,
+            "all_strict_managed_runtimes_verified": true,
+            "zero_provider_extension_artifacts": true,
+            "zero_external_skill_invocations": true,
+            "zero_external_plugin_invocations": true,
+            "zero_external_mcp_invocations": true
+          },
+          "scope_result": null,
+          "git_evidence": {
+            "unchanged": true,
+            "added": [],
+            "removed": [],
+            "changed": []
+          },
+          "human_gate_evidence": [
+            {
+              "id": "ELIC-0001",
+              "kind": "gate_approval",
+              "gate": "spec",
+              "status": "accepted",
+              "provider": "codex",
+              "response_json": "{\"comments\": \"DynosAI 1.0.0rc9 automated acceptance harness\", \"decision\": \"approve\"}"
+            },
+            {
+              "id": "ELIC-0002",
+              "kind": "gate_approval",
+              "gate": "plan",
+              "status": "accepted",
+              "provider": "codex",
+              "response_json": "{\"comments\": \"DynosAI 1.0.0rc9 automated acceptance harness\", \"decision\": \"approve\"}"
+            }
+          ],
+          "codex_runtime_preflight": {
+            "status": "pass",
+            "codex_version": "codex-cli 0.150.1",
+            "codex_home_safe": true,
+            "helper_binary_refusal_detected": false,
+            "provider_started": false,
+            "exit_code": 0
+          },
+          "codex_mcp_preflight": {
+            "status": "pass",
+            "classification": null,
+            "provider": "codex",
+            "provider_version": "codex-cli 0.150.1",
+            "model_turn_started": false,
+            "codex_home_verified": true,
+            "config_read": {
+              "status": "pass",
+              "dynosai_server_present": true,
+              "transport_verified": true,
+              "config_source_verified": true
+            },
+            "mcp_status": {
+              "present": true,
+              "status": "ready",
+              "error": null,
+              "failure_reason": null
+            },
+            "tools": {
+              "count": 15,
+              "names": [
+                "dynosai_ask",
+                "dynosai_context_preview",
+                "dynosai_get_next_action",
+                "dynosai_git_diff",
+                "dynosai_git_status",
+                "dynosai_project",
+                "dynosai_read",
+                "dynosai_register_decision",
+                "dynosai_register_result",
+                "dynosai_request_scope_extension",
+                "dynosai_retrieve_handle",
+                "dynosai_run_validation",
+                "dynosai_submit_plan",
+                "dynosai_submit_spec",
+                "dynosai_work"
+              ]
+            },
+            "direct_tool_call": {
+              "status": "pass",
+              "tool": "dynosai_get_next_action"
+            },
+            "startup_statuses": [
+              "starting",
+              "ready"
+            ],
+            "mcp_activity_present": true,
+            "mcp_calls": 1,
+            "model_tokens": 0
+          },
+          "final_status": "fail",
+          "failure_attribution": "oracle: work_not_done",
+          "artifact_paths": [
+            "codex-greenfield-attempt5.zip",
+            "codex-greenfield-attempt5-logs"
+          ],
+          "artifact_hashes": {
+            "codex-greenfield-attempt5.zip": "eec45e9141a3ea4afdc74b679f9e91f5f399b8e80a9ec6f4d86c9fc0a4885740",
+            "codex-greenfield-attempt5-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "codex-greenfield-attempt5.zip",
+              "sha256": "eec45e9141a3ea4afdc74b679f9e91f5f399b8e80a9ec6f4d86c9fc0a4885740",
+              "local_only": true
+            },
+            {
+              "name": "codex-greenfield-attempt5-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         }
       ]
     },
@@ -1496,24 +2011,24 @@
         "zero_external_mcp_invocations": true
       },
       "evidence": {
-        "attempt": 2,
+        "attempt": 3,
         "failure_attribution": "oracle: work_not_done",
         "artifact_paths": [
-          "codex-brownfield-attempt2.zip",
-          "codex-brownfield-attempt2-logs"
+          "codex-brownfield-attempt3.zip",
+          "codex-brownfield-attempt3-logs"
         ],
         "artifact_hashes": {
-          "codex-brownfield-attempt2.zip": "2968a44fa9ebdadf89a3e6f25bff6cd0631aaa86abb0805e80bd65452d875f07",
-          "codex-brownfield-attempt2-logs": null
+          "codex-brownfield-attempt3.zip": "be3dea46cfe02ca16a6c9885079bfcc080e5424edfa2a26940078206582b53fa",
+          "codex-brownfield-attempt3-logs": null
         },
         "artifact_refs": [
           {
-            "name": "codex-brownfield-attempt2.zip",
-            "sha256": "2968a44fa9ebdadf89a3e6f25bff6cd0631aaa86abb0805e80bd65452d875f07",
+            "name": "codex-brownfield-attempt3.zip",
+            "sha256": "be3dea46cfe02ca16a6c9885079bfcc080e5424edfa2a26940078206582b53fa",
             "local_only": true
           },
           {
-            "name": "codex-brownfield-attempt2-logs",
+            "name": "codex-brownfield-attempt3-logs",
             "sha256": null,
             "local_only": true
           }
@@ -2084,6 +2599,523 @@
               "local_only": true
             }
           ]
+        },
+        {
+          "provider": "codex",
+          "provider_client_version": "codex-cli 0.150.1",
+          "model": "gpt-5.6-luna",
+          "dynosai_version": "1.0.0rc9",
+          "candidate_version": "1.0.0-rc.9",
+          "dynosai_git_commit": "1ea7ef2aa95190ff207153e85ff6fdb71ec94ba7",
+          "git_dirty": true,
+          "source_tree_sha256": "ab74d5f862ceec85c118e77ecaef06763c5caf68ba41014378b18989b7a17279",
+          "source_file_count": 267,
+          "certification_subject_sha256": "335036ae659b7d8685d4f6560d4b34fe8ff057eef950d7af2592cd05f9d4a4c3",
+          "certification_subject_file_count": 266,
+          "certification_dirty_paths": [
+            "docs/validation/matrix-1.0.json"
+          ],
+          "unexpected_dirty_paths": [],
+          "os": "Windows-11-10.0.26200-SP0",
+          "python_version": "3.13.7",
+          "scenario": "orderflow-contract-discounts",
+          "mode": "brownfield",
+          "started_at": "2026-09-06T08:10:47+00:00",
+          "finished_at": "2026-09-06T08:15:59+00:00",
+          "mcp_protocol_version": "2025-06-18",
+          "mcp_protocols_observed": [
+            "2025-06-18"
+          ],
+          "mcp_protocol_note": null,
+          "acp_app_server_capabilities": null,
+          "execution_profile": "unknown",
+          "harness_feature_state": "unknown",
+          "retry_history": [],
+          "attempt": 3,
+          "token_usage": {
+            "totals": {
+              "processes": 1,
+              "exact_processes": 1,
+              "estimated_processes": 0,
+              "input_tokens": 1196677,
+              "cached_input_tokens": 1126656,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 12130,
+              "reasoning_output_tokens": 2775,
+              "provider_total_tokens": 1208807,
+              "total_tokens": 1208807,
+              "observed_token_total": 1208807,
+              "context_read_tokens": 1196677,
+              "generated_tokens": 12130,
+              "processed_tokens": 1208807,
+              "estimated_list_price_usd": 0.05109332
+            },
+            "actual_totals_including_retries": {
+              "processes": 1,
+              "exact_processes": 1,
+              "estimated_processes": 0,
+              "input_tokens": 1196677,
+              "cached_input_tokens": 1126656,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 12130,
+              "reasoning_output_tokens": 2775,
+              "provider_total_tokens": 1208807,
+              "total_tokens": 1208807,
+              "observed_token_total": 1208807,
+              "context_read_tokens": 1196677,
+              "generated_tokens": 12130,
+              "processed_tokens": 1208807,
+              "estimated_list_price_usd": 0.05109332
+            },
+            "by_provider": {
+              "codex": {
+                "processes": 1,
+                "exact_processes": 1,
+                "estimated_processes": 0,
+                "input_tokens": 1196677,
+                "cached_input_tokens": 1126656,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 12130,
+                "reasoning_output_tokens": 2775,
+                "provider_total_tokens": 1208807,
+                "total_tokens": 1208807,
+                "observed_token_total": 1208807,
+                "context_read_tokens": 1196677,
+                "generated_tokens": 12130,
+                "processed_tokens": 1208807,
+                "estimated_list_price_usd": 0.05109332
+              }
+            },
+            "by_scenario": {
+              "orderflow-contract-discounts": {
+                "processes": 1,
+                "exact_processes": 1,
+                "estimated_processes": 0,
+                "input_tokens": 1196677,
+                "cached_input_tokens": 1126656,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 12130,
+                "reasoning_output_tokens": 2775,
+                "provider_total_tokens": 1208807,
+                "total_tokens": 1208807,
+                "observed_token_total": 1208807,
+                "context_read_tokens": 1196677,
+                "generated_tokens": 12130,
+                "processed_tokens": 1208807,
+                "estimated_list_price_usd": 0.05109332
+              }
+            },
+            "processes": [
+              {
+                "provider": "codex",
+                "scenario": "orderflow-contract-discounts",
+                "schema_version": 4,
+                "process_id": "ACCEPTANCE-20260906T081047+0000-114860:codex:orderflow-contract-discounts",
+                "session_id": null,
+                "model": "gpt-5.6-luna",
+                "phase": "implementation",
+                "quality": "exact",
+                "source": "codex_rollout_token_count",
+                "input_tokens": 1196677,
+                "cached_input_tokens": 1126656,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 12130,
+                "reasoning_output_tokens": 2775,
+                "total_tokens": 1208807,
+                "provider_total_tokens": 1208807,
+                "observed_token_total": 1208807,
+                "context_read_tokens": 1196677,
+                "generated_tokens": 12130,
+                "processed_tokens": 1208807,
+                "cache_semantics": "cached_subset_of_input",
+                "provider_usage": {
+                  "input_tokens": 1196677,
+                  "cached_input_tokens": 1126656,
+                  "cache_write_input_tokens": 0,
+                  "output_tokens": 12130,
+                  "reasoning_output_tokens": 2775,
+                  "total_tokens": 1208807
+                },
+                "live_estimate": {
+                  "quality": "estimated",
+                  "source": "dynosai_stream_observation",
+                  "input_tokens": 1879,
+                  "input_semantics": "provider_input_estimate",
+                  "cached_input_tokens": 0,
+                  "output_tokens": 0,
+                  "observed_context_tokens_estimate": 1879,
+                  "observed_thinking_tokens_estimate": 0,
+                  "context_read_tokens": 1879,
+                  "generated_tokens": 0,
+                  "processed_tokens": 1879
+                },
+                "calibrated_live_estimate": {
+                  "quality": "calibrated_estimate",
+                  "context_read_tokens": 830154,
+                  "generated_tokens": 0,
+                  "processed_tokens": 830154,
+                  "calibration": {
+                    "available": true,
+                    "samples": 1,
+                    "context_factor": 441.80628,
+                    "generated_factor": 1.0,
+                    "confidence": 0.2,
+                    "reliability": "low",
+                    "context_relative_mad": 0.0,
+                    "generated_relative_mad": 0.0,
+                    "key": "codex|gpt-5.6-luna|orderflow-contract-discounts",
+                    "updated_at": "2026-09-04T18:28:42+00:00"
+                  },
+                  "prediction_confidence": 0.2
+                },
+                "structural_live_estimate": {
+                  "quality": "observable_structural_estimate",
+                  "basis": "prompt_plus_mcp_context_area",
+                  "prompt_tokens_estimate": 1879,
+                  "mcp_calls_observed": 12,
+                  "mcp_response_bytes": 112885,
+                  "mcp_response_tokens_estimate": 28225,
+                  "context_read_tokens": 211571,
+                  "generated_tokens": 0,
+                  "processed_tokens": 211571,
+                  "routing_authoritative": false
+                },
+                "structural_estimate_error": {
+                  "estimated": 211571,
+                  "exact": 1196677,
+                  "comparable": true,
+                  "absolute_error": -985106,
+                  "error_pct": -82.32,
+                  "reason": null
+                },
+                "calibration_before_run": {
+                  "available": true,
+                  "samples": 1,
+                  "context_factor": 441.80628,
+                  "generated_factor": 1.0,
+                  "confidence": 0.2,
+                  "reliability": "low",
+                  "context_relative_mad": 0.0,
+                  "generated_relative_mad": 0.0,
+                  "key": "codex|gpt-5.6-luna|orderflow-contract-discounts",
+                  "updated_at": "2026-09-04T18:28:42+00:00"
+                },
+                "calibration_update": {
+                  "available": true,
+                  "samples": 2,
+                  "context_factor": 539.33768,
+                  "generated_factor": 1.0,
+                  "confidence": 0.3387,
+                  "reliability": "low",
+                  "context_relative_mad": 0.180836,
+                  "generated_relative_mad": 0.0,
+                  "key": "codex|gpt-5.6-luna|orderflow-contract-discounts",
+                  "updated_at": "2026-09-06T08:15:45+00:00"
+                },
+                "estimate_error": {
+                  "comparison_basis": "derived_operational_metrics",
+                  "context_read_tokens": {
+                    "estimated": 1879,
+                    "exact": 1196677,
+                    "comparable": true,
+                    "absolute_error": -1194798,
+                    "error_pct": -99.84,
+                    "reason": null
+                  },
+                  "generated_tokens": {
+                    "estimated": 0,
+                    "exact": 12130,
+                    "comparable": true,
+                    "absolute_error": -12130,
+                    "error_pct": -100.0,
+                    "reason": null
+                  },
+                  "processed_tokens": {
+                    "estimated": 1879,
+                    "exact": 1208807,
+                    "comparable": true,
+                    "absolute_error": -1206928,
+                    "error_pct": -99.84,
+                    "reason": null
+                  },
+                  "reasoning_output_tokens": {
+                    "estimated": 0,
+                    "exact": 2775,
+                    "comparable": true,
+                    "absolute_error": -2775,
+                    "error_pct": -100.0,
+                    "reason": null
+                  },
+                  "input_tokens": {
+                    "estimated": 1879,
+                    "exact": 1196677,
+                    "comparable": true,
+                    "absolute_error": -1194798,
+                    "error_pct": -99.84,
+                    "reason": null
+                  },
+                  "output_tokens": {
+                    "estimated": 0,
+                    "exact": 12130,
+                    "comparable": true,
+                    "absolute_error": -12130,
+                    "error_pct": -100.0,
+                    "reason": null
+                  }
+                },
+                "phase_usage": [
+                  {
+                    "phase": "discovery",
+                    "reason": "phase_exit",
+                    "quality": "exact",
+                    "source": "codex_rollout_token_count",
+                    "input_tokens": 146241,
+                    "cached_input_tokens": 123136,
+                    "output_tokens": 2332,
+                    "reasoning_output_tokens": 144,
+                    "context_read_tokens": 146241,
+                    "generated_tokens": 2332,
+                    "processed_tokens": 148573,
+                    "elapsed_seconds": 63.771,
+                    "at": "2026-09-06T08:11:53+00:00",
+                    "delta_context_read_tokens": 146241,
+                    "delta_generated_tokens": 2332,
+                    "delta_processed_tokens": 148573,
+                    "allocation_quality": "exact",
+                    "allocation_state": "closed"
+                  },
+                  {
+                    "phase": "specification",
+                    "reason": "synthetic_zero_duration_phase",
+                    "quality": "exact",
+                    "source": "codex_rollout_token_count",
+                    "input_tokens": 146241,
+                    "cached_input_tokens": 123136,
+                    "output_tokens": 2332,
+                    "reasoning_output_tokens": 144,
+                    "context_read_tokens": 146241,
+                    "generated_tokens": 2332,
+                    "processed_tokens": 148573,
+                    "elapsed_seconds": 63.771,
+                    "at": "2026-09-06T08:11:53+00:00",
+                    "delta_context_read_tokens": 0,
+                    "delta_generated_tokens": 0,
+                    "delta_processed_tokens": 0,
+                    "allocation_quality": "exact",
+                    "allocation_state": "synthetic_zero"
+                  },
+                  {
+                    "phase": "planning",
+                    "reason": "phase_exit",
+                    "quality": "exact",
+                    "source": "codex_rollout_token_count",
+                    "input_tokens": 255847,
+                    "cached_input_tokens": 220672,
+                    "output_tokens": 5640,
+                    "reasoning_output_tokens": 461,
+                    "context_read_tokens": 255847,
+                    "generated_tokens": 5640,
+                    "processed_tokens": 261487,
+                    "elapsed_seconds": 130.615,
+                    "at": "2026-09-06T08:13:00+00:00",
+                    "delta_context_read_tokens": 109606,
+                    "delta_generated_tokens": 3308,
+                    "delta_processed_tokens": 112914,
+                    "allocation_quality": "exact",
+                    "allocation_state": "closed"
+                  },
+                  {
+                    "phase": "implementation",
+                    "reason": "final",
+                    "quality": "exact",
+                    "source": "codex_rollout_token_count",
+                    "input_tokens": 1196677,
+                    "cached_input_tokens": 1126656,
+                    "output_tokens": 12130,
+                    "reasoning_output_tokens": 2775,
+                    "context_read_tokens": 1196677,
+                    "generated_tokens": 12130,
+                    "processed_tokens": 1208807,
+                    "elapsed_seconds": 295.571,
+                    "at": "2026-09-06T08:15:45+00:00",
+                    "delta_context_read_tokens": 940830,
+                    "delta_generated_tokens": 6490,
+                    "delta_processed_tokens": 947320,
+                    "allocation_quality": "exact",
+                    "allocation_state": "closed"
+                  }
+                ],
+                "last_turn_usage": {
+                  "input_tokens": 63018,
+                  "cached_input_tokens": 62208,
+                  "cache_write_input_tokens": 0,
+                  "output_tokens": 737,
+                  "reasoning_output_tokens": 572,
+                  "total_tokens": 63755
+                },
+                "last_turn_observed_tokens": 63755,
+                "model_context_window": 258400,
+                "last_turn_context_utilization_pct": 24.67,
+                "tokens_per_minute": 245378.84,
+                "input_tokens_per_minute": 242916.54,
+                "output_tokens_per_minute": 2462.3,
+                "elapsed_seconds": 295.577,
+                "samples": 35,
+                "last_event": "codex_usage_final",
+                "updated_at": "2026-09-06T08:15:45+00:00",
+                "cost_estimate": {
+                  "provider": "codex",
+                  "model": "gpt-5.6-luna",
+                  "catalog_version": "2026-08-24",
+                  "pricing_source": "OpenAI public API list pricing",
+                  "quality": "exact_usage_list_price",
+                  "fresh_input_tokens": 70021,
+                  "cached_input_tokens": 1126656,
+                  "cache_write_input_tokens": 0,
+                  "output_tokens": 12130,
+                  "input_usd": 0.0140042,
+                  "cache_read_usd": 0.02253312,
+                  "cache_write_usd": 0.0,
+                  "output_usd": 0.014556,
+                  "estimated_list_price_usd": 0.05109332,
+                  "note": "Estimated public list-price equivalent, not an invoice. Subscription pools, discounts, regional uplifts and provider-specific billing can differ."
+                },
+                "final": true
+              }
+            ]
+          },
+          "estimated_cost": 0.05109332,
+          "validation_commands": "python -m unittest discover -s tests",
+          "validation_results": null,
+          "oracle_result": {
+            "all_children_passed": false,
+            "all_final_done": false,
+            "all_oracles_passed": false,
+            "all_single_session": true,
+            "all_sessions_completed": false,
+            "all_same_workspace": true,
+            "all_elicitations_observed": true,
+            "all_expected_human_interactions_only": false,
+            "zero_scope_requests": true,
+            "all_validation_baselines_correct": true,
+            "all_runtime_bins_unchanged": true,
+            "all_provider_model_routes_verified": true,
+            "all_token_usage_exact": true,
+            "zero_mcp_failures": true,
+            "zero_mcp_rejections": false,
+            "zero_mcp_normalizations": true,
+            "all_strict_managed_runtimes_verified": true,
+            "zero_provider_extension_artifacts": true,
+            "zero_external_skill_invocations": true,
+            "zero_external_plugin_invocations": true,
+            "zero_external_mcp_invocations": true
+          },
+          "scope_result": null,
+          "git_evidence": {
+            "unchanged": true,
+            "added": [],
+            "removed": [],
+            "changed": []
+          },
+          "human_gate_evidence": [
+            {
+              "id": "ELIC-0001",
+              "kind": "gate_approval",
+              "gate": "spec",
+              "status": "accepted",
+              "provider": "codex",
+              "response_json": "{\"comments\": \"DynosAI 1.0.0rc9 automated acceptance harness\", \"decision\": \"approve\"}"
+            },
+            {
+              "id": "ELIC-0002",
+              "kind": "gate_approval",
+              "gate": "plan",
+              "status": "accepted",
+              "provider": "codex",
+              "response_json": "{\"comments\": \"DynosAI 1.0.0rc9 automated acceptance harness\", \"decision\": \"approve\"}"
+            }
+          ],
+          "codex_runtime_preflight": {
+            "status": "pass",
+            "codex_version": "codex-cli 0.150.1",
+            "codex_home_safe": true,
+            "helper_binary_refusal_detected": false,
+            "provider_started": false,
+            "exit_code": 0
+          },
+          "codex_mcp_preflight": {
+            "status": "pass",
+            "classification": null,
+            "provider": "codex",
+            "provider_version": "codex-cli 0.150.1",
+            "model_turn_started": false,
+            "codex_home_verified": true,
+            "config_read": {
+              "status": "pass",
+              "dynosai_server_present": true,
+              "transport_verified": true,
+              "config_source_verified": true
+            },
+            "mcp_status": {
+              "present": true,
+              "status": "ready",
+              "error": null,
+              "failure_reason": null
+            },
+            "tools": {
+              "count": 15,
+              "names": [
+                "dynosai_ask",
+                "dynosai_context_preview",
+                "dynosai_get_next_action",
+                "dynosai_git_diff",
+                "dynosai_git_status",
+                "dynosai_project",
+                "dynosai_read",
+                "dynosai_register_decision",
+                "dynosai_register_result",
+                "dynosai_request_scope_extension",
+                "dynosai_retrieve_handle",
+                "dynosai_run_validation",
+                "dynosai_submit_plan",
+                "dynosai_submit_spec",
+                "dynosai_work"
+              ]
+            },
+            "direct_tool_call": {
+              "status": "pass",
+              "tool": "dynosai_get_next_action"
+            },
+            "startup_statuses": [
+              "starting",
+              "ready"
+            ],
+            "mcp_activity_present": true,
+            "mcp_calls": 1,
+            "model_tokens": 0
+          },
+          "final_status": "fail",
+          "failure_attribution": "oracle: work_not_done",
+          "artifact_paths": [
+            "codex-brownfield-attempt3.zip",
+            "codex-brownfield-attempt3-logs"
+          ],
+          "artifact_hashes": {
+            "codex-brownfield-attempt3.zip": "be3dea46cfe02ca16a6c9885079bfcc080e5424edfa2a26940078206582b53fa",
+            "codex-brownfield-attempt3-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "codex-brownfield-attempt3.zip",
+              "sha256": "be3dea46cfe02ca16a6c9885079bfcc080e5424edfa2a26940078206582b53fa",
+              "local_only": true
+            },
+            {
+              "name": "codex-brownfield-attempt3-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         }
       ]
     },
@@ -2116,24 +3148,24 @@
         "zero_external_mcp_invocations": false
       },
       "evidence": {
-        "attempt": 2,
-        "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
+        "attempt": 3,
+        "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=1)",
         "artifact_paths": [
-          "cursor-greenfield-attempt2.zip",
-          "cursor-greenfield-attempt2-logs"
+          "cursor-greenfield-attempt3.zip",
+          "cursor-greenfield-attempt3-logs"
         ],
         "artifact_hashes": {
-          "cursor-greenfield-attempt2.zip": "ee64dcd368bd32dc71a72c10b8b331a94e2611d436c2564fcbc5233521a0c0f3",
-          "cursor-greenfield-attempt2-logs": null
+          "cursor-greenfield-attempt3.zip": "54a0ab2b954f265d6527d70764600755f7eb061c040a6122d6cf654d90a8684f",
+          "cursor-greenfield-attempt3-logs": null
         },
         "artifact_refs": [
           {
-            "name": "cursor-greenfield-attempt2.zip",
-            "sha256": "ee64dcd368bd32dc71a72c10b8b331a94e2611d436c2564fcbc5233521a0c0f3",
+            "name": "cursor-greenfield-attempt3.zip",
+            "sha256": "54a0ab2b954f265d6527d70764600755f7eb061c040a6122d6cf654d90a8684f",
             "local_only": true
           },
           {
-            "name": "cursor-greenfield-attempt2-logs",
+            "name": "cursor-greenfield-attempt3-logs",
             "sha256": null,
             "local_only": true
           }
@@ -2741,6 +3773,361 @@
               "local_only": true
             }
           ]
+        },
+        {
+          "provider": "cursor",
+          "provider_client_version": "2026.09.02-c22c1a3",
+          "model": "GPT-5.6 Luna 272K Medium",
+          "dynosai_version": "1.0.0rc9",
+          "candidate_version": "1.0.0-rc.9",
+          "dynosai_git_commit": "1ea7ef2aa95190ff207153e85ff6fdb71ec94ba7",
+          "git_dirty": true,
+          "source_tree_sha256": "caf167f74d6e915d62b871cc15d3b86d8367fe4234c9dcd7973770de8188bdb2",
+          "source_file_count": 267,
+          "certification_subject_sha256": "335036ae659b7d8685d4f6560d4b34fe8ff057eef950d7af2592cd05f9d4a4c3",
+          "certification_subject_file_count": 266,
+          "certification_dirty_paths": [
+            "docs/validation/matrix-1.0.json"
+          ],
+          "unexpected_dirty_paths": [],
+          "os": "Windows-11-10.0.26200-SP0",
+          "python_version": "3.13.7",
+          "scenario": "fibonacci",
+          "mode": "greenfield",
+          "started_at": "2026-09-06T08:08:18+00:00",
+          "finished_at": "2026-09-06T08:09:11+00:00",
+          "mcp_protocol_version": null,
+          "mcp_protocols_observed": [],
+          "mcp_protocol_note": "no MCP tool calls observed",
+          "acp_app_server_capabilities": null,
+          "execution_profile": "unknown",
+          "harness_feature_state": "unknown",
+          "retry_history": [],
+          "attempt": 3,
+          "token_usage": {
+            "totals": {
+              "processes": 1,
+              "exact_processes": 1,
+              "estimated_processes": 0,
+              "input_tokens": 15,
+              "cached_input_tokens": 94253,
+              "cache_write_input_tokens": 26265,
+              "output_tokens": 801,
+              "reasoning_output_tokens": null,
+              "provider_total_tokens": null,
+              "total_tokens": null,
+              "observed_token_total": 816,
+              "context_read_tokens": 94268,
+              "generated_tokens": 801,
+              "processed_tokens": 95069,
+              "estimated_list_price_usd": null
+            },
+            "actual_totals_including_retries": {
+              "processes": 1,
+              "exact_processes": 1,
+              "estimated_processes": 0,
+              "input_tokens": 15,
+              "cached_input_tokens": 94253,
+              "cache_write_input_tokens": 26265,
+              "output_tokens": 801,
+              "reasoning_output_tokens": null,
+              "provider_total_tokens": null,
+              "total_tokens": null,
+              "observed_token_total": 816,
+              "context_read_tokens": 94268,
+              "generated_tokens": 801,
+              "processed_tokens": 95069,
+              "estimated_list_price_usd": null
+            },
+            "by_provider": {
+              "cursor": {
+                "processes": 1,
+                "exact_processes": 1,
+                "estimated_processes": 0,
+                "input_tokens": 15,
+                "cached_input_tokens": 94253,
+                "cache_write_input_tokens": 26265,
+                "output_tokens": 801,
+                "reasoning_output_tokens": null,
+                "provider_total_tokens": null,
+                "total_tokens": null,
+                "observed_token_total": 816,
+                "context_read_tokens": 94268,
+                "generated_tokens": 801,
+                "processed_tokens": 95069,
+                "estimated_list_price_usd": null
+              }
+            },
+            "by_scenario": {
+              "fibonacci": {
+                "processes": 1,
+                "exact_processes": 1,
+                "estimated_processes": 0,
+                "input_tokens": 15,
+                "cached_input_tokens": 94253,
+                "cache_write_input_tokens": 26265,
+                "output_tokens": 801,
+                "reasoning_output_tokens": null,
+                "provider_total_tokens": null,
+                "total_tokens": null,
+                "observed_token_total": 816,
+                "context_read_tokens": 94268,
+                "generated_tokens": 801,
+                "processed_tokens": 95069,
+                "estimated_list_price_usd": null
+              }
+            },
+            "processes": [
+              {
+                "provider": "cursor",
+                "scenario": "fibonacci",
+                "schema_version": 4,
+                "process_id": "ACCEPTANCE-20260906T080818+0000-189012:cursor:fibonacci",
+                "session_id": "9ef41592-cf69-46fa-9741-555804cd7193",
+                "model": "GPT-5.6 Luna 272K Medium",
+                "phase": "discovery",
+                "quality": "exact",
+                "source": "cursor_result",
+                "input_tokens": 15,
+                "cached_input_tokens": 94253,
+                "cache_write_input_tokens": 26265,
+                "output_tokens": 801,
+                "reasoning_output_tokens": null,
+                "total_tokens": null,
+                "provider_total_tokens": null,
+                "observed_token_total": 816,
+                "context_read_tokens": 94268,
+                "generated_tokens": 801,
+                "processed_tokens": 95069,
+                "cache_semantics": "parallel_cache_read",
+                "provider_usage": {
+                  "input_tokens": 15,
+                  "cached_input_tokens": 94253,
+                  "cache_write_input_tokens": 26265,
+                  "output_tokens": 801,
+                  "reasoning_output_tokens": null,
+                  "total_tokens": null
+                },
+                "live_estimate": {
+                  "quality": "estimated",
+                  "source": "dynosai_stream_observation",
+                  "input_tokens": 7289,
+                  "input_semantics": "observed_context_estimate_not_provider_fresh_input",
+                  "cached_input_tokens": 0,
+                  "output_tokens": 141,
+                  "observed_context_tokens_estimate": 7289,
+                  "observed_thinking_tokens_estimate": 216,
+                  "context_read_tokens": 7289,
+                  "generated_tokens": 141,
+                  "processed_tokens": 7430
+                },
+                "calibrated_live_estimate": {
+                  "quality": "raw_estimate",
+                  "context_read_tokens": 7289,
+                  "generated_tokens": 141,
+                  "processed_tokens": 7430,
+                  "calibration": {
+                    "available": false,
+                    "samples": 0,
+                    "context_factor": 1.0,
+                    "generated_factor": 1.0,
+                    "confidence": 0.0,
+                    "reliability": "untrained",
+                    "context_relative_mad": 0.0,
+                    "generated_relative_mad": 0.0,
+                    "key": null
+                  }
+                },
+                "structural_live_estimate": {
+                  "quality": "observable_structural_estimate",
+                  "basis": "prompt_plus_mcp_context_area",
+                  "prompt_tokens_estimate": 1660,
+                  "mcp_calls_observed": 2,
+                  "mcp_response_bytes": 4931,
+                  "mcp_response_tokens_estimate": 1233,
+                  "context_read_tokens": 6494,
+                  "generated_tokens": 141,
+                  "processed_tokens": 6635,
+                  "routing_authoritative": false
+                },
+                "structural_estimate_error": {
+                  "estimated": 6494,
+                  "exact": 94268,
+                  "comparable": true,
+                  "absolute_error": -87774,
+                  "error_pct": -93.11,
+                  "reason": null
+                },
+                "calibration_before_run": {
+                  "available": false,
+                  "samples": 0,
+                  "context_factor": 1.0,
+                  "generated_factor": 1.0,
+                  "confidence": 0.0,
+                  "reliability": "untrained",
+                  "context_relative_mad": 0.0,
+                  "generated_relative_mad": 0.0,
+                  "key": null
+                },
+                "calibration_update": {
+                  "available": true,
+                  "samples": 2,
+                  "context_factor": 23.27192,
+                  "generated_factor": 5.588425,
+                  "confidence": 0.277,
+                  "reliability": "low",
+                  "context_relative_mad": 0.44427,
+                  "generated_relative_mad": 0.016539,
+                  "key": "cursor|gpt-5.6 luna 272k medium|fibonacci",
+                  "updated_at": "2026-09-06T08:09:10+00:00"
+                },
+                "estimate_error": {
+                  "comparison_basis": "derived_operational_metrics",
+                  "context_read_tokens": {
+                    "estimated": 7289,
+                    "exact": 94268,
+                    "comparable": true,
+                    "absolute_error": -86979,
+                    "error_pct": -92.27,
+                    "reason": null
+                  },
+                  "generated_tokens": {
+                    "estimated": 141,
+                    "exact": 801,
+                    "comparable": true,
+                    "absolute_error": -660,
+                    "error_pct": -82.4,
+                    "reason": null
+                  },
+                  "processed_tokens": {
+                    "estimated": 7430,
+                    "exact": 95069,
+                    "comparable": true,
+                    "absolute_error": -87639,
+                    "error_pct": -92.18,
+                    "reason": null
+                  },
+                  "reasoning_output_tokens": {
+                    "estimated": 216,
+                    "exact": null,
+                    "comparable": false,
+                    "absolute_error": null,
+                    "error_pct": null,
+                    "reason": "provider_does_not_report_exact_reasoning_tokens"
+                  },
+                  "input_tokens": {
+                    "estimated": 7289,
+                    "exact": 15,
+                    "comparable": false,
+                    "absolute_error": null,
+                    "error_pct": null,
+                    "reason": "live_input_estimate_represents_observed_context_not_provider_fresh_input"
+                  },
+                  "output_tokens": {
+                    "estimated": 141,
+                    "exact": 801,
+                    "comparable": true,
+                    "absolute_error": -660,
+                    "error_pct": -82.4,
+                    "reason": null
+                  }
+                },
+                "phase_usage": [
+                  {
+                    "phase": "discovery",
+                    "reason": "final",
+                    "quality": "exact",
+                    "source": "cursor_result",
+                    "input_tokens": 15,
+                    "cached_input_tokens": 94253,
+                    "output_tokens": 801,
+                    "reasoning_output_tokens": null,
+                    "context_read_tokens": 94268,
+                    "generated_tokens": 801,
+                    "processed_tokens": 95069,
+                    "elapsed_seconds": 49.652,
+                    "at": "2026-09-06T08:09:10+00:00",
+                    "delta_context_read_tokens": 94268,
+                    "delta_generated_tokens": 801,
+                    "delta_processed_tokens": 95069,
+                    "allocation_quality": "exact",
+                    "allocation_state": "closed"
+                  }
+                ],
+                "last_turn_usage": null,
+                "last_turn_observed_tokens": null,
+                "model_context_window": null,
+                "last_turn_context_utilization_pct": null,
+                "tokens_per_minute": 114862.81,
+                "input_tokens_per_minute": 18.12,
+                "output_tokens_per_minute": 967.77,
+                "elapsed_seconds": 49.66,
+                "samples": 11,
+                "last_event": "cursor_usage_final",
+                "updated_at": "2026-09-06T08:09:10+00:00",
+                "cost_estimate": null,
+                "final": true
+              }
+            ]
+          },
+          "estimated_cost": null,
+          "validation_commands": null,
+          "validation_results": null,
+          "oracle_result": {
+            "all_children_passed": false,
+            "all_final_done": false,
+            "all_oracles_passed": false,
+            "all_single_session": false,
+            "all_sessions_completed": false,
+            "all_same_workspace": false,
+            "all_elicitations_observed": false,
+            "all_expected_human_interactions_only": false,
+            "zero_scope_requests": false,
+            "all_validation_baselines_correct": false,
+            "all_runtime_bins_unchanged": false,
+            "all_provider_model_routes_verified": false,
+            "all_token_usage_exact": false,
+            "zero_mcp_failures": false,
+            "zero_mcp_rejections": false,
+            "zero_mcp_normalizations": false,
+            "all_strict_managed_runtimes_verified": false,
+            "zero_provider_extension_artifacts": false,
+            "zero_external_skill_invocations": false,
+            "zero_external_plugin_invocations": false,
+            "zero_external_mcp_invocations": false
+          },
+          "scope_result": null,
+          "git_evidence": {
+            "unchanged": true,
+            "added": [],
+            "removed": [],
+            "changed": []
+          },
+          "human_gate_evidence": null,
+          "codex_runtime_preflight": null,
+          "codex_mcp_preflight": null,
+          "final_status": "fail",
+          "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=1)",
+          "artifact_paths": [
+            "cursor-greenfield-attempt3.zip",
+            "cursor-greenfield-attempt3-logs"
+          ],
+          "artifact_hashes": {
+            "cursor-greenfield-attempt3.zip": "54a0ab2b954f265d6527d70764600755f7eb061c040a6122d6cf654d90a8684f",
+            "cursor-greenfield-attempt3-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "cursor-greenfield-attempt3.zip",
+              "sha256": "54a0ab2b954f265d6527d70764600755f7eb061c040a6122d6cf654d90a8684f",
+              "local_only": true
+            },
+            {
+              "name": "cursor-greenfield-attempt3-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         }
       ]
     },
@@ -2773,24 +4160,24 @@
         "zero_external_mcp_invocations": false
       },
       "evidence": {
-        "attempt": 2,
+        "attempt": 3,
         "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
         "artifact_paths": [
-          "cursor-brownfield-attempt2.zip",
-          "cursor-brownfield-attempt2-logs"
+          "cursor-brownfield-attempt3.zip",
+          "cursor-brownfield-attempt3-logs"
         ],
         "artifact_hashes": {
-          "cursor-brownfield-attempt2.zip": "44b77ff99d41a43b7f9432e079e02f8f07e9fe0383b49ebf7840349d87783aec",
-          "cursor-brownfield-attempt2-logs": null
+          "cursor-brownfield-attempt3.zip": "8100fafd324971687d3d5029e8eb7b0ea7672253763c29d93079f1af67ceda2f",
+          "cursor-brownfield-attempt3-logs": null
         },
         "artifact_refs": [
           {
-            "name": "cursor-brownfield-attempt2.zip",
-            "sha256": "44b77ff99d41a43b7f9432e079e02f8f07e9fe0383b49ebf7840349d87783aec",
+            "name": "cursor-brownfield-attempt3.zip",
+            "sha256": "8100fafd324971687d3d5029e8eb7b0ea7672253763c29d93079f1af67ceda2f",
             "local_only": true
           },
           {
-            "name": "cursor-brownfield-attempt2-logs",
+            "name": "cursor-brownfield-attempt3-logs",
             "sha256": null,
             "local_only": true
           }
@@ -3207,19 +4594,306 @@
               "local_only": true
             }
           ]
+        },
+        {
+          "provider": "cursor",
+          "provider_client_version": "2026.09.02-c22c1a3",
+          "model": "GPT-5.6 Luna 272K Medium",
+          "dynosai_version": "1.0.0rc9",
+          "candidate_version": "1.0.0-rc.9",
+          "dynosai_git_commit": "1ea7ef2aa95190ff207153e85ff6fdb71ec94ba7",
+          "git_dirty": true,
+          "source_tree_sha256": "aefac8592358e78e2f7297e4b461a4ec9809bb06750fe63d42b366deb2ea3258",
+          "source_file_count": 267,
+          "certification_subject_sha256": "335036ae659b7d8685d4f6560d4b34fe8ff057eef950d7af2592cd05f9d4a4c3",
+          "certification_subject_file_count": 266,
+          "certification_dirty_paths": [
+            "docs/validation/matrix-1.0.json"
+          ],
+          "unexpected_dirty_paths": [],
+          "os": "Windows-11-10.0.26200-SP0",
+          "python_version": "3.13.7",
+          "scenario": "orderflow-contract-discounts",
+          "mode": "brownfield",
+          "started_at": "2026-09-06T08:16:49+00:00",
+          "finished_at": "2026-09-06T08:18:25+00:00",
+          "mcp_protocol_version": null,
+          "mcp_protocols_observed": [],
+          "mcp_protocol_note": "no MCP tool calls observed",
+          "acp_app_server_capabilities": null,
+          "execution_profile": "unknown",
+          "harness_feature_state": "unknown",
+          "retry_history": [],
+          "attempt": 3,
+          "token_usage": {
+            "totals": {
+              "processes": 1,
+              "exact_processes": 0,
+              "estimated_processes": 1,
+              "input_tokens": 5953,
+              "cached_input_tokens": 0,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 88,
+              "reasoning_output_tokens": 0,
+              "provider_total_tokens": null,
+              "total_tokens": null,
+              "observed_token_total": 6041,
+              "context_read_tokens": 5953,
+              "generated_tokens": 88,
+              "processed_tokens": 6041,
+              "estimated_list_price_usd": null
+            },
+            "actual_totals_including_retries": {
+              "processes": 1,
+              "exact_processes": 0,
+              "estimated_processes": 1,
+              "input_tokens": 5953,
+              "cached_input_tokens": 0,
+              "cache_write_input_tokens": 0,
+              "output_tokens": 88,
+              "reasoning_output_tokens": 0,
+              "provider_total_tokens": null,
+              "total_tokens": null,
+              "observed_token_total": 6041,
+              "context_read_tokens": 5953,
+              "generated_tokens": 88,
+              "processed_tokens": 6041,
+              "estimated_list_price_usd": null
+            },
+            "by_provider": {
+              "cursor": {
+                "processes": 1,
+                "exact_processes": 0,
+                "estimated_processes": 1,
+                "input_tokens": 5953,
+                "cached_input_tokens": 0,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 88,
+                "reasoning_output_tokens": 0,
+                "provider_total_tokens": null,
+                "total_tokens": null,
+                "observed_token_total": 6041,
+                "context_read_tokens": 5953,
+                "generated_tokens": 88,
+                "processed_tokens": 6041,
+                "estimated_list_price_usd": null
+              }
+            },
+            "by_scenario": {
+              "orderflow-contract-discounts": {
+                "processes": 1,
+                "exact_processes": 0,
+                "estimated_processes": 1,
+                "input_tokens": 5953,
+                "cached_input_tokens": 0,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 88,
+                "reasoning_output_tokens": 0,
+                "provider_total_tokens": null,
+                "total_tokens": null,
+                "observed_token_total": 6041,
+                "context_read_tokens": 5953,
+                "generated_tokens": 88,
+                "processed_tokens": 6041,
+                "estimated_list_price_usd": null
+              }
+            },
+            "processes": [
+              {
+                "provider": "cursor",
+                "scenario": "orderflow-contract-discounts",
+                "schema_version": 4,
+                "process_id": "ACCEPTANCE-20260906T081649+0000-191236:cursor:orderflow-contract-discounts",
+                "session_id": "c7eb9c8f-2578-45bb-af1a-30da55794499",
+                "model": "GPT-5.6 Luna 272K Medium",
+                "phase": "discovery",
+                "quality": "estimated",
+                "source": "dynosai_estimate",
+                "input_tokens": 5953,
+                "cached_input_tokens": 0,
+                "cache_write_input_tokens": 0,
+                "output_tokens": 88,
+                "reasoning_output_tokens": 0,
+                "total_tokens": null,
+                "provider_total_tokens": null,
+                "observed_token_total": 6041,
+                "context_read_tokens": 5953,
+                "generated_tokens": 88,
+                "processed_tokens": 6041,
+                "cache_semantics": "parallel_cache_read",
+                "provider_usage": {
+                  "input_tokens": null,
+                  "cached_input_tokens": null,
+                  "cache_write_input_tokens": null,
+                  "output_tokens": null,
+                  "reasoning_output_tokens": null,
+                  "total_tokens": null
+                },
+                "live_estimate": {
+                  "quality": "estimated",
+                  "source": "dynosai_stream_observation",
+                  "input_tokens": 5953,
+                  "input_semantics": "observed_context_estimate_not_provider_fresh_input",
+                  "cached_input_tokens": 0,
+                  "output_tokens": 88,
+                  "observed_context_tokens_estimate": 5953,
+                  "observed_thinking_tokens_estimate": 0,
+                  "context_read_tokens": 5953,
+                  "generated_tokens": 88,
+                  "processed_tokens": 6041
+                },
+                "calibrated_live_estimate": {
+                  "quality": "raw_estimate",
+                  "context_read_tokens": 5953,
+                  "generated_tokens": 88,
+                  "processed_tokens": 6041,
+                  "calibration": {
+                    "available": false,
+                    "samples": 0,
+                    "context_factor": 1.0,
+                    "generated_factor": 1.0,
+                    "confidence": 0.0,
+                    "reliability": "untrained",
+                    "context_relative_mad": 0.0,
+                    "generated_relative_mad": 0.0,
+                    "key": null
+                  }
+                },
+                "structural_live_estimate": {
+                  "quality": "observable_structural_estimate",
+                  "basis": "prompt_plus_mcp_context_area",
+                  "prompt_tokens_estimate": 1879,
+                  "mcp_calls_observed": 0,
+                  "mcp_response_bytes": 0,
+                  "mcp_response_tokens_estimate": 0,
+                  "context_read_tokens": 1879,
+                  "generated_tokens": 88,
+                  "processed_tokens": 1967,
+                  "routing_authoritative": false
+                },
+                "structural_estimate_error": null,
+                "calibration_before_run": {
+                  "available": false,
+                  "samples": 0,
+                  "context_factor": 1.0,
+                  "generated_factor": 1.0,
+                  "confidence": 0.0,
+                  "reliability": "untrained",
+                  "context_relative_mad": 0.0,
+                  "generated_relative_mad": 0.0,
+                  "key": null
+                },
+                "calibration_update": null,
+                "estimate_error": null,
+                "phase_usage": [
+                  {
+                    "phase": "discovery",
+                    "reason": "final",
+                    "quality": "estimated",
+                    "source": "dynosai_estimate",
+                    "input_tokens": 5953,
+                    "cached_input_tokens": 0,
+                    "output_tokens": 88,
+                    "reasoning_output_tokens": 0,
+                    "context_read_tokens": 5953,
+                    "generated_tokens": 88,
+                    "processed_tokens": 6041,
+                    "elapsed_seconds": 90.347,
+                    "at": "2026-09-06T08:18:24+00:00",
+                    "delta_context_read_tokens": 5953,
+                    "delta_generated_tokens": 88,
+                    "delta_processed_tokens": 6041,
+                    "allocation_quality": "estimated",
+                    "allocation_state": "closed"
+                  }
+                ],
+                "last_turn_usage": null,
+                "last_turn_observed_tokens": null,
+                "model_context_window": null,
+                "last_turn_context_utilization_pct": null,
+                "tokens_per_minute": 4011.84,
+                "input_tokens_per_minute": 3953.4,
+                "output_tokens_per_minute": 58.44,
+                "elapsed_seconds": 90.347,
+                "samples": 10,
+                "last_event": "cursor_usage_final",
+                "updated_at": "2026-09-06T08:18:24+00:00",
+                "cost_estimate": null,
+                "final": true
+              }
+            ]
+          },
+          "estimated_cost": null,
+          "validation_commands": null,
+          "validation_results": null,
+          "oracle_result": {
+            "all_children_passed": false,
+            "all_final_done": false,
+            "all_oracles_passed": false,
+            "all_single_session": false,
+            "all_sessions_completed": false,
+            "all_same_workspace": false,
+            "all_elicitations_observed": false,
+            "all_expected_human_interactions_only": false,
+            "zero_scope_requests": false,
+            "all_validation_baselines_correct": false,
+            "all_runtime_bins_unchanged": false,
+            "all_provider_model_routes_verified": false,
+            "all_token_usage_exact": false,
+            "zero_mcp_failures": false,
+            "zero_mcp_rejections": false,
+            "zero_mcp_normalizations": false,
+            "all_strict_managed_runtimes_verified": false,
+            "zero_provider_extension_artifacts": false,
+            "zero_external_skill_invocations": false,
+            "zero_external_plugin_invocations": false,
+            "zero_external_mcp_invocations": false
+          },
+          "scope_result": null,
+          "git_evidence": {
+            "unchanged": true,
+            "added": [],
+            "removed": [],
+            "changed": []
+          },
+          "human_gate_evidence": null,
+          "codex_runtime_preflight": null,
+          "codex_mcp_preflight": null,
+          "final_status": "fail",
+          "failure_attribution": "AssertionError: expected exactly one governed DYN work item, got 0 (total rows=0)",
+          "artifact_paths": [
+            "cursor-brownfield-attempt3.zip",
+            "cursor-brownfield-attempt3-logs"
+          ],
+          "artifact_hashes": {
+            "cursor-brownfield-attempt3.zip": "8100fafd324971687d3d5029e8eb7b0ea7672253763c29d93079f1af67ceda2f",
+            "cursor-brownfield-attempt3-logs": null
+          },
+          "artifact_refs": [
+            {
+              "name": "cursor-brownfield-attempt3.zip",
+              "sha256": "8100fafd324971687d3d5029e8eb7b0ea7672253763c29d93079f1af67ceda2f",
+              "local_only": true
+            },
+            {
+              "name": "cursor-brownfield-attempt3-logs",
+              "sha256": null,
+              "local_only": true
+            }
+          ]
         }
       ]
     }
   ],
   "environment": {
-    "dynosai_version": "1.0.0rc8",
-    "dynosai_display_version": "1.0.0-rc.8",
-    "dynosai_git_commit": "181624b8df6eab3224fbfc23c44ee27b4cacef0d",
-    "git_dirty": false,
-    "source_tree_sha256": "390c19d1ff5573206972cd5c7a09025eb0b55d3c6404c8f5c3ea2c81d7ad530a",
-    "source_file_count": 263,
-    "certification_subject_sha256": "b433bd5252f6c0343e2b246e04d43b72b528871ad30f01b3886c089041e60120",
-    "certification_subject_file_count": 262,
+    "dynosai_version": "1.0.0rc9",
+    "dynosai_display_version": "1.0.0-rc.9",
+    "dynosai_git_commit": "1ea7ef2aa95190ff207153e85ff6fdb71ec94ba7",
+    "git_dirty": true,
+    "source_tree_sha256": "aefac8592358e78e2f7297e4b461a4ec9809bb06750fe63d42b366deb2ea3258",
+    "source_file_count": 267,
+    "certification_subject_sha256": "335036ae659b7d8685d4f6560d4b34fe8ff057eef950d7af2592cd05f9d4a4c3",
+    "certification_subject_file_count": 266,
     "os": "Windows-11-10.0.26200-SP0",
     "python_version": "3.13.7",
     "mcp_protocols_supported": [
