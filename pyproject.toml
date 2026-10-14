@@ -21,7 +21,7 @@ keywords = [
   "codex",
 ]
 dependencies = [
-  "fastembed>=0.8.0,<0.9",
+  "fastembed>=0.8.0,<0.10",
   "sqlite-vec>=0.1.9,<0.2",
   "numpy>=1.26,<3",
 ]
